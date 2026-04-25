@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetzgerPost — Mittagstisch erstellen</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="layouts.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg:       #0f0d0b;
+      --surface:  #1a1714;
+      --surface2: #242018;
+      --border:   #2e2a24;
+      --border2:  #3d3830;
+      --accent:   #d4853a;
+      --accent2:  #e8a055;
+      --text:     #f0ece4;
+      --muted:    #8a8070;
+      --error:    #e05555;
+      --success:  #5cad7a;
+      --radius:   12px;
+      --radius-sm:8px;
+      --font-d:   'Syne', sans-serif;
+      --font-b:   'DM Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-b);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 10% 20%, rgba(212,133,58,0.10) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 50% at 90% 80%, rgba(212,133,58,0.06) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── Top Nav ── */
+    .topnav {
+      position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15,13,11,0.8);
+      backdrop-filter: blur(10px);
+    }
+    .nav-logo { font-family: var(--font-d); font-size: 20px; font-weight: 800; }
+    .nav-logo span { color: var(--accent); }
+    .nav-user { display: flex; align-items: center; gap: 12px; }
+    .nav-user-name { font-size: 13px; color: var(--muted); }
+    .btn-nav {
+      padding: 7px 14px; font-family: var(--font-b); font-size: 13px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: transparent; color: var(--muted); cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-nav:hover { border-color: var(--border2); color: var(--text); }
+
+    /* ── Main Layout ── */
+    .main {
+      position: relative; z-index: 1;
+      max-width: 860px; margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+
+    /* ── Progress Steps ── */
+    .steps {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0; margin-bottom: 48px;
+    }
+    .step-item {
+      display: flex; align-items: center; gap: 0;
+    }
+    .step-bubble {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1.5px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      background: var(--surface); transition: all 0.3s; position: relative;
+      cursor: default;
+    }
+    .step-bubble.active {
+      border-color: var(--accent); color: var(--accent);
+      background: rgba(212,133,58,0.10);
+    }
+    .step-bubble.done {
+      border-color: var(--success); background: rgba(92,173,122,0.15);
+      color: var(--success);
+    }
+    .step-label {
+      font-size: 11px; color: var(--muted); position: absolute;
+      top: 42px; left: 50%; transform: translateX(-50%);
+      white-space: nowrap; font-weight: 500;
+      transition: color 0.3s;
+    }
+    .step-bubble.active .step-label { color: var(--accent); }
+    .step-bubble.done  .step-label  { color: var(--success); }
+    .step-line {
+      width: 80px; height: 1px; background: var(--border);
+      transition: background 0.3s;
+    }
+    .step-line.done { background: var(--success); }
+
+    /* ── Cards ── */
+    .wizard-step { display: none; animation: fadeUp 0.35s ease both; }
+    .wizard-step.active { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-family: var(--font-d); font-size: 22px; font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .card-sub { font-size: 14px; color: var(--muted); margin-bottom: 28px; }
+
+    /* ── Template Grid ── */
+    .template-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;
+      margin-bottom: 24px;
+    }
+    .template-card {
+      border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+      padding: 16px 14px; cursor: pointer; transition: all 0.2s;
+      background: var(--surface2); position: relative;
+    }
+    .template-card:hover { border-color: var(--border2); }
+    .template-card.selected { border-color: var(--accent); background: rgba(212,133,58,0.07); }
+    .template-card.selected::after {
+      content: '✓'; position: absolute; top: 10px; right: 12px;
+      font-size: 13px; font-weight: 600; color: var(--accent);
+    }
+    .template-thumb {
+      width: 100%; aspect-ratio: 9/16; background: var(--border);
+      border-radius: 6px; margin-bottom: 10px; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+    }
+    .template-thumb.landscape { aspect-ratio: 4/3; }
+    .template-thumb.square    { aspect-ratio: 1/1; }
+    .template-name { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+    .template-desc { font-size: 11px; color: var(--muted); }
+    .template-badge {
+      display: inline-block; font-size: 10px; font-weight: 600;
+      padding: 2px 7px; border-radius: 20px; margin-top: 6px;
+      background: rgba(212,133,58,0.15); color: var(--accent);
+      border: 1px solid rgba(212,133,58,0.3);
+    }
+    .template-badge.free { background: rgba(92,173,122,0.15); color: var(--success); border-color: rgba(92,173,122,0.3); }
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 1.5px dashed var(--border2); border-radius: var(--radius-sm);
+      padding: 28px; text-align: center; cursor: pointer;
+      transition: all 0.2s; background: var(--surface2);
+    }
+    .upload-zone:hover { border-color: var(--accent); }
+    .upload-zone.dragover { border-color: var(--accent); background: rgba(212,133,58,0.07); }
+    .upload-icon { font-size: 28px; margin-bottom: 8px; }
+    .upload-text { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+    .upload-sub  { font-size: 12px; color: var(--muted); }
+    .upload-zone input { display: none; }
+    .upload-preview {
+      display: none; margin-top: 14px;
+      align-items: center; gap: 12px;
+    }
+    .upload-preview.visible { display: flex; }
+    .upload-preview img {
+      width: 48px; height: 48px; border-radius: 8px; object-fit: contain;
+      background: var(--surface); border: 1px solid var(--border);
+    }
+    .upload-preview-name { font-size: 13px; font-weight: 500; }
+    .upload-preview-remove {
+      margin-left: auto; font-size: 12px; color: var(--error);
+      cursor: pointer; background: none; border: none; font-family: var(--font-b);
+    }
+
+    /* ── Days Grid ── */
+    .days-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+      margin-bottom: 24px;
+    }
+    .day-card {
+      border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+      padding: 16px 10px; text-align: center; cursor: pointer;
+      transition: all 0.2s; background: var(--surface2); user-select: none;
+    }
+    .day-card:hover { border-color: var(--border2); }
+    .day-card.selected { border-color: var(--accent); background: rgba(212,133,58,0.08); }
+    .day-card.selected .day-dot { background: var(--accent); }
+    .day-name { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+    .day-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border2); margin: 0 auto;
+      transition: background 0.2s;
+    }
+
+    /* Meals count per day */
+    .days-detail { display: none; }
+    .days-detail.visible { display: block; margin-top: 24px; }
+    .day-detail-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); margin-bottom: 10px;
+      background: var(--surface2);
+    }
+    .day-detail-name { font-size: 14px; font-weight: 600; }
+    .count-control { display: flex; align-items: center; gap: 10px; }
+    .count-btn {
+      width: 28px; height: 28px; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text); font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; font-family: var(--font-b);
+    }
+    .count-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .count-val { font-size: 15px; font-weight: 600; min-width: 20px; text-align: center; }
+
+    /* ── Meals Step ── */
+    .meals-day-tabs {
+      display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .meals-day-tab {
+      padding: 7px 16px; border-radius: 20px;
+      border: 1px solid var(--border); background: var(--surface2);
+      color: var(--muted); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .meals-day-tab.active {
+      border-color: var(--accent); color: var(--accent);
+      background: rgba(212,133,58,0.10);
+    }
+
+    .meal-block { display: none; }
+    .meal-block.active { display: block; }
+
+    .meal-item {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 18px; margin-bottom: 12px;
+    }
+    .meal-item-header {
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+    }
+    .meal-fields { display: grid; grid-template-columns: 1fr 140px; gap: 10px; }
+    .meal-fields-full { grid-template-columns: 1fr; }
+
+    .field-wrap label {
+      font-size: 12px; color: var(--muted); font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; display: block;
+    }
+    input[type="text"], input[type="number"], input[type="email"], input[type="password"], select, textarea {
+      width: 100%; padding: 10px 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-family: var(--font-b); font-size: 14px; outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.6; }
+    select option { background: var(--surface2); color: var(--text); }
+
+    .meal-img-row {
+      display: flex; align-items: center; gap: 10px; margin-top: 10px;
+    }
+    .meal-img-thumb {
+      width: 52px; height: 52px; border-radius: 8px; object-fit: cover;
+      border: 1px solid var(--border); background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .meal-img-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 7px; }
+    .btn-gen-img {
+      flex: 1; padding: 9px 14px; font-family: var(--font-b);
+      font-size: 13px; font-weight: 500;
+      border: 1px solid var(--accent); border-radius: var(--radius-sm);
+      background: rgba(212,133,58,0.10); color: var(--accent);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-gen-img:hover { background: rgba(212,133,58,0.18); }
+    .btn-gen-img:disabled { opacity: 0.4; cursor: not-allowed; }
+    .img-badge {
+      font-size: 10px; padding: 2px 7px; border-radius: 20px;
+      background: rgba(212,133,58,0.15); color: var(--accent);
+      border: 1px solid rgba(212,133,58,0.3); white-space: nowrap;
+    }
+
+    /* ── Navigation Buttons ── */
+    .wizard-nav {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 24px;
+    }
+    .btn-back {
+      padding: 12px 24px; font-family: var(--font-b); font-size: 14px; font-weight: 500;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: transparent; color: var(--muted); cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-back:hover { border-color: var(--border2); color: var(--text); }
+    .btn-next {
+      padding: 13px 32px; font-family: var(--font-b); font-size: 15px; font-weight: 600;
+      border: none; border-radius: var(--radius-sm);
+      background: var(--accent); color: #fff; cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-next:hover  { background: var(--accent2); }
+    .btn-next:active { transform: scale(0.98); }
+
+    /* ── Preview Step ── */
+    .preview-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+      margin-bottom: 20px;
+    }
+    .preview-panel {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px;
+    }
+    .preview-label {
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;
+    }
+    .preview-canvas-wrap {
+      width: 100%; aspect-ratio: 9/16;
+      background: var(--border); border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 13px;
+    }
+    .preview-canvas-wrap.square { aspect-ratio: 1/1; }
+    .preview-canvas-wrap.landscape { aspect-ratio: 4/3; }
+
+    .download-row {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px;
+    }
+    .btn-download {
+      flex: 1; min-width: 120px; padding: 12px;
+      font-family: var(--font-b); font-size: 14px; font-weight: 600;
+      border: 1px solid var(--accent); border-radius: var(--radius-sm);
+      background: rgba(212,133,58,0.12); color: var(--accent);
+      cursor: pointer; transition: all 0.2s; text-align: center;
+    }
+    .btn-download:hover { background: rgba(212,133,58,0.22); }
+    .btn-download.primary {
+      background: var(--accent); color: #fff; border-color: var(--accent);
+    }
+    .btn-download.primary:hover { background: var(--accent2); }
+
+    /* Caption */
+    .caption-box {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 18px; margin-top: 16px;
+    }
+    .caption-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .caption-title { font-size: 13px; font-weight: 600; }
+    .btn-copy {
+      font-size: 12px; padding: 5px 12px;
+      border: 1px solid var(--border); border-radius: 20px;
+      background: transparent; color: var(--muted); cursor: pointer;
+      font-family: var(--font-b); transition: all 0.2s;
+    }
+    .btn-copy:hover { border-color: var(--border2); color: var(--text); }
+    .caption-text {
+      font-size: 13px; color: var(--muted); line-height: 1.7;
+      white-space: pre-wrap; resize: vertical; min-height: 120px;
+      border: none; padding: 0; background: transparent; width: 100%;
+    }
+
+    /* Woche bar */
+    .woche-bar {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px 18px; margin-bottom: 16px;
+    }
+    .woche-bar label { font-size: 13px; color: var(--muted); white-space: nowrap; margin: 0; }
+    .woche-bar input { flex: 1; max-width: 260px; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--success); color: #fff; padding: 12px 20px; border-radius: 20px;
+      font-size: 14px; font-weight: 500; z-index: 999;
+      transition: transform 0.3s ease; pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+
+    /* ── Format Karten (Schritt 1) ── */
+    .format-card {
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--surface2);
+    }
+    .format-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+    .format-card.selected {
+      border-color: var(--accent);
+      background: rgba(212,133,58,0.08);
+    }
+    .format-icon { font-size: 36px; margin-bottom: 12px; }
+    .format-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .format-desc { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+    .format-sub  { font-size: 11px; color: var(--border2); }
+
+    /* ── Template Picker Grid ── */
+    .template-picker-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 8px;
+    }
+    .template-picker-card {
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--surface2);
+      position: relative;
+    }
+    .template-picker-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+    .template-picker-card.selected { border-color: var(--accent); }
+    .template-picker-card.selected::after {
+      content: '✓';
+      position: absolute; top: 8px; right: 10px;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--accent); color: #fff;
+      font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .template-picker-thumb {
+      width: 100%; aspect-ratio: 9/16;
+      object-fit: cover; display: block;
+    }
+    .template-picker-thumb.landscape { aspect-ratio: 16/9; }
+    .template-picker-thumb.square { aspect-ratio: 1/1; }
+    .template-picker-info {
+      padding: 10px 12px;
+    }
+    .template-picker-name { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+    .template-picker-desc { font-size: 11px; color: var(--muted); }
+
+    /* ── Gerichte Picker Modal ── */
+    .picker-modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); z-index: 200;
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .picker-modal.open { display: flex; }
+    .picker-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); width: 100%; max-width: 520px;
+      max-height: 80vh; display: flex; flex-direction: column;
+      animation: fadeUp 0.25s ease;
+    }
+    .picker-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px; border-bottom: 1px solid var(--border);
+    }
+    .picker-title { font-family: var(--font-d); font-size: 18px; font-weight: 700; }
+    .picker-close {
+      background: none; border: none; color: var(--muted);
+      font-size: 20px; cursor: pointer; line-height: 1;
+      font-family: var(--font-b);
+    }
+    .picker-search {
+      padding: 14px 24px; border-bottom: 1px solid var(--border);
+    }
+    .picker-search input {
+      width: 100%; padding: 10px 14px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-family: var(--font-b); font-size: 14px; outline: none;
+    }
+    .picker-search input:focus { border-color: var(--accent); }
+    .picker-list {
+      overflow-y: auto; padding: 12px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+    .picker-item {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .picker-item:hover { border-color: var(--accent); background: rgba(212,133,58,0.08); }
+    .picker-item-name { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+    .picker-item-price { font-size: 12px; color: var(--accent); }
+    .btn-picker {
+      padding: 8px 12px; font-family: var(--font-b); font-size: 12px; font-weight: 500;
+      background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--muted); cursor: pointer;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .btn-picker:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-add-meal {
+      width: 100%; margin-top: 10px; padding: 11px;
+      background: transparent; border: 1.5px dashed var(--border2);
+      border-radius: var(--radius-sm); color: var(--muted);
+      font-family: var(--font-b); font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-add-meal:hover { border-color: var(--accent); color: var(--accent); }
+
+    @media (max-width: 600px) {
+      .template-grid { grid-template-columns: 1fr 1fr; }
+      .days-grid { grid-template-columns: repeat(3, 1fr); }
+      .preview-grid { grid-template-columns: 1fr; }
+      .meal-fields { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Auth Guard ── -->
+<script>
+(async () => {
+  const SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co'
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10'
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
+  const { data: { session } } = await sb.auth.getSession()
+  if (!session) { window.location.replace('auth.html'); return; }
+  window._sbUser = session.user
+  document.getElementById('nav-username').textContent =
+    session.user.user_metadata?.betrieb_name || session.user.email
+})()
+</script>
+
+<!-- ── Nav ── -->
+<nav class="topnav">
+  <a class="nav-logo" href="dashboard.html" style="text-decoration:none;color:var(--text);">Metzger<span>Post</span></a>
+  <div class="nav-user">
+    <span class="nav-user-name" id="nav-username">…</span>
+    <button class="btn-nav" onclick="window.location.href='auth.html'">Abmelden</button>
+  </div>
+</nav>
+
+<!-- ── Progress Bar ── -->
+<div class="main">
+  <div class="steps">
+    <div class="step-item">
+      <div class="step-bubble active" id="s1">
+        <span>1</span>
+        <span class="step-label">Format</span>
+      </div>
+    </div>
+    <div class="step-line" id="l1"></div>
+    <div class="step-item">
+      <div class="step-bubble" id="s2">
+        <span>2</span>
+        <span class="step-label">Tage</span>
+      </div>
+    </div>
+    <div class="step-line" id="l2"></div>
+    <div class="step-item">
+      <div class="step-bubble" id="s3">
+        <span>3</span>
+        <span class="step-label">Gerichte</span>
+      </div>
+    </div>
+    <div class="step-line" id="l3"></div>
+    <div class="step-item">
+      <div class="step-bubble" id="s4">
+        <span>4</span>
+        <span class="step-label">Layout</span>
+      </div>
+    </div>
+    <div class="step-line" id="l4"></div>
+    <div class="step-item">
+      <div class="step-bubble" id="s5">
+        <span>5</span>
+        <span class="step-label">Export</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCHRITT 1: Format ══ -->
+  <div class="wizard-step active" id="step1">
+    <div class="card">
+      <div class="card-title">Was möchtest du erstellen?</div>
+      <div class="card-sub">Wähle das Format für deinen Mittagstisch</div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:8px;">
+
+        <div class="format-card selected" id="fmt-instagram" onclick="selectFormat('mittagstisch_instagram', this)">
+          <div class="format-icon">📱</div>
+          <div class="format-name">Instagram</div>
+          <div class="format-desc">Story + Feed</div>
+          <div class="format-sub">9:16 & 4:5</div>
+        </div>
+
+        <div class="format-card" id="fmt-druck" onclick="selectFormat('mittagstisch_druck', this)">
+          <div class="format-icon">🖨️</div>
+          <div class="format-name">Druck A4</div>
+          <div class="format-desc">Vorder- & Rückseite</div>
+          <div class="format-sub">Tischaufsteller</div>
+        </div>
+
+        <div class="format-card" id="fmt-beide" onclick="selectFormat('beide', this)">
+          <div class="format-icon">✨</div>
+          <div class="format-name">Alles</div>
+          <div class="format-desc">Instagram + Druck</div>
+          <div class="format-sub">Komplett-Paket</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="wizard-nav">
+      <div></div>
+      <button class="btn-next" onclick="goTo(2)">Weiter → Tage wählen</button>
+    </div>
+  </div>
+
+  <!-- ══ SCHRITT 2: Tage ══ -->
+  <div class="wizard-step" id="step2">
+    <div class="card">
+      <div class="card-title">Welche Tage?</div>
+      <div class="card-sub">Wähle die Tage aus und wie viele Gerichte du pro Tag anbietest</div>
+
+      <div class="days-grid">
+        <div class="day-card" id="day-montag" onclick="toggleDay('montag',this)">
+          <div class="day-name">Mo</div>
+          <div class="day-dot"></div>
+        </div>
+        <div class="day-card selected" id="day-dienstag" onclick="toggleDay('dienstag',this)">
+          <div class="day-name">Di</div>
+          <div class="day-dot"></div>
+        </div>
+        <div class="day-card selected" id="day-mittwoch" onclick="toggleDay('mittwoch',this)">
+          <div class="day-name">Mi</div>
+          <div class="day-dot"></div>
+        </div>
+        <div class="day-card selected" id="day-donnerstag" onclick="toggleDay('donnerstag',this)">
+          <div class="day-name">Do</div>
+          <div class="day-dot"></div>
+        </div>
+        <div class="day-card selected" id="day-freitag" onclick="toggleDay('freitag',this)">
+          <div class="day-name">Fr</div>
+          <div class="day-dot"></div>
+        </div>
+      </div>
+
+      <div class="days-detail" id="days-detail">
+        <!-- Dynamisch befüllt -->
+      </div>
+    </div>
+
+    <div class="wizard-nav">
+      <button class="btn-back" onclick="goTo(1)">← Zurück</button>
+      <button class="btn-next" onclick="goTo(3)">Weiter → Gerichte</button>
+    </div>
+  </div>
+
+  <!-- ══ SCHRITT 3: Gerichte ══ -->
+  <div class="wizard-step" id="step3">
+    <div class="card">
+      <div class="card-title">Gerichte eintragen</div>
+      <div class="card-sub">Trag deine Gerichte und Preise ein — optional mit KI-Bild</div>
+
+      <div class="woche-bar">
+        <label for="woche-input">Kalenderwoche</label>
+        <input type="text" id="woche-input" placeholder="z.B. 07.04. – 11.04.2025" style="max-width:220px;">
+      </div>
+
+      <div class="meals-day-tabs" id="meals-tabs"></div>
+      <div id="meals-panels"></div>
+    </div>
+
+    <div class="wizard-nav">
+      <button class="btn-back" onclick="goTo(2)">← Zurück</button>
+      <button class="btn-next" onclick="goTo(4)">Weiter → Layout wählen</button>
+    </div>
+  </div>
+
+  <!-- ══ SCHRITT 4: Layout & Template ══ -->
+  <div class="wizard-step" id="step4">
+    <div class="card">
+      <div class="card-title">Layout & Template wählen</div>
+      <div class="card-sub">Wähle ein fertiges Template als Basis für dein Design</div>
+
+      <div class="template-picker-grid" id="template-picker-grid">
+        <!-- Wird per JS befüllt -->
+      </div>
+
+      <div style="margin-top:28px; border-top: 1px solid var(--border); padding-top:20px;">
+        <div style="font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:14px;">Oder eigenes Template hochladen</div>
+        <div class="upload-zone" id="template-upload-zone" onclick="document.getElementById('template-file-input').click()"
+          ondragover="dragOver(event,'template-upload-zone')" ondragleave="dragLeave('template-upload-zone')">
+          <input type="file" id="template-file-input" accept="image/*" onchange="handleTemplateUpload(this.files[0])" style="display:none">
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-text">Template hochladen</div>
+          <div class="upload-sub">JPG oder PNG — dein eigenes Design als Basis</div>
+        </div>
+        <div class="upload-preview" id="template-preview">
+          <img id="template-preview-img" src="" alt="Template">
+          <div class="upload-preview-name" id="template-preview-name"></div>
+          <button class="upload-preview-remove" onclick="removeTemplate()">Entfernen</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-nav">
+      <button class="btn-back" onclick="goTo(3)">← Zurück</button>
+      <button class="btn-next" onclick="goTo(5)">Weiter → Export</button>
+    </div>
+  </div>
+
+  <!-- ══ SCHRITT 5: Export ══ -->
+  <div class="wizard-step" id="step5">
+    <div class="card">
+      <div class="card-title">Vorschau & Export</div>
+      <div class="card-sub">Dein Mittagstisch wird gerendert — bereit zum Herunterladen</div>
+
+      <div id="render-status" style="text-align:center;padding:20px;color:var(--muted);font-size:14px;">
+        ⏳ Vorschau wird geladen…
+      </div>
+
+      <div id="preview-panels-wrap" style="display:none;">
+        <div class="preview-grid" id="wizard-preview-grid"></div>
+
+        <div class="download-row" id="wizard-download-row"></div>
+
+        <div class="caption-box" style="margin-top:16px;">
+          <div class="caption-header">
+            <span class="caption-title">📋 Instagram Caption</span>
+            <button class="btn-copy" onclick="copyWizardCaption()">Kopieren</button>
+          </div>
+          <textarea class="caption-text" id="caption-output" readonly></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-nav">
+      <button class="btn-back" onclick="goTo(4)">← Zurück</button>
+      <button class="btn-next" onclick="newWeek()" style="background:var(--success);">+ Neue Woche</button>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- Toast -->
+
+<!-- Gerichte Picker Modal -->
+<div class="picker-modal" id="picker-modal">
+  <div class="picker-box">
+    <div class="picker-header">
+      <span class="picker-title">Gericht wählen</span>
+      <button class="picker-close" onclick="closePicker()">✕</button>
+    </div>
+    <div class="picker-search">
+      <input type="text" id="picker-search" placeholder="Suchen..." oninput="filterPicker(this.value)">
+    </div>
+    <div class="picker-list" id="picker-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══ State ══ */
+const state = {
+  template: 'instagram_story',
+  format: 'mittagstisch_instagram',
+  selectedTemplate: null,
+  selectedLayoutKey: null,
+  selectedFormat: null,
+  customTemplate: null,
+  logo: null,
+  days: { montag: false, dienstag: true, mittwoch: true, donnerstag: true, freitag: true },
+  mealsPerDay: { montag: 1, dienstag: 1, mittwoch: 1, donnerstag: 1, freitag: 1 },
+  meals: {},   // { dienstag: [{name:'', preis:'', img:null}, ...] }
+  woche: '',
+  currentStep: 1
+}
+
+const dayNames = {
+  montag:'Montag', dienstag:'Dienstag', mittwoch:'Mittwoch',
+  donnerstag:'Donnerstag', freitag:'Freitag'
+}
+
+/* ══ Navigation ══ */
+function goTo(step) {
+  document.getElementById(`step${state.currentStep}`).classList.remove('active')
+
+  // Mark done
+  for (let i = 1; i <= 5; i++) {
+    const b = document.getElementById(`s${i}`)
+    b.classList.remove('active','done')
+    if (i < step)       b.classList.add('done')
+    else if (i === step) b.classList.add('active')
+  }
+  for (let i = 1; i <= 4; i++) {
+    const line = document.getElementById(`l${i}`)
+    if (line) line.classList.toggle('done', i < step)
+  }
+
+  // Prep step content
+  if (step === 2) buildDaysDetail()
+  if (step === 3) buildMealsPanels()
+  if (step === 4) buildLayoutStep()
+  if (step === 5) buildPreview()
+
+  state.currentStep = step
+  document.getElementById(`step${step}`).classList.add('active')
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+/* ══ Step 1: Format ══ */
+function selectFormat(format, el) {
+  document.querySelectorAll('.format-card').forEach(c => c.classList.remove('selected'))
+  el.classList.add('selected')
+  state.format = format
+  // Vorauswahl für Layout-Step
+  if (format === 'mittagstisch_instagram') {
+    state.selectedLayoutKey = 'mittagstisch_instagram'
+    state.selectedFormat    = 'story'
+    state.selectedTemplate  = 'mittagstisch_instagram_story'
+  } else if (format === 'mittagstisch_druck') {
+    state.selectedLayoutKey = 'mittagstisch_druck'
+    state.selectedFormat    = 'front'
+    state.selectedTemplate  = 'mittagstisch_druck_front'
+  } else if (format === 'beide') {
+    state.selectedLayoutKey = 'beide'
+    state.selectedFormat    = 'all'
+    state.selectedTemplate  = null
+  }
+}
+function selectTemplate(id, el) {} // Legacy-Stub
+
+function handleLogoUpload(file) {
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = e => {
+    state.logo = e.target.result
+    document.getElementById('logo-preview-img').src = e.target.result
+    document.getElementById('logo-preview-name').textContent = file.name
+    document.getElementById('logo-preview').classList.add('visible')
+    document.getElementById('logo-zone').style.display = 'none'
+  }
+  reader.readAsDataURL(file)
+}
+function removeLogo() {
+  state.logo = null
+  document.getElementById('logo-preview').classList.remove('visible')
+  document.getElementById('logo-zone').style.display = 'block'
+  document.getElementById('logo-input').value = ''
+}
+function dragOver(e, id) { e.preventDefault(); document.getElementById(id).classList.add('dragover') }
+function dragLeave(id)   { document.getElementById(id).classList.remove('dragover') }
+function dropFile(e, type) {
+  e.preventDefault(); dragLeave('logo-zone')
+  const file = e.dataTransfer.files[0]
+  if (file && type === 'logo') handleLogoUpload(file)
+}
+
+/* ══ Step 2: Days ══ */
+function toggleDay(day, el) {
+  state.days[day] = !state.days[day]
+  el.classList.toggle('selected', state.days[day])
+  buildDaysDetail()
+}
+
+function buildDaysDetail() {
+  const wrap = document.getElementById('days-detail')
+  const active = Object.keys(state.days).filter(d => state.days[d])
+
+  if (active.length === 0) { wrap.classList.remove('visible'); return }
+  wrap.classList.add('visible')
+
+  wrap.innerHTML = `<div style="font-size:13px; font-weight:600; color:var(--muted); margin-bottom:12px; text-transform:uppercase; letter-spacing:.5px;">Gerichte pro Tag</div>`
+
+  active.forEach(day => {
+    const n = state.mealsPerDay[day] || 1
+    wrap.innerHTML += `
+      <div class="day-detail-row">
+        <div class="day-detail-name">${dayNames[day]}</div>
+        <div class="count-control">
+          <button class="count-btn" onclick="changeCount('${day}',-1)">−</button>
+          <span class="count-val" id="cnt-${day}">${n}</span>
+          <button class="count-btn" onclick="changeCount('${day}',1)">+</button>
+        </div>
+      </div>`
+  })
+}
+
+function changeCount(day, delta) {
+  const cur = state.mealsPerDay[day] || 1
+  state.mealsPerDay[day] = Math.max(1, Math.min(5, cur + delta))
+  document.getElementById(`cnt-${day}`).textContent = state.mealsPerDay[day]
+}
+
+/* ══ Step 3: Meals ══ */
+let activeMealDay = null
+
+function buildMealsPanels() {
+  const active = Object.keys(state.days).filter(d => state.days[d])
+  if (!active.length) return
+
+  const tabs  = document.getElementById('meals-tabs')
+  const panels= document.getElementById('meals-panels')
+
+  tabs.innerHTML = ''
+  panels.innerHTML = ''
+
+  if (!activeMealDay || !active.includes(activeMealDay)) activeMealDay = active[0]
+
+  active.forEach(day => {
+    // Init meals array
+    if (!state.meals[day]) state.meals[day] = []
+    const count = state.mealsPerDay[day] || 1
+    while (state.meals[day].length < count) state.meals[day].push({ name:'', preis:'', img: null })
+    while (state.meals[day].length > count) state.meals[day].pop()
+
+    // Tab
+    const tab = document.createElement('div')
+    tab.className = 'meals-day-tab' + (day === activeMealDay ? ' active' : '')
+    tab.textContent = dayNames[day]
+    tab.onclick = () => switchMealDay(day)
+    tabs.appendChild(tab)
+
+    // Panel
+    const panel = document.createElement('div')
+    panel.className = 'meal-block' + (day === activeMealDay ? ' active' : '')
+    panel.id = `meal-panel-${day}`
+
+    let html = ''
+    for (let i = 0; i < count; i++) {
+      const m = state.meals[day][i]
+      html += `
+        <div class="meal-item">
+          <div class="meal-item-header" style="display:flex;align-items:center;justify-content:space-between;"><span>Gericht ${count > 1 ? i+1 : ''}</span><button class="btn-picker" onclick="openPicker('${day}',${i})">📋 Aus Liste wählen</button></div>
+          <div class="meal-fields">
+            <div class="field-wrap">
+              <label>Gerichtname</label>
+              <input type="text" placeholder="z.B. Schäufele mit Knödel"
+                value="${m.name || ''}"
+                oninput="saveMealField('${day}',${i},'name',this.value)">
+            </div>
+            <div class="field-wrap">
+              <label>Preis</label>
+              <input type="text" placeholder="8,50 €"
+                value="${m.preis || ''}"
+                oninput="saveMealField('${day}',${i},'preis',this.value)">
+            </div>
+          </div>
+          <div class="meal-img-row">
+            <div class="meal-img-thumb" id="thumb-${day}-${i}">
+              ${m.img ? `<img src="${m.img}">` : '🍽️'}
+            </div>
+            <button class="btn-gen-img" onclick="generateImage('${day}',${i})">
+              ✨ KI-Bild generieren
+            </button>
+            <span class="img-badge">Plus</span>
+          </div>
+        </div>`
+    }
+    // + Gericht Button
+    const addBtn = document.createElement('button')
+    addBtn.className = 'btn-add-meal'
+    addBtn.innerHTML = '+ Gericht hinzufügen'
+    addBtn.onclick = () => {
+      if (state.mealsPerDay[day] >= 5) { showToast('Maximal 5 Gerichte pro Tag'); return }
+      state.mealsPerDay[day] = (state.mealsPerDay[day] || 1) + 1
+      buildMealsPanels()
+      switchMealDay(day)
+    }
+    panel.innerHTML = html
+    panel.appendChild(addBtn)
+    panels.appendChild(panel)
+  })
+}
+
+function switchMealDay(day) {
+  activeMealDay = day
+  document.querySelectorAll('.meals-day-tab').forEach((t,i) => {
+    const days = Object.keys(state.days).filter(d => state.days[d])
+    t.classList.toggle('active', days[i] === day)
+  })
+  document.querySelectorAll('.meal-block').forEach(p => p.classList.remove('active'))
+  document.getElementById(`meal-panel-${day}`).classList.add('active')
+}
+
+function saveMealField(day, idx, field, val) {
+  if (!state.meals[day]) return
+  if (!state.meals[day][idx]) state.meals[day][idx] = {}
+  state.meals[day][idx][field] = val
+}
+
+function generateImage(day, idx) {
+  showToast('KI-Bildgenerierung ist im Plus-Paket verfügbar 🚀')
+}
+
+/* ══ Step 4: Layout & Template ══ */
+function buildLayoutStep() {
+  const grid = document.getElementById('template-picker-grid')
+  if (!grid) return
+
+  // Templates aus config.js laden
+  const templates = []
+
+  // Aus kundenLayouts alle Templates sammeln
+  if (typeof kundenLayouts !== 'undefined') {
+    const kunde = 'sorgundseitz'
+    const layouts = kundenLayouts[kunde] || {}
+
+    Object.keys(layouts).forEach(layoutKey => {
+      Object.keys(layouts[layoutKey]).forEach(format => {
+        const layoutData = layouts[layoutKey][format]
+        if (!layoutData.template) return
+
+        let aspect = 'portrait'
+        if (format === 'feed') aspect = 'square'
+        if (format === 'front' || format === 'back') aspect = 'landscape'
+
+        const labels = {
+          'mittagstisch_instagram': 'Instagram',
+          'mittagstisch_druck': 'Druck A4'
+        }
+        const formatLabels = {
+          'story': 'Story (9:16)',
+          'feed': 'Feed (4:5)',
+          'front': 'Vorderseite',
+          'back': 'Rückseite'
+        }
+
+        templates.push({
+          id: `${layoutKey}_${format}`,
+          layoutKey,
+          format,
+          src: layoutData.template,
+          name: `${labels[layoutKey] || layoutKey} — ${formatLabels[format] || format}`,
+          aspect
+        })
+      })
+    })
+  }
+
+  grid.innerHTML = ''
+
+  templates.forEach(t => {
+    const isSelected = state.selectedTemplate === t.id
+    const card = document.createElement('div')
+    card.className = 'template-picker-card' + (isSelected ? ' selected' : '')
+    card.innerHTML = `
+      <img class="template-picker-thumb ${t.aspect === 'landscape' ? 'landscape' : t.aspect === 'square' ? 'square' : ''}"
+           src="${t.src}" alt="${t.name}"
+           onerror="this.style.background='var(--surface)';this.style.height='120px'">
+      <div class="template-picker-info">
+        <div class="template-picker-name">${t.name}</div>
+        <div class="template-picker-desc">${t.aspect === 'landscape' ? 'Querformat' : t.aspect === 'square' ? 'Quadrat' : 'Hochformat'}</div>
+      </div>`
+    card.onclick = () => {
+      state.selectedTemplate = t.id
+      state.selectedLayoutKey = t.layoutKey
+      state.selectedFormat = t.format
+      document.querySelectorAll('.template-picker-card').forEach(c => c.classList.remove('selected'))
+      card.classList.add('selected')
+      showToast(`${t.name} ausgewählt ✓`)
+    }
+    grid.appendChild(card)
+  })
+
+  // Ersten automatisch auswählen
+  if (!state.selectedTemplate && templates.length > 0) {
+    state.selectedTemplate = templates[0].id
+    state.selectedLayoutKey = templates[0].layoutKey
+    state.selectedFormat = templates[0].format
+    grid.querySelector('.template-picker-card')?.classList.add('selected')
+  }
+}
+
+function handleTemplateUpload(file) {
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = e => {
+    state.customTemplate = e.target.result
+    document.getElementById('template-preview-img').src = e.target.result
+    document.getElementById('template-preview-name').textContent = file.name
+    document.getElementById('template-preview').classList.add('visible')
+    document.getElementById('template-upload-zone').style.display = 'none'
+    showToast('Template hochgeladen ✓')
+  }
+  reader.readAsDataURL(file)
+}
+
+function removeTemplate() {
+  state.customTemplate = null
+  document.getElementById('template-preview').classList.remove('visible')
+  document.getElementById('template-upload-zone').style.display = 'block'
+}
+
+/* ══ Step 5: Echter Canvas-Renderer ══ */
+const wizardCanvases = {}
+
+async function buildPreview() {
+  const status = document.getElementById('render-status')
+  const wrap   = document.getElementById('preview-panels-wrap')
+  const grid   = document.getElementById('wizard-preview-grid')
+  const dlRow  = document.getElementById('wizard-download-row')
+
+  status.style.display = 'block'
+  wrap.style.display   = 'none'
+  grid.innerHTML = ''
+  dlRow.innerHTML = ''
+
+  // Caption aufbauen
+  buildWizardCaption()
+
+  // Herausfinden welches Layout/Format gewählt wurde
+  const layoutKey = state.selectedLayoutKey || 'mittagstisch_instagram'
+  const format    = state.selectedFormat    || 'story'
+
+  // Gerichte in den alten Generator-State übertragen
+  syncWizardStateToGenerator()
+
+  try {
+    // Renders basierend auf gewähltem Template
+    const renders = []
+
+    if (layoutKey === 'mittagstisch_instagram') {
+      renders.push({ id: 'story', label: 'Instagram Story', btnLabel: 'Story PNG' })
+      renders.push({ id: 'feed',  label: 'Instagram Feed',  btnLabel: 'Feed PNG' })
+    } else if (layoutKey === 'mittagstisch_druck') {
+      renders.push({ id: 'front', label: 'Vorderseite', btnLabel: 'Vorderseite PNG' })
+      renders.push({ id: 'back',  label: 'Rückseite',   btnLabel: 'Rückseite PNG' })
+    }
+
+    for (const r of renders) {
+      const panel = document.createElement('div')
+      panel.className = 'preview-panel'
+      const isPortrait = r.id === 'story'
+      panel.innerHTML = `
+        <div class="preview-label">${r.label}</div>
+        <div class="preview-canvas-wrap ${r.id === 'feed' ? 'square' : r.id === 'front' || r.id === 'back' ? 'landscape' : ''}">
+          <canvas id="wizard-canvas-${r.id}" style="width:100%;height:100%;border-radius:6px;display:block;"></canvas>
+        </div>`
+      grid.appendChild(panel)
+
+      // Echtes Canvas rendern
+      const canvas = document.getElementById(`wizard-canvas-${r.id}`)
+      try {
+        await renderToCanvas(canvas, r.id)
+        wizardCanvases[r.id] = canvas
+      } catch(e) {
+        console.error('Render Fehler:', r.id, e)
+        // Fallback: einfacher Text-Canvas
+        const layoutData = kundenLayouts?.sorgundseitz?.[layoutKey]?.[r.id]
+        canvas.width  = layoutData?.width  || 1080
+        canvas.height = layoutData?.height || 1920
+        const ctx = canvas.getContext('2d')
+        ctx.fillStyle = '#1a1714'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        ctx.fillStyle = '#d4853a'
+        ctx.font = `bold ${canvas.width * 0.07}px sans-serif`
+        ctx.textAlign = 'center'
+        ctx.fillText('MetzgerPost', canvas.width/2, canvas.height/2)
+        ctx.fillStyle = '#8a8070'
+        ctx.font = `${canvas.width * 0.04}px sans-serif`
+        ctx.fillText('Template wird geladen...', canvas.width/2, canvas.height/2 + canvas.width * 0.1)
+        wizardCanvases[r.id] = canvas
+      }
+
+      // Download Button
+      const btn = document.createElement('button')
+      btn.className = 'btn-download'
+      btn.textContent = r.btnLabel
+      btn.onclick = () => wizardDownload(r.id, r.label)
+      dlRow.appendChild(btn)
+    }
+
+    // Alle herunterladen Button
+    const btnAll = document.createElement('button')
+    btnAll.className = 'btn-download primary'
+    btnAll.textContent = '⬇ Alle herunterladen'
+    btnAll.onclick = () => renders.forEach((r,i) => setTimeout(() => wizardDownload(r.id, r.label), i*400))
+    dlRow.insertBefore(btnAll, dlRow.firstChild)
+
+    status.style.display = 'none'
+    wrap.style.display   = 'block'
+
+  } catch(e) {
+    status.textContent = '❌ Fehler beim Rendern: ' + e.message
+    console.error(e)
+  }
+}
+
+function syncWizardStateToGenerator() {
+  // Woche setzen
+  const wocheInput = document.getElementById('woche-input')
+  const woche = wocheInput?.value || ''
+
+  // Globale gerichte Variable aus config.js nutzen
+  window.gerichte = typeof getGerichte === 'function' ? getGerichte() : standardGerichte
+
+  // Dropdowns im Hintergrund setzen (renderToCanvas liest von dort)
+  const active = Object.keys(state.days).filter(d => state.days[d])
+  const dayMap = { dienstag: 'dienstag', mittwoch: 'mittwoch', donnerstag: 'donnerstag', freitag: 'freitag' }
+
+  active.forEach(day => {
+    const m = (state.meals[day] || [])[0]
+    if (!m?.name) return
+
+    // Preis überschreiben wenn abweichend
+    if (m.name && window.gerichte) {
+      const gerichtKey = Object.keys(window.gerichte).find(k =>
+        window.gerichte[k].text === m.name
+      )
+      if (gerichtKey && m.preis && window.gerichte[gerichtKey]) {
+        window.gerichte[gerichtKey] = { ...window.gerichte[gerichtKey], preis: m.preis }
+      }
+    }
+
+    // Select-Element setzen
+    const selectEl = document.getElementById(day)
+    if (selectEl && m.name) {
+      const gerichtKey = Object.keys(window.gerichte || standardGerichte).find(k =>
+        (window.gerichte || standardGerichte)[k].text === m.name
+      )
+      if (gerichtKey) selectEl.value = gerichtKey
+    }
+  })
+
+  // Woche setzen
+  const wocheEl = document.getElementById('woche')
+  if (wocheEl) wocheEl.value = woche
+}
+
+function wizardDownload(id, label) {
+  const canvas = wizardCanvases[id]
+  if (!canvas) { showToast('Bitte zuerst Vorschau laden'); return }
+  const a = document.createElement('a')
+  a.href = canvas.toDataURL('image/png')
+  a.download = `mittagstisch-${id}-${Date.now()}.png`
+  a.click()
+  showToast(`${label} heruntergeladen ✓`)
+}
+
+function buildWizardCaption() {
+  const active = Object.keys(state.days).filter(d => state.days[d])
+  const woche  = document.getElementById('woche-input')?.value || ''
+  let caption  = `🍽️ Unser Mittagstisch diese Woche\n\n`
+  if (woche) caption += `📅 ${woche}\n\n`
+  active.forEach(day => {
+    caption += `${dayNames[day]}:\n`
+    ;(state.meals[day] || []).forEach(m => {
+      if (m.name) caption += `• ${m.name}${m.preis ? ' — ' + m.preis : ''}\n`
+    })
+    caption += '\n'
+  })
+  caption += `Wir freuen uns auf euren Besuch! 🥩\n\n#mittagstisch #metzgerei #regional #frischgekocht`
+  const el = document.getElementById('caption-output')
+  if (el) el.value = caption
+}
+
+function copyWizardCaption() {
+  const el = document.getElementById('caption-output')
+  if (!el) return
+  navigator.clipboard.writeText(el.value).then(() => showToast('Caption kopiert! ✓'))
+}
+
+function copyCaption() {
+  const el = document.getElementById('caption-output')
+  el.select()
+  navigator.clipboard.writeText(el.value).then(() => showToast('Caption kopiert! ✓'))
+}
+
+function downloadAll()  { downloadCanvas('story'); setTimeout(() => downloadCanvas('feed'), 400) }
+function downloadStory(){ downloadCanvas('story') }
+function downloadFeed() { downloadCanvas('feed') }
+function downloadCanvas(type) {
+  const canvas = document.getElementById(`canvas-${type}`)
+  if (!canvas) { showToast('Bitte zuerst Vorschau laden'); return }
+  const a = document.createElement('a')
+  a.href = canvas.toDataURL('image/png')
+  a.download = `mittagstisch-${type}-${Date.now()}.png`
+  a.click()
+  showToast(`${type === 'story' ? 'Story' : 'Feed'} heruntergeladen ✓`)
+}
+
+function newWeek() {
+  if (!confirm('Neue Woche starten? Die Gerichte werden zurückgesetzt.')) return
+  state.meals = {}
+  state.woche = ''
+  document.getElementById('woche-input').value = ''
+  goTo(3)
+}
+
+/* ══ Toast ══ */
+function showToast(msg) {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.classList.add('show')
+  setTimeout(() => t.classList.remove('show'), 2800)
+}
+
+
+/* ══ Gerichte Picker ══ */
+let _pickerDay = null
+let _pickerIdx = null
+
+// Gerichte aus config.js (standardGerichte)
+function getAlleGerichte() {
+  if (typeof standardGerichte !== 'undefined') {
+    return Object.values(standardGerichte).sort((a,b) => a.text.localeCompare(b.text, 'de'))
+  }
+  // Fallback aus localStorage
+  try {
+    const g = JSON.parse(localStorage.getItem('gerichte_sorgundseitz') || '{}')
+    return Object.values(g).sort((a,b) => (a.text||'').localeCompare(b.text||'', 'de'))
+  } catch { return [] }
+}
+
+function openPicker(day, idx) {
+  _pickerDay = day
+  _pickerIdx = idx
+  document.getElementById('picker-search').value = ''
+  renderPickerList('')
+  document.getElementById('picker-modal').classList.add('open')
+  setTimeout(() => document.getElementById('picker-search').focus(), 100)
+}
+
+function closePicker() {
+  document.getElementById('picker-modal').classList.remove('open')
+}
+
+function renderPickerList(query) {
+  const list = document.getElementById('picker-list')
+  const gerichte = getAlleGerichte()
+  const filtered = query
+    ? gerichte.filter(g => g.text.toLowerCase().includes(query.toLowerCase()))
+    : gerichte
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px;grid-column:1/-1;text-align:center;">Keine Gerichte gefunden</div>'
+    return
+  }
+
+  list.innerHTML = filtered.map((g,i) => `
+    <div class="picker-item" data-name="${(g.text||'').replace(/"/g,'&quot;')}" data-preis="${(g.preis||'').replace(/"/g,'&quot;')}">
+      <div class="picker-item-name">${g.text}</div>
+      <div class="picker-item-price">${g.preis || ''}</div>
+    </div>`).join('')
+
+  // Event delegation statt inline onclick
+  list.querySelectorAll('.picker-item').forEach(el => {
+    el.addEventListener('click', () => selectGericht(el.dataset.name, el.dataset.preis))
+  })
+}
+
+function filterPicker(query) {
+  renderPickerList(query)
+}
+
+function selectGericht(name, preis) {
+  // Fallback: ersten aktiven Tag nehmen wenn nichts gesetzt
+  if (_pickerDay === null) {
+    _pickerDay = Object.keys(state.days).find(d => state.days[d]) || 'dienstag'
+    _pickerIdx = 0
+  }
+  if (_pickerDay === null || _pickerIdx === null) return
+
+  // State updaten
+  if (!state.meals[_pickerDay]) state.meals[_pickerDay] = []
+  if (!state.meals[_pickerDay][_pickerIdx]) state.meals[_pickerDay][_pickerIdx] = {}
+  state.meals[_pickerDay][_pickerIdx].name  = name
+  state.meals[_pickerDay][_pickerIdx].preis = preis
+
+  // Felder im DOM updaten - alle inputs im Panel holen
+  const panel = document.getElementById(`meal-panel-${_pickerDay}`)
+  const items = panel ? panel.querySelectorAll('.meal-item') : []
+  const item  = items[_pickerIdx]
+  if (item) {
+    const inputs = item.querySelectorAll('input[type=text]')
+    if (inputs[0]) inputs[0].value = name
+    if (inputs[1]) inputs[1].value = preis
+  }
+
+  closePicker()
+  showToast('Gericht übernommen ✓')
+}
+
+document.getElementById('picker-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closePicker()
+})
+
+
+/* ══ Wizard Canvas Renderer (eigenständig, ohne script.js) ══ */
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload  = () => resolve(img)
+    img.onerror = () => reject(new Error('Bild nicht geladen: ' + src))
+    img.src = src
+  })
+}
+
+function drawImageCover(ctx, img, cx, cy, radius) {
+  const size = radius * 2
+  const scale = Math.max(size / img.width, size / img.height)
+  const w = img.width  * scale
+  const h = img.height * scale
+  ctx.drawImage(img, cx - w/2, cy - h/2, w, h)
+}
+
+function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ')
+  let line = ''
+  let currentY = y
+  for (let n = 0; n < words.length; n++) {
+    const testLine  = line + words[n] + ' '
+    const metrics   = ctx.measureText(testLine)
+    if (metrics.width > maxWidth && n > 0) {
+      ctx.fillText(line.trim(), x, currentY)
+      line = words[n] + ' '
+      currentY += lineHeight
+    } else {
+      line = testLine
+    }
+  }
+  ctx.fillText(line.trim(), x, currentY)
+}
+
+async function renderToCanvas(canvas, format) {
+  const layoutKey = state.selectedLayoutKey || 'mittagstisch_instagram'
+  const layoutData = kundenLayouts?.sorgundseitz?.[layoutKey]?.[format]
+  if (!layoutData) throw new Error('Layout nicht gefunden: ' + layoutKey + '/' + format)
+
+  canvas.width  = layoutData.width
+  canvas.height = layoutData.height
+  const ctx = canvas.getContext('2d')
+
+  // Hintergrundbild laden
+  const bg = await loadImage(layoutData.template)
+  ctx.drawImage(bg, 0, 0, canvas.width, canvas.height)
+
+  // Woche einzeichnen
+  const wocheVal = document.getElementById('woche-input')?.value || ''
+  if (layoutData.woche && wocheVal) {
+    ctx.textAlign   = 'center'
+    ctx.fillStyle   = '#2f2f2f'
+    ctx.font        = `600 ${layoutData.woche.fontSize}px 'Raleway', Arial, sans-serif`
+    ctx.fillText(wocheVal, layoutData.woche.x, layoutData.woche.y)
+  }
+
+  // Datum (Druck-Vorderseite)
+  if (layoutData.datum && wocheVal) {
+    ctx.textAlign = 'center'
+    ctx.fillStyle = '#2f2f2f'
+    ctx.font      = `600 ${layoutData.datum.fontSize}px 'Raleway', Arial, sans-serif`
+    ctx.fillText(wocheVal, layoutData.datum.x, layoutData.datum.y)
+    return // Vorderseite hat keine Gerichte
+  }
+
+  // Gerichte einzeichnen
+  const active = Object.keys(state.days).filter(d => state.days[d])
+  const mealsConfig = layoutData.meals || layoutData.links?.meals || layoutData.rechts?.meals || {}
+
+  for (const day of active) {
+    const config = mealsConfig[day]
+    if (!config) continue
+
+    const m = (state.meals[day] || [])[0]
+    if (!m?.name) continue
+
+    // Gericht aus standardGerichte finden für Bild-Pfad
+    const gerichtKey = Object.keys(standardGerichte).find(k =>
+      standardGerichte[k].text === m.name
+    )
+    const gericht = gerichtKey ? standardGerichte[gerichtKey] : null
+    const preis   = m.preis || gericht?.preis || ''
+
+    // Bild zeichnen
+    if (gericht?.bild) {
+      try {
+        const img = await loadImage(gericht.bild)
+        ctx.save()
+        ctx.beginPath()
+        ctx.arc(config.imageX, config.imageY, config.imageRadius, 0, Math.PI * 2)
+        ctx.closePath()
+        ctx.clip()
+        drawImageCover(ctx, img, config.imageX, config.imageY, config.imageRadius)
+        ctx.restore()
+      } catch(e) {
+        // Kein Bild verfügbar — Kreis leer lassen
+        ctx.save()
+        ctx.beginPath()
+        ctx.arc(config.imageX, config.imageY, config.imageRadius, 0, Math.PI * 2)
+        ctx.fillStyle = 'rgba(0,0,0,0.1)'
+        ctx.fill()
+        ctx.restore()
+      }
+    }
+
+    // Text zeichnen
+    ctx.textAlign = 'center'
+    ctx.fillStyle = '#2f2f2f'
+    ctx.font      = `500 ${config.textFontSize}px 'Raleway', Arial, sans-serif`
+    drawWrappedText(ctx, m.name, config.textX, config.textY, config.textMaxWidth, config.textLineHeight)
+
+    // Preis zeichnen
+    if (preis) {
+      ctx.textAlign = 'center'
+      ctx.fillStyle = config.priceColor || '#2f2f2f'
+      ctx.font      = `600 ${config.priceFontSize}px 'Raleway', Arial, sans-serif`
+      ctx.fillText(preis, config.priceX, config.priceY)
+    }
+  }
+
+  // Druck Rückseite: Links + Rechts separat rendern
+  if (layoutData.links && layoutData.rechts) {
+    for (const seite of ['links', 'rechts']) {
+      const seiteData = layoutData[seite]
+      if (seiteData.woche && wocheVal) {
+        ctx.textAlign = 'center'
+        ctx.fillStyle = '#2f2f2f'
+        ctx.font      = `600 ${seiteData.woche.fontSize}px 'Raleway', Arial, sans-serif`
+        ctx.fillText(wocheVal, seiteData.woche.x, seiteData.woche.y)
+      }
+      for (const day of active) {
+        const config = seiteData.meals?.[day]
+        if (!config) continue
+        const m = (state.meals[day] || [])[0]
+        if (!m?.name) continue
+        const gerichtKey = Object.keys(standardGerichte).find(k => standardGerichte[k].text === m.name)
+        const gericht = gerichtKey ? standardGerichte[gerichtKey] : null
+        const preis   = m.preis || gericht?.preis || ''
+        if (gericht?.bild) {
+          try {
+            const img = await loadImage(gericht.bild)
+            ctx.save()
+            ctx.beginPath()
+            ctx.arc(config.imageX, config.imageY, config.imageRadius, 0, Math.PI * 2)
+            ctx.clip()
+            drawImageCover(ctx, img, config.imageX, config.imageY, config.imageRadius)
+            ctx.restore()
+          } catch(e) {}
+        }
+        ctx.textAlign = 'center'
+        ctx.fillStyle = '#2f2f2f'
+        ctx.font      = `500 ${config.textFontSize}px 'Raleway', Arial, sans-serif`
+        drawWrappedText(ctx, m.name, config.textX, config.textY, config.textMaxWidth, config.textLineHeight)
+        if (preis) {
+          ctx.fillStyle = config.priceColor || '#2f2f2f'
+          ctx.font      = `600 ${config.priceFontSize}px 'Raleway', Arial, sans-serif`
+          ctx.fillText(preis, config.priceX, config.priceY)
+        }
+      }
+    }
+  }
+}
+
+/* ══ Init: Design aus Dashboard laden wenn vorhanden ══ */
+window.addEventListener('DOMContentLoaded', () => {
+  const params    = new URLSearchParams(window.location.search)
+  const startStep = parseInt(params.get('step')) || 1
+  const designId  = params.get('design')
+  const weekId    = params.get('week')
+
+  if (designId) {
+    try {
+      const saved = JSON.parse(localStorage.getItem('mp_active_design'))
+      if (saved && saved.id === designId) {
+        state.template    = saved.template    || state.template
+        state.logo        = saved.logo        || null
+        state.days        = saved.days        || state.days
+        state.mealsPerDay = saved.mealsPerDay || state.mealsPerDay
+      }
+    } catch(e) {}
+  }
+
+  if (weekId) {
+    try {
+      const savedWeek = JSON.parse(localStorage.getItem('mp_active_week'))
+      if (savedWeek && savedWeek.id === weekId) {
+        state.meals = savedWeek.meals || {}
+        setTimeout(() => {
+          const el = document.getElementById('woche-input')
+          if (el) el.value = savedWeek.woche || ''
+        }, 100)
+        if (savedWeek.designId) {
+          try {
+            const designs = JSON.parse(localStorage.getItem('mp_designs')) || []
+            const d = designs.find(x => x.id === savedWeek.designId)
+            if (d) {
+              state.template    = d.template    || state.template
+              state.logo        = d.logo        || null
+              state.days        = d.days        || state.days
+              state.mealsPerDay = d.mealsPerDay || state.mealsPerDay
+            }
+          } catch(e) {}
+        }
+      }
+    } catch(e) {}
+  }
+
+  buildDaysDetail()
+  if (startStep > 1) goTo(startStep)
+})
+</script>
+
+</body>
+</html>

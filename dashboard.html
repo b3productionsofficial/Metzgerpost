@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetzgerPost — Dashboard</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg:       #0f0d0b;
+      --surface:  #1a1714;
+      --surface2: #242018;
+      --border:   #2e2a24;
+      --border2:  #3d3830;
+      --accent:   #d4853a;
+      --accent2:  #e8a055;
+      --text:     #f0ece4;
+      --muted:    #8a8070;
+      --error:    #e05555;
+      --success:  #5cad7a;
+      --radius:   12px;
+      --radius-sm:8px;
+      --font-d:   'Syne', sans-serif;
+      --font-b:   'DM Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-b);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 50% 40% at 5% 15%, rgba(212,133,58,0.09) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 50% at 95% 85%, rgba(212,133,58,0.05) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── Nav ── */
+    .topnav {
+      position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 32px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15,13,11,0.85);
+      backdrop-filter: blur(10px);
+    }
+    .nav-logo { font-family: var(--font-d); font-size: 20px; font-weight: 800; }
+    .nav-logo span { color: var(--accent); }
+    .nav-right { display: flex; align-items: center; gap: 14px; }
+    .nav-name { font-size: 13px; color: var(--muted); }
+    .btn-sm {
+      padding: 7px 14px; font-family: var(--font-b); font-size: 13px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: transparent; color: var(--muted); cursor: pointer;
+      transition: all 0.2s; text-decoration: none; display: inline-block;
+    }
+    .btn-sm:hover { border-color: var(--border2); color: var(--text); }
+
+    /* ── Main ── */
+    .main {
+      position: relative; z-index: 1;
+      max-width: 1000px; margin: 0 auto;
+      padding: 40px 24px 80px;
+      animation: fadeUp 0.4s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Header Row ── */
+    .dash-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 32px; flex-wrap: wrap; gap: 16px;
+    }
+    .dash-title {
+      font-family: var(--font-d); font-size: 28px; font-weight: 800;
+      line-height: 1.1;
+    }
+    .dash-title span { color: var(--accent); }
+    .dash-sub { font-size: 14px; color: var(--muted); margin-top: 6px; }
+    .btn-new {
+      padding: 12px 24px; font-family: var(--font-b); font-size: 14px; font-weight: 600;
+      background: var(--accent); color: #fff; border: none;
+      border-radius: var(--radius-sm); cursor: pointer;
+      transition: background 0.2s, transform 0.1s; white-space: nowrap;
+      text-decoration: none; display: inline-block;
+    }
+    .btn-new:hover  { background: var(--accent2); }
+    .btn-new:active { transform: scale(0.98); }
+
+    /* ── Quick Stats ── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 18px 20px;
+    }
+    .stat-val { font-family: var(--font-d); font-size: 28px; font-weight: 700; }
+    .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── Section Label ── */
+    .section-label {
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin-bottom: 14px;
+    }
+
+    /* ── Design Cards ── */
+    .designs-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px; margin-bottom: 40px;
+    }
+    .design-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      transition: border-color 0.2s, transform 0.15s;
+      cursor: pointer; position: relative;
+    }
+    .design-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+    }
+    .design-card-thumb {
+      width: 100%; aspect-ratio: 4/3;
+      background: var(--surface2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; border-bottom: 1px solid var(--border);
+      position: relative; overflow: hidden;
+    }
+    .design-card-thumb canvas {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .design-format-badge {
+      position: absolute; top: 10px; right: 10px;
+      font-size: 11px; font-weight: 600; padding: 3px 8px;
+      border-radius: 20px; background: rgba(15,13,11,0.75);
+      backdrop-filter: blur(4px); border: 1px solid var(--border2);
+      color: var(--muted);
+    }
+    .design-card-body { padding: 16px 18px; }
+    .design-card-name {
+      font-size: 15px; font-weight: 600; margin-bottom: 4px;
+    }
+    .design-card-meta {
+      font-size: 12px; color: var(--muted); margin-bottom: 14px;
+    }
+    .design-card-actions { display: flex; gap: 8px; }
+    .btn-use {
+      flex: 1; padding: 9px; font-family: var(--font-b); font-size: 13px; font-weight: 600;
+      background: var(--accent); color: #fff; border: none;
+      border-radius: var(--radius-sm); cursor: pointer; transition: background 0.2s;
+    }
+    .btn-use:hover { background: var(--accent2); }
+    .btn-icon {
+      width: 36px; padding: 9px; font-family: var(--font-b); font-size: 14px;
+      background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-icon:hover { border-color: var(--border2); color: var(--text); }
+    .btn-icon.danger:hover { border-color: var(--error); color: var(--error); }
+
+    /* ── Empty State ── */
+    .empty-state {
+      text-align: center; padding: 60px 20px;
+      background: var(--surface); border: 1px dashed var(--border2);
+      border-radius: var(--radius);
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 14px; }
+    .empty-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+    .empty-sub { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+
+    /* ── Letzte Wochen ── */
+    .weeks-list { display: flex; flex-direction: column; gap: 10px; }
+    .week-row {
+      display: flex; align-items: center; gap: 16px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px 18px;
+      transition: border-color 0.2s; cursor: pointer;
+    }
+    .week-row:hover { border-color: var(--border2); }
+    .week-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+      background: var(--success);
+    }
+    .week-dot.old { background: var(--border2); }
+    .week-name { font-size: 14px; font-weight: 600; flex: 1; }
+    .week-meta { font-size: 12px; color: var(--muted); }
+    .week-design { font-size: 12px; color: var(--accent); }
+    .btn-week-edit {
+      padding: 6px 14px; font-family: var(--font-b); font-size: 12px; font-weight: 500;
+      background: transparent; border: 1px solid var(--border);
+      border-radius: 20px; color: var(--muted); cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-week-edit:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Rename Modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6); z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px; width: 100%; max-width: 380px;
+      animation: fadeUp 0.25s ease;
+    }
+    .modal-title { font-family: var(--font-d); font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    .modal-input {
+      width: 100%; padding: 11px 14px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-family: var(--font-b); font-size: 14px; outline: none; margin-bottom: 14px;
+    }
+    .modal-input:focus { border-color: var(--accent); }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-modal-cancel {
+      padding: 9px 18px; font-family: var(--font-b); font-size: 13px;
+      background: transparent; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--muted); cursor: pointer;
+    }
+    .btn-modal-ok {
+      padding: 9px 18px; font-family: var(--font-b); font-size: 13px; font-weight: 600;
+      background: var(--accent); border: none; border-radius: var(--radius-sm);
+      color: #fff; cursor: pointer;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--success); color: #fff; padding: 12px 20px; border-radius: 20px;
+      font-size: 14px; font-weight: 500; z-index: 999;
+      transition: transform 0.3s ease; pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .designs-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Auth Guard -->
+<script>
+(async () => {
+  const SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co'
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10'
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
+  const { data: { session } } = await sb.auth.getSession()
+  if (!session) { window.location.replace('auth.html'); return }
+  window._sbUser = session.user
+  const name = session.user.user_metadata?.betrieb_name || session.user.email
+  document.getElementById('nav-name').textContent = name
+  document.getElementById('dash-name').textContent = name.split(' ')[0]
+})()
+</script>
+
+<!-- Nav -->
+<nav class="topnav">
+  <div class="nav-logo">Metzger<span>Post</span></div>
+  <div class="nav-right">
+    <span class="nav-name" id="nav-name">…</span>
+    <a class="btn-sm" href="auth.html">Abmelden</a>
+  </div>
+</nav>
+
+<div class="main">
+
+  <!-- Header -->
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">Hallo, <span id="dash-name">…</span> 👋</div>
+      <div class="dash-sub">Was möchtest du diese Woche erstellen?</div>
+    </div>
+    <a class="btn-new" href="wizard.html">+ Neues Design</a>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="stat-designs">0</div>
+      <div class="stat-label">Gespeicherte Designs</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-weeks">0</div>
+      <div class="stat-label">Erstellte Wochen</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-plan">Basis</div>
+      <div class="stat-label">Dein Paket</div>
+    </div>
+  </div>
+
+  <!-- Meine Designs -->
+  <div class="section-label">Meine Designs</div>
+  <div class="designs-grid" id="designs-grid">
+    <!-- JS befüllt -->
+  </div>
+
+  <!-- Letzte Wochen -->
+  <div class="section-label" style="margin-top:8px;">Letzte Wochen</div>
+  <div class="weeks-list" id="weeks-list">
+    <!-- JS befüllt -->
+  </div>
+
+</div>
+
+<!-- Rename Modal -->
+<div class="modal-overlay" id="rename-modal">
+  <div class="modal-box">
+    <div class="modal-title">Design umbenennen</div>
+    <input class="modal-input" id="rename-input" type="text" placeholder="Name des Designs" />
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-modal-ok" onclick="saveRename()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══ Storage Keys ══ */
+const DESIGNS_KEY = 'mp_designs'
+const WEEKS_KEY   = 'mp_weeks'
+
+/* ══ Demo-Designs beim ersten Start ══ */
+function seedDemoIfEmpty() {
+  const existing = getSaved(DESIGNS_KEY)
+  if (existing.length > 0) return
+
+  const demos = [
+    {
+      id: 'demo-1',
+      name: 'Metzgerei Sorg & Seitz — Mittagstisch',
+      template: 'instagram_story',
+      templateLabel: 'Story + Feed + Druck',
+      days: { dienstag:true, mittwoch:true, donnerstag:true, freitag:true },
+      mealsPerDay: { dienstag:1, mittwoch:1, donnerstag:1, freitag:1 },
+      logo: null,
+      createdAt: Date.now() - 1000*60*60*24*7,
+      lastUsed: Date.now(),
+    }
+  ]
+  localStorage.setItem(DESIGNS_KEY, JSON.stringify(demos))
+
+  // Demo week
+  const weeks = [
+    {
+      id: 'week-demo-1',
+      designId: 'demo-1',
+      designName: 'Mittagstisch Instagram',
+      woche: '31.03. – 04.04.2025',
+      meals: {
+        dienstag:   [{ name:'Schäufele mit Knödel', preis:'8,50 €' }],
+        mittwoch:   [{ name:'Gulasch mit Spätzle',  preis:'6,80 €' }],
+        donnerstag: [{ name:'Cordon Bleu',           preis:'6,80 €' }],
+        freitag:    [{ name:'Backfisch',             preis:'6,80 €' }],
+      },
+      createdAt: Date.now() - 1000*60*60*24*3,
+    }
+  ]
+  localStorage.setItem(WEEKS_KEY, JSON.stringify(weeks))
+}
+
+function getSaved(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || [] } catch { return [] }
+}
+
+/* ══ Render Designs ══ */
+function renderDesigns() {
+  const designs = getSaved(DESIGNS_KEY)
+  const grid = document.getElementById('designs-grid')
+  document.getElementById('stat-designs').textContent = designs.length
+
+  if (designs.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-icon">🎨</div>
+        <div class="empty-title">Noch kein Design gespeichert</div>
+        <div class="empty-sub">Erstelle dein erstes Design — dauert nur 2 Minuten</div>
+        <a class="btn-new" href="wizard.html">+ Erstes Design erstellen</a>
+      </div>`
+    return
+  }
+
+  grid.innerHTML = ''
+  designs.forEach(d => {
+    const lastUsed = d.lastUsed
+      ? new Date(d.lastUsed).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'})
+      : 'Noch nicht verwendet'
+
+    const activeDays = Object.keys(d.days || {}).filter(k => d.days[k])
+      .map(k => ({montag:'Mo',dienstag:'Di',mittwoch:'Mi',donnerstag:'Do',freitag:'Fr'}[k]))
+      .join(' · ')
+
+    const card = document.createElement('div')
+    card.className = 'design-card'
+    card.innerHTML = `
+      <div class="design-card-thumb">
+        <canvas id="thumb-${d.id}" width="400" height="300"></canvas>
+        <div class="design-format-badge">${d.templateLabel || d.template}</div>
+      </div>
+      <div class="design-card-body">
+        <div class="design-card-name">${d.name}</div>
+        <div class="design-card-meta">${activeDays} · Zuletzt: ${lastUsed}</div>
+        <div class="design-card-actions">
+          <button class="btn-use" onclick="useDesign('${d.id}')">Diese Woche erstellen →</button>
+          <button class="btn-icon" title="Umbenennen" onclick="openRename('${d.id}')">✏️</button>
+          <button class="btn-icon danger" title="Löschen" onclick="deleteDesign('${d.id}')">🗑️</button>
+        </div>
+      </div>`
+    grid.appendChild(card)
+
+    // Thumb-Canvas zeichnen
+    setTimeout(() => drawThumb(d.id, d), 50)
+  })
+}
+
+/* ══ Thumb Canvas ══ */
+function drawThumb(id, d) {
+  const canvas = document.getElementById(`thumb-${id}`)
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+
+  // Background
+  ctx.fillStyle = '#1a1714'
+  ctx.fillRect(0, 0, 400, 300)
+
+  // Subtle grid lines
+  ctx.strokeStyle = '#2e2a24'
+  ctx.lineWidth = 1
+  for (let x = 0; x < 400; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,300); ctx.stroke() }
+  for (let y = 0; y < 300; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(400,y); ctx.stroke() }
+
+  // Orange accent block
+  ctx.fillStyle = 'rgba(212,133,58,0.15)'
+  ctx.fillRect(0, 0, 400, 80)
+  ctx.fillStyle = '#d4853a'
+  ctx.fillRect(0, 0, 400, 4)
+
+  // Title
+  ctx.fillStyle = '#f0ece4'
+  ctx.font = 'bold 22px Syne, sans-serif'
+  ctx.textAlign = 'center'
+  ctx.fillText(d.name, 200, 48)
+
+  // Days dots
+  const days = Object.keys(d.days || {}).filter(k => d.days[k])
+  const labels = {montag:'Mo',dienstag:'Di',mittwoch:'Mi',donnerstag:'Do',freitag:'Fr'}
+  const startX = 200 - (days.length * 50) / 2 + 25
+  days.forEach((day, i) => {
+    const x = startX + i * 50
+    ctx.beginPath()
+    ctx.arc(x, 110, 18, 0, Math.PI*2)
+    ctx.fillStyle = 'rgba(212,133,58,0.20)'
+    ctx.fill()
+    ctx.strokeStyle = '#d4853a'
+    ctx.lineWidth = 1.5
+    ctx.stroke()
+    ctx.fillStyle = '#d4853a'
+    ctx.font = 'bold 13px DM Sans, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText(labels[day], x, 115)
+  })
+
+  // Meals per day indicator
+  ctx.fillStyle = '#8a8070'
+  ctx.font = '13px DM Sans, sans-serif'
+  ctx.textAlign = 'center'
+  const countText = `${days.length} Tage · ${Object.values(d.mealsPerDay||{}).reduce((a,b)=>a+b,0)} Gerichte/Woche`
+  ctx.fillText(countText, 200, 160)
+
+  // Format label bottom
+  ctx.fillStyle = 'rgba(212,133,58,0.10)'
+  ctx.fillRect(20, 200, 360, 50)
+  ctx.fillStyle = '#d4853a'
+  ctx.font = '600 13px DM Sans, sans-serif'
+  ctx.fillText(d.templateLabel || d.template, 200, 230)
+}
+
+/* ══ Use Design → Wizard mit vorgeladenem State ══ */
+function useDesign(id) {
+  const designs = getSaved(DESIGNS_KEY)
+  const design  = designs.find(d => d.id === id)
+  if (!design) return
+
+  // Update lastUsed
+  design.lastUsed = Date.now()
+  localStorage.setItem(DESIGNS_KEY, JSON.stringify(designs))
+
+  // Speichere aktuellen Design-State für Wizard
+  localStorage.setItem('mp_active_design', JSON.stringify(design))
+
+  // Alten Generator öffnen mit richtigem Kunden
+  window.location.href = 'index.html?kunde=sorgundseitz'
+}
+
+/* ══ Delete Design ══ */
+function deleteDesign(id) {
+  if (!confirm('Design wirklich löschen?')) return
+  const designs = getSaved(DESIGNS_KEY).filter(d => d.id !== id)
+  localStorage.setItem(DESIGNS_KEY, JSON.stringify(designs))
+  renderDesigns()
+  showToast('Design gelöscht')
+}
+
+/* ══ Rename Modal ══ */
+let _renameId = null
+function openRename(id) {
+  _renameId = id
+  const d = getSaved(DESIGNS_KEY).find(x => x.id === id)
+  document.getElementById('rename-input').value = d?.name || ''
+  document.getElementById('rename-modal').classList.add('open')
+  setTimeout(() => document.getElementById('rename-input').focus(), 100)
+}
+function closeModal() {
+  document.getElementById('rename-modal').classList.remove('open')
+  _renameId = null
+}
+function saveRename() {
+  const name = document.getElementById('rename-input').value.trim()
+  if (!name || !_renameId) return
+  const designs = getSaved(DESIGNS_KEY)
+  const d = designs.find(x => x.id === _renameId)
+  if (d) { d.name = name; localStorage.setItem(DESIGNS_KEY, JSON.stringify(designs)) }
+  closeModal()
+  renderDesigns()
+  showToast('Umbenannt ✓')
+}
+document.getElementById('rename-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal()
+})
+
+/* ══ Render Wochen ══ */
+function renderWeeks() {
+  const weeks = getSaved(WEEKS_KEY).sort((a,b) => b.createdAt - a.createdAt).slice(0, 6)
+  const list  = document.getElementById('weeks-list')
+  document.getElementById('stat-weeks').textContent = getSaved(WEEKS_KEY).length
+
+  if (weeks.length === 0) {
+    list.innerHTML = `<div style="color:var(--muted);font-size:14px;padding:20px 0;">Noch keine Wochen erstellt.</div>`
+    return
+  }
+
+  const now = Date.now()
+  list.innerHTML = ''
+  weeks.forEach(w => {
+    const age  = now - w.createdAt
+    const isNew = age < 1000*60*60*24*7
+    const date  = new Date(w.createdAt).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})
+    const row = document.createElement('div')
+    row.className = 'week-row'
+    row.innerHTML = `
+      <div class="week-dot ${isNew ? '' : 'old'}"></div>
+      <div style="flex:1">
+        <div class="week-name">${w.woche || 'Unbenannte Woche'}</div>
+        <div class="week-meta">${date} · <span class="week-design">${w.designName || ''}</span></div>
+      </div>
+      <button class="btn-week-edit" onclick="editWeek('${w.id}')">Nochmal bearbeiten</button>`
+    list.appendChild(row)
+  })
+}
+
+function editWeek(id) {
+  const week = getSaved(WEEKS_KEY).find(w => w.id === id)
+  if (!week) return
+  localStorage.setItem('mp_active_week', JSON.stringify(week))
+  window.location.href = 'wizard.html?step=3&week=' + id
+}
+
+/* ══ Plan Label ══ */
+function renderPlan() {
+  const user = window._sbUser
+  if (!user) return
+  const plan = user.user_metadata?.plan || 'basis'
+  document.getElementById('stat-plan').textContent = plan.charAt(0).toUpperCase() + plan.slice(1)
+}
+
+/* ══ Toast ══ */
+function showToast(msg) {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.classList.add('show')
+  setTimeout(() => t.classList.remove('show'), 2800)
+}
+
+/* ══ Init ══ */
+window.addEventListener('DOMContentLoaded', () => {
+  seedDemoIfEmpty()
+  renderDesigns()
+  renderWeeks()
+  setTimeout(renderPlan, 300) // warten bis Auth fertig
+})
+</script>
+
+</body>
+</html>

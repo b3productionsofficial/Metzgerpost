@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetzgerPost — Anmelden</title>
+
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Google Fonts: Syne (Display) + DM Sans (Body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Design Tokens ── */
+    :root {
+      --bg:         #0f0d0b;
+      --surface:    #1a1714;
+      --surface2:   #242018;
+      --border:     #2e2a24;
+      --border2:    #3d3830;
+      --accent:     #d4853a;
+      --accent2:    #e8a055;
+      --text:       #f0ece4;
+      --muted:      #8a8070;
+      --error:      #e05555;
+      --success:    #5cad7a;
+
+      --font-display: 'Syne', sans-serif;
+      --font-body:    'DM Sans', sans-serif;
+      --radius:       12px;
+      --radius-sm:    8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Animated background grain + glow */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 30%, rgba(212,133,58,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 60% at 80% 70%, rgba(212,133,58,0.07) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      padding: 24px 16px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Logo / Header ── */
+    .logo-wrap {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .logo-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px; height: 52px;
+      background: var(--accent);
+      border-radius: 14px;
+      margin-bottom: 14px;
+    }
+    .logo-icon svg { width: 28px; height: 28px; fill: #fff; }
+    .logo-name {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    .logo-name span { color: var(--accent); }
+    .logo-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      background: var(--surface2);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      margin-bottom: 28px;
+      gap: 4px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 9px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      border-radius: calc(var(--radius-sm) - 2px);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--muted);
+      background: transparent;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+    .tab-btn:not(.active):hover {
+      color: var(--text);
+      background: var(--border);
+    }
+
+    /* ── Forms ── */
+    .form-panel { display: none; }
+    .form-panel.active { display: block; }
+
+    .form-row {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      border-color: var(--accent);
+    }
+    input::placeholder { color: var(--muted); opacity: 0.6; }
+
+    /* ── Submit Button ── */
+    .btn-primary {
+      width: 100%;
+      margin-top: 8px;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-primary:hover { background: var(--accent2); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-primary .spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto;
+    }
+    .btn-primary.loading span { display: none; }
+    .btn-primary.loading .spinner { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Message Banner ── */
+    .msg {
+      display: none;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .msg.error   { background: rgba(224,85,85,0.12); border: 1px solid rgba(224,85,85,0.3); color: var(--error); display: block; }
+    .msg.success { background: rgba(92,173,122,0.12); border: 1px solid rgba(92,173,122,0.3); color: var(--success); display: block; }
+
+    /* ── Divider ── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Magic Link Button ── */
+    .btn-secondary {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      border-color: var(--border2);
+      color: var(--text);
+      background: var(--surface2);
+    }
+
+    /* ── Passwort vergessen ── */
+    .forgot-link {
+      display: block;
+      text-align: right;
+      font-size: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      margin-top: 6px;
+      transition: color 0.2s;
+    }
+    .forgot-link:hover { color: var(--accent); }
+
+    /* ── Dashboard (nach Login) ── */
+    .dashboard {
+      display: none;
+      animation: fadeUp 0.4s ease both;
+    }
+    .dashboard.visible { display: block; }
+
+    .dash-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .dash-welcome {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .dash-welcome span { color: var(--accent); }
+    .btn-logout {
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+      font-family: var(--font-body);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-logout:hover { border-color: var(--error); color: var(--error); }
+
+    .dash-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .dash-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 18px;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s;
+      text-decoration: none;
+      color: var(--text);
+      display: block;
+    }
+    .dash-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .dash-card-icon {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+    .dash-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .dash-card-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .dash-plan {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .plan-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(212,133,58,0.15);
+      color: var(--accent);
+      border: 1px solid rgba(212,133,58,0.3);
+    }
+    .plan-text { font-size: 13px; color: var(--muted); }
+
+    /* ── Footer ── */
+    .auth-footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .auth-footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <!-- ══ AUTH CARD ══ -->
+  <div id="auth-section">
+    <div class="logo-wrap">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+      </div>
+      <div class="logo-name">Metzger<span>Post</span></div>
+      <div class="logo-sub">Dein wöchentlicher Mittagstisch — in 5 Minuten</div>
+    </div>
+
+    <div class="card">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('login')">Anmelden</button>
+        <button class="tab-btn" onclick="switchTab('register')">Registrieren</button>
+      </div>
+
+      <!-- ── Login Panel ── -->
+      <div id="panel-login" class="form-panel active">
+        <div id="msg-login" class="msg"></div>
+
+        <div class="form-row">
+          <label>E-Mail</label>
+          <input type="email" id="login-email" placeholder="name@metzgerei.de" autocomplete="email" />
+        </div>
+        <div class="form-row">
+          <label>Passwort</label>
+          <input type="password" id="login-pw" placeholder="••••••••" autocomplete="current-password" />
+          <a class="forgot-link" href="#" onclick="showForgot(event)">Passwort vergessen?</a>
+        </div>
+
+        <button class="btn-primary" id="btn-login" onclick="doLogin()">
+          <span>Anmelden</span>
+          <div class="spinner"></div>
+        </button>
+
+        <div class="divider">oder</div>
+
+        <button class="btn-secondary" onclick="doMagicLink('login')">
+          🔗 Magic Link per E-Mail
+        </button>
+      </div>
+
+      <!-- ── Register Panel ── -->
+      <div id="panel-register" class="form-panel">
+        <div id="msg-register" class="msg"></div>
+
+        <div class="form-row">
+          <label>Betrieb / Name</label>
+          <input type="text" id="reg-name" placeholder="Metzgerei Mustermann" />
+        </div>
+        <div class="form-row">
+          <label>E-Mail</label>
+          <input type="email" id="reg-email" placeholder="name@metzgerei.de" autocomplete="email" />
+        </div>
+        <div class="form-row">
+          <label>Passwort (min. 8 Zeichen)</label>
+          <input type="password" id="reg-pw" placeholder="••••••••" autocomplete="new-password" />
+        </div>
+
+        <button class="btn-primary" id="btn-register" onclick="doRegister()">
+          <span>Kostenlos starten</span>
+          <div class="spinner"></div>
+        </button>
+      </div>
+    </div>
+
+    <div class="auth-footer">
+      Mit der Anmeldung akzeptierst du unsere
+      <a href="#">AGB</a> und <a href="#">Datenschutzerklärung</a>.
+    </div>
+  </div>
+
+  <!-- ══ DASHBOARD (nach Login) ══ -->
+  <div id="dashboard-section" class="dashboard">
+    <div class="card">
+      <div class="dash-header">
+        <div class="dash-welcome">Hallo, <span id="dash-name">Nutzer</span> 👋</div>
+        <button class="btn-logout" onclick="doLogout()">Abmelden</button>
+      </div>
+
+      <div class="dash-plan">
+        <div>
+          <div class="plan-text">Dein aktuelles Paket</div>
+        </div>
+        <div class="plan-badge" id="dash-plan">Basis</div>
+      </div>
+
+      <div class="divider" style="margin: 20px 0 16px;"></div>
+
+      <div class="dash-grid">
+        <a class="dash-card" href="dashboard.html">
+          <div class="dash-card-icon">🍽️</div>
+          <div class="dash-card-title">Generator</div>
+          <div class="dash-card-sub">Mittagstisch erstellen</div>
+        </a>
+        <a class="dash-card" href="admin.html">
+          <div class="dash-card-icon">⚙️</div>
+          <div class="dash-card-title">Admin</div>
+          <div class="dash-card-sub">Gerichte & Layouts</div>
+        </a>
+        <a class="dash-card" href="#">
+          <div class="dash-card-icon">📁</div>
+          <div class="dash-card-title">Meine Wochen</div>
+          <div class="dash-card-sub">Gespeicherte Pläne</div>
+        </a>
+        <a class="dash-card" href="#">
+          <div class="dash-card-icon">💳</div>
+          <div class="dash-card-title">Paket upgraden</div>
+          <div class="dash-card-sub">Plus & Pro Funktionen</div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<script>
+  /* ══════════════════════════════════════════════════════
+     SUPABASE KONFIGURATION
+     ─────────────────────────────────────────────────────
+     1. Gehe zu https://supabase.com und leg ein Projekt an
+     2. Unter Settings → API findest du URL und anon key
+     3. Trage beides hier ein und lösche die Kommentare
+  ══════════════════════════════════════════════════════ */
+  const SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co'
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10'
+
+  const { createClient } = window.supabase
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON)
+
+  /* ── Tab-Wechsel ── */
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach((b,i) => {
+      b.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'register' && i === 1))
+    })
+    document.getElementById('panel-login').classList.toggle('active', tab === 'login')
+    document.getElementById('panel-register').classList.toggle('active', tab === 'register')
+  }
+
+  /* ── Hilfsfunktionen ── */
+  function setMsg(panelId, text, type) {
+    const el = document.getElementById(`msg-${panelId}`)
+    el.textContent = text
+    el.className = `msg ${type}`
+  }
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId)
+    btn.classList.toggle('loading', loading)
+    btn.disabled = loading
+  }
+
+  /* ── Login ── */
+  async function doLogin() {
+    const email = document.getElementById('login-email').value.trim()
+    const pw    = document.getElementById('login-pw').value
+    if (!email || !pw) return setMsg('login', 'Bitte E-Mail und Passwort eingeben.', 'error')
+
+    setLoading('btn-login', true)
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pw })
+    setLoading('btn-login', false)
+
+    if (error) return setMsg('login', fehlerText(error), 'error')
+    showDashboard(data.user)
+  }
+
+  /* ── Register ── */
+  async function doRegister() {
+    const name  = document.getElementById('reg-name').value.trim()
+    const email = document.getElementById('reg-email').value.trim()
+    const pw    = document.getElementById('reg-pw').value
+
+    if (!name || !email || !pw) return setMsg('register', 'Bitte alle Felder ausfüllen.', 'error')
+    if (pw.length < 8)          return setMsg('register', 'Passwort muss mindestens 8 Zeichen haben.', 'error')
+
+    setLoading('btn-register', true)
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password: pw,
+      options: {
+        data: { betrieb_name: name, plan: 'basis' }   // gespeichert in user_metadata
+      }
+    })
+    setLoading('btn-register', false)
+
+    if (error) return setMsg('register', fehlerText(error), 'error')
+
+    // Supabase schickt Bestätigungsmail — zeige Hinweis
+    setMsg('register',
+      '✉️ Bestätigungsmail gesendet! Bitte prüfe dein Postfach und klicke den Link, um dein Konto zu aktivieren.',
+      'success'
+    )
+  }
+
+  /* ── Magic Link ── */
+  async function doMagicLink(panel) {
+    const email = document.getElementById(`${panel === 'login' ? 'login' : 'reg'}-email`).value.trim()
+    if (!email) return setMsg(panel, 'Bitte zuerst E-Mail eingeben.', 'error')
+
+    const { error } = await sb.auth.signInWithOtp({ email })
+    if (error) return setMsg(panel, fehlerText(error), 'error')
+    setMsg(panel, '✉️ Magic Link gesendet! Prüfe deine E-Mails.', 'success')
+  }
+
+  /* ── Passwort vergessen ── */
+  async function showForgot(e) {
+    e.preventDefault()
+    const email = document.getElementById('login-email').value.trim()
+    if (!email) return setMsg('login', 'Bitte zuerst deine E-Mail eingeben.', 'error')
+
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/auth.html?reset=1'
+    })
+    if (error) return setMsg('login', fehlerText(error), 'error')
+    setMsg('login', '✉️ Passwort-Reset-Link wurde gesendet!', 'success')
+  }
+
+  /* ── Logout ── */
+  async function doLogout() {
+    await sb.auth.signOut()
+    document.getElementById('auth-section').style.display = 'block'
+    document.getElementById('dashboard-section').classList.remove('visible')
+  }
+
+  /* ── Dashboard anzeigen ── */
+  function showDashboard(user) {
+    const name = user.user_metadata?.betrieb_name || user.email.split('@')[0]
+    const plan = user.user_metadata?.plan || 'Basis'
+
+    document.getElementById('dash-name').textContent = name
+    document.getElementById('dash-plan').textContent = plan.charAt(0).toUpperCase() + plan.slice(1)
+
+    document.getElementById('auth-section').style.display = 'none'
+    document.getElementById('dashboard-section').classList.add('visible')
+  }
+
+  /* ── Session wiederherstellen beim Laden ── */
+  window.addEventListener('DOMContentLoaded', async () => {
+    const { data: { session } } = await sb.auth.getSession()
+    if (session?.user) showDashboard(session.user)
+
+    // Auth State Listener: reagiert auf Login/Logout
+    sb.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) showDashboard(session.user)
+    })
+  })
+
+  /* ── Fehlermeldungen eingedeutscht ── */
+  function fehlerText(err) {
+    const map = {
+      'Invalid login credentials':  'E-Mail oder Passwort falsch.',
+      'Email not confirmed':         'E-Mail noch nicht bestätigt. Prüfe dein Postfach.',
+      'User already registered':     'Diese E-Mail ist bereits registriert.',
+      'Password should be at least 6 characters': 'Passwort zu kurz (min. 8 Zeichen).',
+      'Rate limit exceeded':         'Zu viele Versuche. Bitte kurz warten.',
+    }
+    for (const [key, msg] of Object.entries(map)) {
+      if (err.message?.includes(key)) return msg
+    }
+    return err.message || 'Ein Fehler ist aufgetreten.'
+  }
+</script>
+
+</body>
+</html>

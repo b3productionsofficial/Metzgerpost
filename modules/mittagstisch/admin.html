@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>MetzgerPost Admin</title>
+
+  <!-- ── Auth Guard ── -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    (async () => {
+      const SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co'
+      const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10'
+      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
+      const { data: { session } } = await sb.auth.getSession()
+      if (!session) window.location.replace('auth.html')
+    })()
+  </script>
+  <!-- ── Ende Auth Guard ── -->
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      background: #f4f4f4;
+    }
+
+    h1, h2 {
+      margin-bottom: 10px;
+    }
+
+    .topnav {
+      margin-bottom: 30px;
+    }
+
+    .topnav a {
+      display: inline-block;
+      margin-right: 15px;
+      text-decoration: none;
+      color: #0b57d0;
+      font-weight: bold;
+    }
+
+    .gericht-card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+      max-width: 900px;
+    }
+
+    .gericht-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    label {
+      font-size: 14px;
+      color: #444;
+      display: block;
+      margin-bottom: 4px;
+      margin-top: 10px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      font-size: 15px;
+    }
+
+    button {
+      padding: 10px 16px;
+      font-size: 15px;
+      margin-right: 10px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    .actions {
+      margin-top: 25px;
+      margin-bottom: 20px;
+    }
+
+    .status {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #0b6b2a;
+    }
+
+    .layout-editor-wrap {
+      display: flex;
+      gap: 30px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-top: 30px;
+    }
+
+    .layout-editor-left {
+      flex: 0 0 420px;
+      max-width: 420px;
+    }
+
+    .layout-editor-right {
+      flex: 1;
+      min-width: 320px;
+      position: sticky;
+      top: 20px;
+    }
+
+    .positions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 16px;
+    }
+
+    .positions-grid input,
+    .positions-grid select {
+      width: 100%;
+      margin: 0;
+    }
+
+    #admin-preview-canvas {
+      width: 100%;
+      max-width: 420px;
+      height: auto;
+      aspect-ratio: auto;
+      border: 1px solid #ccc;
+      background: #fff;
+      border-radius: 8px;
+    }
+
+    #bereich-wrap,
+    #tag-wrap,
+    #meal-fields-wrap,
+    #week-fields-wrap {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="topnav">
+    <a href="index.html">Zum Generator</a>
+    <a href="admin.html">Admin</a>
+  </div>
+
+  <h1>MetzgerPost Admin</h1>
+  <p>Hier kannst du Standardpreise, Namen, Bildpfade und Layout-Positionen bearbeiten.</p>
+
+  <label for="kunde">Kunde</label>
+  <select id="kunde" onchange="handleKundeChange()">
+    <option value="sorgundseitz">Metzgerei Sorg &amp; Seitz</option>
+    <option value="schilling">Motorrad Schilling</option>
+    <option value="erkenbrecher">Schreinerei Erkenbrecher</option>
+    <option value="metzgereigoetz">Metzgerei Götz</option>
+  </select>
+
+  <div id="gerichte-container"></div>
+
+  <div class="actions">
+    <button onclick="addGericht()">+ Neues Gericht</button>
+    <button onclick="saveGerichte()">Änderungen speichern</button>
+    <button onclick="resetGerichte()">Auf Standard zurücksetzen</button>
+  </div>
+
+  <p id="status" class="status"></p>
+
+  <div class="layout-editor-wrap">
+    <div class="layout-editor-left">
+      <h2>Layout Editor</h2>
+
+      <label for="layout-auswahl">Layout</label>
+      <select id="layout-auswahl" onchange="updateFormatAuswahl(); updateAdminEditorUI(); ladePositionsWerte(); renderAdminPreview();">
+        <option value="mittagstisch_instagram">Mittagstisch Instagram</option>
+        <option value="mittagstisch_druck">Mittagstisch Druck</option>
+      </select>
+
+      <label for="format-auswahl">Format</label>
+      <select id="format-auswahl" onchange="updateAdminEditorUI(); ladePositionsWerte(); renderAdminPreview();"></select>
+
+      <div id="bereich-wrap">
+        <label for="bereich-auswahl">Bereich</label>
+        <select id="bereich-auswahl" onchange="ladePositionsWerte(); renderAdminPreview();">
+          <option value="links">Links</option>
+          <option value="rechts">Rechts</option>
+        </select>
+      </div>
+
+      <div id="tag-wrap">
+        <label for="tag-auswahl">Tag</label>
+        <select id="tag-auswahl" onchange="ladePositionsWerte(); renderAdminPreview();">
+          <option value="montag">Montag</option>
+          <option value="dienstag">Dienstag</option>
+          <option value="mittwoch">Mittwoch</option>
+          <option value="donnerstag">Donnerstag</option>
+          <option value="freitag">Freitag</option>
+        </select>
+      </div>
+      <div id="line-wrap">
+        <label for="line-auswahl">Zeile</label>
+        <select id="line-auswahl" onchange="ladePositionsWerte(); renderAdminPreview();">
+          <option value="1">Zeile 1</option>
+          <option value="2">Zeile 2</option>
+          <option value="3">Zeile 3</option>
+        </select>
+      </div>
+
+      <div id="meal-fields-wrap">
+        <div class="positions-grid">
+          <div>
+            <label for="imageX">Bild X</label>
+            <input type="number" id="imageX">
+          </div>
+
+          <div>
+            <label for="imageY">Bild Y</label>
+            <input type="number" id="imageY">
+          </div>
+
+          <div>
+            <label for="imageRadius">Bild Radius</label>
+            <input type="number" id="imageRadius">
+          </div>
+
+          <div>
+            <label for="textX">Text X</label>
+            <input type="number" id="textX">
+          </div>
+
+          <div>
+            <label for="textY">Text Y</label>
+            <input type="number" id="textY">
+          </div>
+
+          <div>
+            <label for="textMaxWidth">Text Max Width</label>
+            <input type="number" id="textMaxWidth">
+          </div>
+
+          <div>
+            <label for="textLineHeight">Text Line Height</label>
+            <input type="number" id="textLineHeight">
+          </div>
+
+          <div>
+            <label for="priceX">Preis X</label>
+            <input type="number" id="priceX">
+          </div>
+
+          <div>
+            <label for="priceY">Preis Y</label>
+            <input type="number" id="priceY">
+          </div>
+
+          <div>
+            <label for="priceColor">Preisfarbe</label>
+            <select id="priceColor">
+              <option value="#ffffff">Weiß</option>
+              <option value="#2f2f2f">Schwarz</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="textFontSize">Textgröße</label>
+            <input type="number" id="textFontSize">
+          </div>
+
+          <div>
+            <label for="priceFontSize">Preisgröße</label>
+            <input type="number" id="priceFontSize">
+          </div>
+        </div>
+      </div>
+
+      <div id="week-fields-wrap">
+        <div class="positions-grid">
+          <div>
+            <label for="weekX">Woche X</label>
+            <input type="number" id="weekX">
+          </div>
+
+          <div>
+            <label for="weekY">Woche Y</label>
+            <input type="number" id="weekY">
+          </div>
+
+          <div>
+            <label for="weekFontSize">Woche Größe</label>
+            <input type="number" id="weekFontSize">
+          </div>
+        </div>
+      </div>
+
+      <button onclick="speicherePositionsWerte()">Positionen speichern</button>
+      <button onclick="resetPositionsWerte()">Positionswerte zurücksetzen</button>
+
+      <p id="layout-status" style="margin-top:15px; font-weight:bold;"></p>
+    </div>
+
+    <div class="layout-editor-right">
+      <h2>Layout Vorschau</h2>
+      <button onclick="renderAdminPreview()">Vorschau aktualisieren</button>
+      <br><br>
+      <canvas id="admin-preview-canvas" width="1080" height="1920"></canvas>
+    </div>
+  </div>
+
+  <script>
+    // Passwort-Schutz entfernt — Login läuft jetzt über auth.html / Supabase
+  </script>
+
+  <script src="config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

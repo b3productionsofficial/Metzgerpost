@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mittagstisch Generator</title>
+
+  <!-- ── Auth Guard: Weiterleitung zu auth.html wenn nicht eingeloggt ── -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    (async () => {
+      const SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co'
+      const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10'
+      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
+      const { data: { session } } = await sb.auth.getSession()
+      if (!session) window.location.replace('auth.html')
+    })()
+  </script>
+  <!-- ── Ende Auth Guard ── -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@600;700&family=Raleway:wght@500;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: system-ui;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 40px;
+    }
+
+    .app {
+  max-width: 1100px;
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid #e4e7eb;
+  border-radius: 12px;
+  padding: 22px;
+  margin-bottom: 22px;
+}
+
+.panel h2 {
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-size: 22px;
+}
+
+.panel h3 {
+  margin-top: 0;
+}
+
+label {
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+select,
+input,
+textarea {
+  box-sizing: border-box;
+}
+
+select {
+  min-width: 0;
+  width: 100%;
+  max-width: 520px;
+}
+
+input[type="text"],
+input:not([type]) {
+  width: 100%;
+  max-width: 520px;
+}
+
+.meal-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  max-width: 640px;
+}
+
+.meal-row select {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.meal-row input {
+  width: 110px;
+  min-width: 110px;
+  margin: 0;
+  text-align: center;
+  font-weight: 600;
+  background: #f7f7f7;
+  color: #333;
+}
+
+.druck-box {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 18px;
+  margin-top: 20px;
+  background: #fafafa;
+}
+
+.download-actions button {
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.status-text {
+  margin-top: 12px;
+  color: #b00020;
+  font-weight: 600;
+}
+
+#preview-story,
+#preview-feed {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+canvas {
+  height: auto !important;
+}
+
+#preview-front,
+#preview-back {
+  display: block;
+  width: 280px;
+  height: calc(280px * 2700 / 2160); /* Verhältnis fix! */
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+    .preview-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 9999;
+  padding: 30px;
+  box-sizing: border-box;
+}
+
+.preview-modal-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #222;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 14px;
+  cursor: pointer;
+  z-index: 2;
+}
+
+#preview-modal-canvas {
+  max-width: 90vw;
+  width: auto;
+  height: auto;
+  background: white;
+  border-radius: 10px;
+  display: block;
+}
+
+input[readonly] {
+  background: #f7f7f7;
+  color: #333;
+}
+
+    label {
+      display: block;
+      margin-top: 8px;
+      font-weight: 600;
+    }
+
+    .meal-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.meal-row select {
+  flex: 1;
+  min-width: 0;
+}
+
+.meal-row input {
+  width: 110px;
+  min-width: 110px;
+  text-align: center;
+  font-weight: 600;
+  background: #f7f7f7;
+  color: #333;
+}
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <header>
+      <h1 id="seiten-titel">Mittagstisch Generator</h1>
+      <p>Social Media Mittagstisch automatisch erstellen</p>
+    </header>
+
+    <main>
+
+      <section class="panel">
+  <h2>1. Format wählen</h2>
+
+<div id="kunde-block">
+  <label for="kunde">Kunde</label>
+  <select id="kunde" onchange="handleKundeChange()">
+    <option value="sorgundseitz">Metzgerei Sorg &amp; Seitz</option>
+    <option value="schilling">Motorrad Schilling</option>
+    <option value="erkenbrecher">Schreinerei Erkenbrecher</option>
+    <option value="metzgereigoetz">Metzgerei Götz</option>
+  </select>
+</div>
+
+<div id="vorlage-block">
+  <label for="vorlage">Format</label>
+  <select id="vorlage" onchange="handleVorlageChange()"></select>
+</div>
+
+ <section class="panel">
+  <h2 id="bereich2-title">2. Kalenderwoche</h2>
+
+  <div id="instagram-woche-block" class="druck-box">
+  <label for="woche">Kalenderwoche</label>
+  <input id="woche" value="18.02. - 20.02.2026" oninput="updatePreviews()" />
+</div>
+
+  <div id="druck-front-block" class="druck-box">
+  <h3>Vorderseite</h3>
+  <label for="druck-front-datum">Datum / Kalenderwoche</label>
+  <input id="druck-front-datum" value="18.02. - 20.02.2026" oninput="updatePreviews()" />
+  </div>
+
+  <div id="druck-woche1-block" class="druck-box" style="margin-top:20px;">
+    <h3>Rückseite – Linke Woche</h3>
+
+    <label for="druck-woche-links">Kalenderwoche links</label>
+    <input id="druck-woche-links" value="18.02. - 20.02.2026" oninput="updatePreviews()" />
+
+    <label for="dienstag">Dienstag</label>
+    <div class="meal-row">
+    <select id="druck-dienstag" onchange="handleMealChange('druck-dienstag')"></select>
+    <input type="text" id="preis-druck-dienstag" readonly placeholder="Preis">
+    </div>
+
+    <label for="mittwoch">Mittwoch</label>
+    <div class="meal-row">
+      <select id="druck-mittwoch" onchange="handleMealChange('druck-mittwoch')"></select>
+      <input type="text" id="preis-druck-mittwoch" readonly placeholder="Preis">
+    </div>
+
+    <label for="donnerstag">Donnerstag</label>
+    <div class="meal-row">
+      <select id="druck-donnerstag" onchange="handleMealChange('druck-donnerstag')"></select>
+      <input type="text" id="preis-druck-donnerstag" readonly placeholder="Preis">
+    </div>
+
+    <label for="freitag">Freitag</label>
+    <div class="meal-row">
+      <select id="druck-freitag" onchange="handleMealChange('druck-freitag')"></select>
+      <input type="text" id="preis-druck-freitag" readonly placeholder="Preis">
+    </div>
+  </div>
+
+  <div id="druck-woche2-block" class="druck-box" style="display:none;">
+    <h3>Rückseite – Rechte Woche</h3>
+
+    <label for="druck-woche-rechts">Kalenderwoche rechts</label>
+    <input id="druck-woche-rechts" placeholder="z. B. 25.02. - 27.02.2026" oninput="updatePreviews()" />
+
+    <label for="dienstag2">Dienstag</label>
+    <div class="meal-row">
+      <select id="dienstag2" onchange="handleMealChange('dienstag2')"></select>
+      <input type="text" id="preis-dienstag2" readonly placeholder="Preis">
+    </div>
+
+    <label for="mittwoch2">Mittwoch</label>
+    <div class="meal-row">
+      <select id="mittwoch2" onchange="handleMealChange('mittwoch2')"></select>
+      <input type="text" id="preis-mittwoch2" readonly placeholder="Preis">
+    </div>
+
+    <label for="donnerstag2">Donnerstag</label>
+    <div class="meal-row">
+      <select id="donnerstag2" onchange="handleMealChange('donnerstag2')"></select>
+      <input type="text" id="preis-donnerstag2" readonly placeholder="Preis">
+    </div>
+
+    <label for="freitag2">Freitag</label>
+    <div class="meal-row">
+      <select id="freitag2" onchange="handleMealChange('freitag2')"></select>
+      <input type="text" id="preis-freitag2" readonly placeholder="Preis">
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="gerichte-panel">
+  <h2>3. Gerichte auswählen</h2>
+
+  <label for="dienstag">Dienstag</label>
+  <input type="text" id="suche-dienstag" placeholder="Gericht suchen..." oninput="filterDropdown('dienstag', 'suche-dienstag')">
+  <div class="meal-row">
+    <select id="dienstag" onchange="handleMealChange('dienstag')"></select>
+    <input type="text" id="preis-dienstag" readonly placeholder="Preis">
+  </div>
+
+  <label for="mittwoch">Mittwoch</label>
+  <input type="text" id="suche-mittwoch" placeholder="Gericht suchen..." oninput="filterDropdown('mittwoch', 'suche-mittwoch')">
+  <div class="meal-row">
+    <select id="mittwoch" onchange="handleMealChange('mittwoch')"></select>
+    <input type="text" id="preis-mittwoch" readonly placeholder="Preis">
+  </div>
+
+  <label for="donnerstag">Donnerstag</label>
+  <input type="text" id="suche-donnerstag" placeholder="Gericht suchen..." oninput="filterDropdown('donnerstag', 'suche-donnerstag')">
+  <div class="meal-row">
+    <select id="donnerstag" onchange="handleMealChange('donnerstag')"></select>
+    <input type="text" id="preis-donnerstag" readonly placeholder="Preis">
+  </div>
+
+  <label for="freitag">Freitag</label>
+  <input type="text" id="suche-freitag" placeholder="Gericht suchen..." oninput="filterDropdown('freitag', 'suche-freitag')">
+  <div class="meal-row">
+    <select id="freitag" onchange="handleMealChange('freitag')"></select>
+    <input type="text" id="preis-freitag" readonly placeholder="Preis">
+  </div>
+</section>
+
+<section class="panel" id="goetz-text-panel" style="display:none;">
+  <h2>3. Tagesgerichte eingeben</h2>
+
+  <div class="druck-box">
+     <label for="montag-title">Montag Titel</label>
+     <input id="montag-title" value="montag, 24. März" oninput="updatePreviews()" />
+    
+     <label>Montag Gericht 1</label>
+    <select id="montag-meal1-select" onchange="handleGoetzMealChange('montag', 1)">
+      <option value="">-- Gericht wählen --</option>
+    </select>
+
+    <label for="montag-meal1">Text (optional überschreiben)</label>
+    <input id="montag-meal1" oninput="updatePreviews()" />
+
+    <label for="montag-price1">Preis</label>
+    <input id="montag-price1" oninput="updatePreviews()" />
+
+    <label for="montag-meal2">Montag Gericht 2</label>
+    <input id="montag-meal2" oninput="updatePreviews()" />
+
+    <label for="montag-price2">Montag Preis 2</label>
+    <input id="montag-price2" oninput="updatePreviews()" />
+
+    <label for="montag-meal3">Montag Gericht 3</label>
+    <input id="montag-meal3" oninput="updatePreviews()" />
+
+    <label for="montag-price3">Montag Preis 3</label>
+    <input id="montag-price3" oninput="updatePreviews()" />
+  </div>
+
+   <div class="druck-box">
+  <label for="dienstag-title">Dienstag Titel</label>
+  <input id="dienstag-title" value="Dienstag, 24. März" oninput="updatePreviews()" />
+
+  <label>Dienstag Gericht 1</label>
+  <select id="dienstag-meal1-select" onchange="handleGoetzMealChange('dienstag', 1)">
+    <option value="">-- Gericht wählen --</option>
+  </select>
+
+  <label for="dienstag-meal1">Text (optional überschreiben)</label>
+  <input id="dienstag-meal1" oninput="updatePreviews()" />
+
+  <label for="dienstag-price1">Preis</label>
+  <input id="dienstag-price1" oninput="updatePreviews()" />
+
+  <label>Dienstag Gericht 2</label>
+  <select id="dienstag-meal2-select" onchange="handleGoetzMealChange('dienstag', 2)">
+    <option value="">-- Gericht wählen --</option>
+  </select>
+
+  <label for="dienstag-meal2">Text (optional überschreiben)</label>
+  <input id="dienstag-meal2" oninput="updatePreviews()" />
+
+  <label for="dienstag-price2">Preis</label>
+  <input id="dienstag-price2" oninput="updatePreviews()" />
+
+  <label>Dienstag Gericht 3</label>
+  <select id="dienstag-meal3-select" onchange="handleGoetzMealChange('dienstag', 3)">
+    <option value="">-- Gericht wählen --</option>
+  </select>
+
+  <label for="dienstag-meal3">Text (optional überschreiben)</label>
+  <input id="dienstag-meal3" oninput="updatePreviews()" />
+
+  <label for="dienstag-price3">Preis</label>
+  <input id="dienstag-price3" oninput="updatePreviews()" />
+</div>
+
+<div class="druck-box">
+  <label for="mittwoch-title">Mittwoch Titel</label>
+  <input id="mittwoch-title" value="Mittwoch, 25. März" oninput="updatePreviews()" />
+
+  <label>Mittwoch Gericht 1</label>
+  <select id="mittwoch-meal1-select" onchange="handleGoetzMealChange('mittwoch', 1)">
+    <option value="">-- Gericht wählen --</option>
+  </select>
+
+  <label for="mittwoch-meal1">Text (optional überschreiben)</label>
+  <input id="mittwoch-meal1" oninput="updatePreviews()" />
+
+  <label for="mittwoch-price1">Preis</label>
+  <input id="mittwoch-price1" oninput="updatePreviews()" />
+
+  <label>Mittwoch Gericht 2</label>
+  <select id="mittwoch-meal2-select" onchange="handleGoetzMealChange('mittwoch', 2)">
+    <option value="">-- Gericht wählen --</option>
+  </select>
+
+  <label for="mittwoch-meal2">Text (optional überschreiben)</label>
+  <input id="mittwoch-meal2" oninput="updatePreviews()" />
+
+  <label for="mittwoch-price2">Preis</label>
+  <input id="mittwoch-price2" oninput="updatePreviews()" />
+
+  <label>Mittwoch Gericht 3</label>
+  <select id="mittwoch-meal3-select" onchange="handleGoetzMealChange('mittwoch', 3)">
+    <option value="">-- Gericht wählen --</option>
+  </select>
+
+  <label for="mittwoch-meal3">Text (optional überschreiben)</label>
+  <input id="mittwoch-meal3" oninput="updatePreviews()" />
+
+  <label for="mittwoch-price3">Preis</label>
+  <input id="mittwoch-price3" oninput="updatePreviews()" />
+</div>
+
+<div class="druck-box">
+  <label for="donnerstag-title">Donnerstag Titel</label>
+  <input id="donnerstag-title" value="Donnerstag, 26. März" oninput="updatePreviews()" />
+
+  <label>Donnerstag Gericht 1</label>
+  <select id="donnerstag-meal1-select" onchange="handleGoetzMealChange('donnerstag', 1)">
+    <option value="">-- Gericht wählen --</option>
+  </select>
+
+  <label for="donnerstag-meal1">Text (optional überschreiben)</label>
+  <input id="donnerstag-meal1" oninput="updatePreviews()" />
+
+  <label for="donnerstag-price1">Preis</label>
+  <input id="donnerstag-price1" oninput="updatePreviews()" />
+
+  <label>Donnerstag Gericht 2</label>
+  <select id="donnerstag-meal2-select" onchange="handleGoetzMealChange('donnerstag', 2)">
+    <option value="">-- Gericht wählen --</option>
+  </select>
+
+  <label for="donnerstag-meal2">Text (optional überschreiben)</label>
+  <input id="donnerstag-meal2" oninput="updatePreviews()" />
+
+  <label for="donnerstag-price2">Preis</label>
+  <input id="donnerstag-price2" oninput="updatePreviews()" />
+
+  <label>Donnerstag Gericht 3</label>
+  <select id="donnerstag-meal3-select" onchange="handleGoetzMealChange('donnerstag', 3)">
+    <option value="">-- Gericht wählen --</option>
+  </select>
+
+  <label for="donnerstag-meal3">Text (optional überschreiben)</label>
+  <input id="donnerstag-meal3" oninput="updatePreviews()" />
+
+  <label for="donnerstag-price3">Preis</label>
+  <input id="donnerstag-price3" oninput="updatePreviews()" />
+</div>
+
+<div class="druck-box">
+  <label for="freitag-title">Freitag Titel</label>
+  <input id="freitag-title" value="Freitag, 27. März" oninput="updatePreviews()" />
+
+  <label>Freitag Gericht 1</label>
+  <select id="freitag-meal1-select" onchange="handleGoetzMealChange('freitag', 1)">
+    <option value="">-- Gericht wählen --</option>
+  </select>
+
+  <label for="freitag-meal1">Text (optional überschreiben)</label>
+  <input id="freitag-meal1" oninput="updatePreviews()" />
+
+  <label for="freitag-price1">Preis</label>
+  <input id="freitag-price1" oninput="updatePreviews()" />
+
+  <label>Freitag Gericht 2</label>
+  <select id="freitag-meal2-select" onchange="handleGoetzMealChange('freitag', 2)">
+    <option value="">-- Gericht wählen --</option>
+  </select>
+
+  <label for="freitag-meal2">Text (optional überschreiben)</label>
+  <input id="freitag-meal2" oninput="updatePreviews()" />
+
+  <label for="freitag-price2">Preis</label>
+  <input id="freitag-price2" oninput="updatePreviews()" />
+
+  <label>Freitag Gericht 3</label>
+  <select id="freitag-meal3-select" onchange="handleGoetzMealChange('freitag', 3)">
+    <option value="">-- Gericht wählen --</option>
+  </select>
+
+  <label for="freitag-meal3">Text (optional überschreiben)</label>
+  <input id="freitag-meal3" oninput="updatePreviews()" />
+
+  <label for="freitag-price3">Preis</label>
+  <input id="freitag-price3" oninput="updatePreviews()" />
+</div>
+
+</section>
+
+  <section class="panel">
+    <h2>4. Download</h2>
+    <div id="download-buttons" class="download-actions">
+      <button id="btn-story" onclick="downloadStory()">Story herunterladen</button>
+      <button id="btn-feed" onclick="downloadFeed()">Feed herunterladen</button>
+      <button id="btn-both" onclick="downloadBoth()">Beide herunterladen</button>
+
+      <button id="btn-front" onclick="downloadFront()">Vorderseite herunterladen</button>
+      <button id="btn-back" onclick="downloadBack()">Rückseite herunterladen</button>
+      <button id="btn-print" onclick="downloadPrint()">Beide Druckseiten herunterladen</button>
+    </div>
+
+    <p id="status" class="status-text"></p>
+  </section>
+
+  <section class="panel">
+    <h2>5. Vorschau</h2>
+
+    <div id="preview-instagram" class="preview-wrap">
+      <div class="preview-box">
+        <h3>Story Vorschau</h3>
+        <canvas id="preview-story" width="1080" height="1920" onclick="openPreviewModal('preview-story')"></canvas>
+      </div>
+
+      <div class="preview-box">
+        <h3>Feed Vorschau</h3>
+        <canvas id="preview-feed" width="1080" height="1350" onclick="openPreviewModal('preview-feed')"></canvas>
+      </div>
+    </div>
+
+    <div id="preview-druck" class="preview-wrap" style="display:none;">
+      <div class="preview-box">
+        <h3>Vorderseite Vorschau</h3>
+        <canvas id="preview-front" width="3508" height="2480" onclick="openPreviewModal('preview-front')"></canvas>
+      </div>
+
+      <div class="preview-box">
+        <h3>Rückseite Vorschau</h3>
+        <canvas id="preview-back" width="3508" height="2480" onclick="openPreviewModal('preview-back')"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="caption-panel">
+  <h2>Instagram Text</h2>
+  <textarea id="caption" rows="8" style="width:100%; max-width:600px;"></textarea>
+  <br>
+  <button onclick="copyCaption()">Text kopieren</button>
+</section>
+
+  <canvas id="canvas" width="1080" height="1350"></canvas>
+
+</main>
+
+    <footer>
+      <p>© Mittagstisch Generator</p>
+    </footer>
+
+  </div>
+
+  <script src="config.js"></script>
+  <script src="layouts.js"></script>
+  <script src="script.js"></script>
+
+<div id="preview-modal" class="preview-modal" onclick="closePreviewModal()">
+  <div class="preview-modal-inner" onclick="event.stopPropagation()">
+    <button class="preview-modal-close" onclick="closePreviewModal()">✕</button>
+    <canvas id="preview-modal-canvas"></canvas>
+  </div>
+</div>
+
+</body>
+</html>

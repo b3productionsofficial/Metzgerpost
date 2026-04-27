@@ -72,7 +72,7 @@ const POSITIONS = {
   freitag:    { img:{x:87.5, y:38, r:7},   text:{x:87.5, y:58, w:20}, preis:{x:87.5, y:70, w:11}, activeSize:false },
 }
 
-function getCurrentDayName() { return DAY_MAP[new Date().getDay()] || null }
+function getCurrentDayName() { const t = new URLSearchParams(window.location.search).get('testday'); return DAY_MAP[t ? parseInt(t) : new Date().getDay()] || null }
 function getKW(d=new Date()) {
   const date = new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))
   date.setUTCDate(date.getUTCDate()+4-(date.getUTCDay()||7))

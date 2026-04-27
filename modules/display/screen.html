@@ -92,6 +92,7 @@ function renderDisplay(content) {
   // Hintergrundbild wechseln
   const bgImg = document.getElementById('bg-image')
   const newSrc = LAYOUTS[todayKey]
+  console.log('Lade Bild:', newSrc)
   if (bgImg.getAttribute('data-src') !== newSrc) {
     bgImg.style.opacity = '0'
     const tmpImg = new Image()

@@ -3,275 +3,188 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MetzgerPost Display</title>
+  <title>MetzgerPost — Bildschirm 1</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root {
-      --bg:     #0f0d0b;
-      --accent: #d4853a;
-      --text:   #f0ece4;
-      --muted:  #8a8070;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'DM Sans', Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      width: 100vw; height: 100vh;
-      overflow: hidden;
-      display: flex; flex-direction: column;
-    }
-
-    /* ── Loading Screen ── */
-    #loading {
-      position: fixed; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      background: var(--bg); z-index: 100;
-    }
-    .loading-logo {
-      font-size: 48px; font-weight: 800;
-      color: var(--text); margin-bottom: 16px;
-    }
-    .loading-logo span { color: var(--accent); }
-    .loading-bar {
-      width: 200px; height: 3px;
-      background: rgba(212,133,58,0.2); border-radius: 2px; overflow: hidden;
-    }
-    .loading-bar-fill {
-      height: 100%; background: var(--accent); border-radius: 2px;
-      animation: loadFill 2s ease forwards;
-    }
-    @keyframes loadFill { from { width: 0; } to { width: 100%; } }
-
-    /* ── Content Wrapper ── */
-    #content-wrapper {
-      flex: 1; position: relative; overflow: hidden;
-    }
-
-    /* ── Mittagstisch Display (Landscape 16:9) ── */
-    .display-mittagstisch {
-      width: 100%; height: 100%;
-      display: grid; grid-template-columns: 1fr 2fr;
-      background: #f8f5f0;
-    }
-    .display-left {
-      background: #2d4a2d;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 40px;
-      gap: 20px;
-    }
-    .display-logo-area {
-      text-align: center; color: #f8f5f0;
-    }
-    .display-logo-area h1 { font-size: clamp(20px, 3vw, 36px); font-weight: 800; margin-bottom: 8px; }
-    .display-logo-area p  { font-size: clamp(12px, 1.5vw, 18px); opacity: 0.7; }
-    .display-woche {
-      background: rgba(255,255,255,0.12);
-      border-radius: 12px; padding: 12px 20px;
-      color: #f8f5f0; text-align: center;
-      font-size: clamp(14px, 2vw, 22px); font-weight: 700;
-    }
-    .display-right {
-      display: grid; grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      gap: 2px; background: #ddd8d0; padding: 2px;
-    }
-    .display-meal {
-      background: #f8f5f0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 20px; gap: 10px; text-align: center;
-    }
-    .display-meal-img {
-      width: clamp(60px, 8vw, 100px); height: clamp(60px, 8vw, 100px);
-      border-radius: 50%; object-fit: cover;
-      border: 3px solid #2d4a2d;
-    }
-    .display-meal-day {
-      font-size: clamp(10px, 1.2vw, 14px);
-      font-weight: 700; text-transform: uppercase;
-      letter-spacing: 1px; color: #2d4a2d;
-    }
-    .display-meal-name {
-      font-size: clamp(12px, 1.5vw, 18px); font-weight: 600;
-      color: #1a1a1a; line-height: 1.3;
-    }
-    .display-meal-price {
-      background: #2d4a2d; color: #f8f5f0;
-      font-size: clamp(12px, 1.5vw, 18px); font-weight: 700;
-      padding: 4px 14px; border-radius: 20px;
-    }
-
-    /* ── Status Bar ── */
-    #status-bar {
-      height: 36px;
-      background: rgba(15,13,11,0.9);
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 20px;
-      font-size: 12px; color: var(--muted);
-    }
-    .status-live {
-      display: flex; align-items: center; gap: 6px; color: #5cad7a;
-    }
-    .status-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: #5cad7a;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.4; }
-    }
-
-    /* ── Fallback / Offline ── */
-    .display-offline {
-      width: 100%; height: 100%;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 16px; color: var(--muted);
-    }
-    .display-offline-icon { font-size: 64px; }
-    .display-offline h2 { font-size: 24px; font-weight: 700; color: var(--text); }
-    .display-offline p  { font-size: 15px; }
-
-    /* Transition */
-    .fade-enter { animation: fadeIn 0.5s ease both; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { width:100vw; height:100vh; overflow:hidden; background:#e8e4de; }
+    #screen { position:relative; width:100vw; height:100vh; }
+    #bg-image { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:opacity 0.6s ease; }
+    #overlay { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+    #datum-overlay { position:absolute; top:5.5%; left:50%; transform:translateX(-50%); font-size:2.2vw; font-weight:700; color:#2d2d2d; white-space:nowrap; font-family:Georgia,serif; }
+    .day-img-wrap { position:absolute; border-radius:50%; overflow:hidden; border:4px solid #fff; box-shadow:0 4px 20px rgba(0,0,0,.2); }
+    .day-img-wrap img { width:100%; height:100%; object-fit:cover; }
+    .day-img-placeholder { width:100%; height:100%; background:linear-gradient(135deg,#87CEEB,#90EE90); display:flex; align-items:center; justify-content:center; font-size:2em; }
+    .day-name-text { position:absolute; text-align:center; line-height:1.3; font-family:Georgia,serif; }
+    .day-price { position:absolute; border-radius:50px; display:flex; align-items:center; justify-content:center; font-weight:700; font-family:Georgia,serif; white-space:nowrap; }
+    .fade-in { animation:fadeIn .8s ease both; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    #no-content { display:none; position:absolute; inset:0; background:#e8e4de; align-items:center; justify-content:center; flex-direction:column; gap:20px; }
+    #no-content.show { display:flex; }
+    #no-content h1 { font-size:4vw; color:#2d4a2d; font-family:Georgia,serif; }
+    #no-content p { font-size:2vw; color:#666; }
+    #status-bar { position:fixed; bottom:0; left:0; right:0; height:26px; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:space-between; padding:0 16px; font-family:monospace; font-size:11px; color:rgba(255,255,255,.5); z-index:999; }
+    .status-live { display:flex; align-items:center; gap:6px; color:#5cad7a; }
+    .status-dot { width:5px; height:5px; border-radius:50%; background:#5cad7a; animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-
-<!-- Loading -->
-<div id="loading">
-  <div class="loading-logo">Metzger<span>Post</span></div>
-  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
-</div>
-
-<!-- Content -->
-<div id="content-wrapper"></div>
-
-<!-- Status Bar -->
-<div id="status-bar">
-  <div class="status-live">
-    <div class="status-dot"></div>
-    <span id="status-text">Verbinde…</span>
+<div id="screen">
+  <img id="bg-image" src="" alt="">
+  <div id="overlay">
+    <div id="datum-overlay"></div>
+    <div id="gerichte-overlay"></div>
   </div>
+  <div id="no-content">
+    <h1>Metzgerei Sorg &amp; Seitz</h1>
+    <p>Heute kein Mittagstisch</p>
+  </div>
+</div>
+<div id="status-bar">
+  <div class="status-live"><div class="status-dot"></div><span id="status-text">Verbinde…</span></div>
   <span id="status-time"></span>
 </div>
-
-<script src="../../shared/supabase.js"></script>
 <script>
+const SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co'
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10'
 const params   = new URLSearchParams(window.location.search)
 const KUNDE_ID = params.get('kunde') || 'demo'
 const SCREEN_ID= params.get('screen') || 'screen1'
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
 
-const dayNames = { montag:'Montag', dienstag:'Dienstag', mittwoch:'Mittwoch', donnerstag:'Donnerstag', freitag:'Freitag' }
+// Layout-Bilder je Tag
+const LAYOUTS = {
+  dienstag:   'assets/Bildschim_1_Dienstag.png',
+  mittwoch:   'assets/Bildschirm_1_Mittwoch.png',
+  donnerstag: 'assets/Bildschirm_1_Donnerstag.png',
+  freitag:    'assets/Bildschirm_1_Freitag.png',
+}
+const DAY_MAP = { 2:'dienstag', 3:'mittwoch', 4:'donnerstag', 5:'freitag' }
+const DAY_LABELS = { dienstag:'Dienstag', mittwoch:'Mittwoch', donnerstag:'Donnerstag', freitag:'Freitag' }
 
-let currentContent = null
-let refreshTimer   = null
-
-/* ── Init ── */
-window.addEventListener('DOMContentLoaded', async () => {
-  // Uhr
-  setInterval(() => {
-    const now = new Date()
-    document.getElementById('status-time').textContent =
-      now.toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' })
-  }, 1000)
-
-  // Erst laden
-  await loadContent()
-
-  // Loading ausblenden
-  setTimeout(() => {
-    document.getElementById('loading').style.display = 'none'
-  }, 2000)
-
-  // Alle 30 Sek neu laden
-  setInterval(loadContent, 30000)
-})
-
-/* ── Content laden ── */
-async function loadContent() {
-  try {
-    const data = await MP.getDisplayContent(KUNDE_ID, SCREEN_ID)
-    if (!data) { showOffline(); return }
-
-    // Nur neu rendern wenn Inhalt sich geändert hat
-    const contentHash = JSON.stringify(data.content)
-    if (contentHash === currentContent) return
-    currentContent = contentHash
-
-    renderContent(data.content)
-    document.getElementById('status-text').textContent =
-      `Live · ${KUNDE_ID} · ${SCREEN_ID}`
-
-  } catch(e) {
-    console.error(e)
-    showOffline()
-  }
+// Positionen (% des Viewports) — basierend auf den Canva-Layouts
+// Highlighted = aktiver Tag (größer), Inactive = kleinere Karten
+const POSITIONS = {
+  dienstag:   { img:{x:12.5, y:36, r:8.5}, text:{x:12.5, y:58, w:22}, preis:{x:12.5, y:72, w:13}, activeSize:true },
+  mittwoch:   { img:{x:37.5, y:38, r:7},   text:{x:37.5, y:58, w:20}, preis:{x:37.5, y:70, w:11}, activeSize:false },
+  donnerstag: { img:{x:62.5, y:38, r:7},   text:{x:62.5, y:58, w:20}, preis:{x:62.5, y:70, w:11}, activeSize:false },
+  freitag:    { img:{x:87.5, y:38, r:7},   text:{x:87.5, y:58, w:20}, preis:{x:87.5, y:70, w:11}, activeSize:false },
 }
 
-/* ── Content rendern ── */
-function renderContent(content) {
-  const wrapper = document.getElementById('content-wrapper')
-  wrapper.innerHTML = ''
+function getCurrentDayName() { return DAY_MAP[new Date().getDay()] || null }
+function getKW(d=new Date()) {
+  const date = new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))
+  date.setUTCDate(date.getUTCDate()+4-(date.getUTCDay()||7))
+  const y = new Date(Date.UTC(date.getUTCFullYear(),0,1))
+  return Math.ceil((((date-y)/86400000)+1)/7)
+}
 
-  if (content.type === 'mittagstisch' || content.type === 'tagesgerichte') {
-    wrapper.innerHTML = buildMittagstisch(content)
-  } else {
-    showOffline()
+function renderDisplay(content) {
+  const todayKey = getCurrentDayName()
+  if (!todayKey || !content?.gerichte) {
+    document.getElementById('no-content').classList.add('show')
+    document.getElementById('bg-image').style.opacity = '0'
     return
   }
+  document.getElementById('no-content').classList.remove('show')
 
-  wrapper.querySelector('.display-mittagstisch')?.classList.add('fade-enter')
-}
+  // Hintergrundbild wechseln
+  const bgImg = document.getElementById('bg-image')
+  const newSrc = LAYOUTS[todayKey]
+  if (bgImg.getAttribute('data-src') !== newSrc) {
+    bgImg.style.opacity = '0'
+    const tmpImg = new Image()
+    tmpImg.onload = () => { bgImg.src = newSrc; bgImg.style.opacity = '1'; bgImg.setAttribute('data-src', newSrc) }
+    tmpImg.src = newSrc
+  }
 
-function buildMittagstisch(content) {
+  // Datum
+  document.getElementById('datum-overlay').textContent = content.woche || ''
+
+  // Gerichte-Overlays
+  const overlay = document.getElementById('gerichte-overlay')
+  overlay.innerHTML = ''
   const gerichte = content.gerichte || {}
-  const active   = Object.keys(gerichte).filter(d => gerichte[d]?.length > 0)
-  const woche    = content.woche || ''
 
-  const mealsHtml = active.slice(0, 4).map(day => {
-    const m = gerichte[day]?.[0]
-    if (!m?.name) return ''
-    return `
-      <div class="display-meal">
-        <div class="display-meal-day">${dayNames[day] || day}</div>
-        <div class="display-meal-name">${m.name}</div>
-        ${m.preis ? `<div class="display-meal-price">${m.preis}</div>` : ''}
-      </div>`
-  }).join('')
+  Object.keys(POSITIONS).forEach(day => {
+    const mahlzeit = gerichte[day]?.[0]
+    if (!mahlzeit?.name) return
+    const pos = POSITIONS[day]
+    const isToday = day === todayKey
 
-  return `
-    <div class="display-mittagstisch fade-enter">
-      <div class="display-left">
-        <div class="display-logo-area">
-          <h1>Metzger<span style="color:#d4853a">Post</span></h1>
-          <p>Mittagstisch der Woche</p>
-        </div>
-        ${woche ? `<div class="display-woche">📅 ${woche}</div>` : ''}
-      </div>
-      <div class="display-right">
-        ${mealsHtml || '<div class="display-meal"><p>Keine Gerichte</p></div>'}
-      </div>
-    </div>`
+    // Bild
+    const imgSize = (pos.img.r / 100) * window.innerWidth * 2
+    const imgEl = document.createElement('div')
+    imgEl.className = 'day-img-wrap fade-in'
+    imgEl.style.cssText = `left:${pos.img.x}%;top:${pos.img.y}%;width:${imgSize}px;height:${imgSize}px;transform:translate(-50%,-50%);`
+    if (mahlzeit.bild) {
+      imgEl.innerHTML = `<img src="../../${mahlzeit.bild}" onerror="this.parentNode.innerHTML='<div class=day-img-placeholder>🍽️</div>'">`
+    } else {
+      imgEl.innerHTML = '<div class="day-img-placeholder">🍽️</div>'
+    }
+    overlay.appendChild(imgEl)
+
+    // Name
+    const nameEl = document.createElement('div')
+    nameEl.className = 'day-name-text fade-in'
+    nameEl.style.cssText = `left:${pos.text.x}%;top:${pos.text.y}%;width:${pos.text.w}%;transform:translateX(-50%);font-size:${isToday?'2.0vw':'1.5vw'};font-weight:${isToday?800:600};color:#1a1a1a;`
+    nameEl.textContent = mahlzeit.name
+    overlay.appendChild(nameEl)
+
+    // Preis
+    if (mahlzeit.preis) {
+      const priceEl = document.createElement('div')
+      priceEl.className = 'day-price fade-in'
+      const pw = (pos.preis.w/100)*window.innerWidth
+      priceEl.style.cssText = `left:${pos.preis.x}%;top:${pos.preis.y}%;width:${pw}px;height:${pw*0.28}px;transform:translate(-50%,-50%);background:${isToday?'#c8dcb8':'#1a1a1a'};color:${isToday?'#1a1a1a':'#fff'};font-size:${isToday?'1.6vw':'1.2vw'};`
+      priceEl.textContent = mahlzeit.preis
+      overlay.appendChild(priceEl)
+    }
+  })
+
+  document.getElementById('status-text').textContent = `Live · KW ${getKW()} · ${DAY_LABELS[todayKey]||'Heute'}`
 }
 
-function showOffline() {
-  const wrapper = document.getElementById('content-wrapper')
-  wrapper.innerHTML = `
-    <div class="display-offline">
-      <div class="display-offline-icon">📺</div>
-      <h2>Kein Inhalt</h2>
-      <p>Sende Inhalte über den Display Manager</p>
-    </div>`
-  document.getElementById('status-text').textContent = 'Warte auf Inhalt…'
+async function loadContent() {
+  try {
+    const { data } = await sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).single()
+    if (data?.content) renderDisplay(data.content)
+    else showDemo()
+  } catch(e) { showDemo() }
 }
+
+function showDemo() {
+  renderDisplay({
+    woche: '28.04. - 02.05.2026',
+    gerichte: {
+      dienstag:   [{name:'Schäufele mit Knödel', preis:'8,50 €'}],
+      mittwoch:   [{name:'Gulasch mit Spätzle',  preis:'6,80 €'}],
+      donnerstag: [{name:'Cordon Bleu',           preis:'6,80 €'}],
+      freitag:    [{name:'Backfisch',             preis:'6,80 €'}]
+    }
+  })
+  document.getElementById('status-text').textContent = 'Demo-Modus'
+}
+
+function subscribeRealtime() {
+  sb.channel('display-'+SCREEN_ID)
+    .on('postgres_changes',{event:'*',schema:'public',table:'displays',filter:`kunde_id=eq.${KUNDE_ID}`},
+      payload => { if (payload.new?.content) renderDisplay(payload.new.content) })
+    .subscribe(s => { if(s==='SUBSCRIBED') document.getElementById('status-text').textContent='Live ✓' })
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  setInterval(() => {
+    const n = new Date()
+    document.getElementById('status-time').textContent = n.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' · KW '+getKW()
+  }, 1000)
+  loadContent()
+  subscribeRealtime()
+  // Täglich um Mitternacht neu laden
+  const now=new Date(), midnight=new Date(now); midnight.setHours(24,0,5,0)
+  setTimeout(()=>{ loadContent(); setInterval(loadContent,86400000) }, midnight-now)
+})
 </script>
 </body>
 </html>

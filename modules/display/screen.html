@@ -66,10 +66,10 @@ const DAY_LABELS = { dienstag:'Dienstag', mittwoch:'Mittwoch', donnerstag:'Donne
 // Positionen (% des Viewports) — basierend auf den Canva-Layouts
 // Highlighted = aktiver Tag (größer), Inactive = kleinere Karten
 const POSITIONS = {
-  dienstag:   { img:{x:12.5, y:36, r:8.5}, text:{x:12.5, y:58, w:22}, preis:{x:12.5, y:72, w:13}, activeSize:true },
-  mittwoch:   { img:{x:37.5, y:38, r:7},   text:{x:37.5, y:58, w:20}, preis:{x:37.5, y:70, w:11}, activeSize:false },
-  donnerstag: { img:{x:62.5, y:38, r:7},   text:{x:62.5, y:58, w:20}, preis:{x:62.5, y:70, w:11}, activeSize:false },
-  freitag:    { img:{x:87.5, y:38, r:7},   text:{x:87.5, y:58, w:20}, preis:{x:87.5, y:70, w:11}, activeSize:false },
+  dienstag:   { img:{x:12.5, y:32, r:5.5}, text:{x:12.5, y:62, w:20}, preis:{x:12.5, y:76, w:11}, activeSize:true },
+  mittwoch:   { img:{x:37.5, y:34, r:4.5}, text:{x:37.5, y:62, w:18}, preis:{x:37.5, y:73, w:10}, activeSize:false },
+  donnerstag: { img:{x:62.5, y:34, r:4.5}, text:{x:62.5, y:62, w:18}, preis:{x:62.5, y:73, w:10}, activeSize:false },
+  freitag:    { img:{x:87.5, y:34, r:4.5}, text:{x:87.5, y:62, w:18}, preis:{x:87.5, y:73, w:10}, activeSize:false },
 }
 
 function getCurrentDayName() { const t = new URLSearchParams(window.location.search).get('testday'); return DAY_MAP[t ? parseInt(t) : new Date().getDay()] || null }

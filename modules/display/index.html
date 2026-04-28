@@ -207,6 +207,11 @@ async function migrateLocalWeeks(localWeeks) {
         kunde_id: kundeId,
         woche_label: w.woche || 'Migriert',
         gerichte: w.meals || w.gerichte || {},
+        kw: null, jahr: null
+      })
+    } catch(e) {}
+  }
+},
         kw: null,
         jahr: null
       })
@@ -285,7 +290,7 @@ function openEditor(s) {
 async function checkStatus() {
   for (const s of SCREENS) {
     try {
-      const data = await MP.getDisplayContent(kundeId, s)
+      const { data } = await getSB().from('displays').select('*').eq('kunde_id',kundeId).eq('screen_id',s).limit(1).then(r=>({data:r.data&&r.data[0]||null})).catch(()=>({data:null}))
       const dot = document.getElementById('dot-' + s)
       const meta = document.getElementById('meta-' + s)
       const content = data && data.content ? data.content : null

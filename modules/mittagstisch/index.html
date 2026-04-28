@@ -551,6 +551,12 @@ input[readonly] {
       <button id="btn-back" onclick="downloadBack()">Rückseite herunterladen</button>
       <button id="btn-print" onclick="downloadPrint()">Beide Druckseiten herunterladen</button>
     </div>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid #e4e7eb;">
+      <button id="btn-save-woche" onclick="saveWocheToSupabase()" style="background:#2d6a4f;color:#fff;border:none;border-radius:8px;padding:12px 24px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;">
+        💾 Als Woche speichern (Display)
+      </button>
+      <p id="save-woche-status" style="margin-top:8px;font-size:13px;color:#2d6a4f;display:none;"></p>
+    </div>
 
     <p id="status" class="status-text"></p>
   </section>
@@ -610,6 +616,89 @@ input[readonly] {
     <canvas id="preview-modal-canvas"></canvas>
   </div>
 </div>
+
+
+<script>
+// ── Woche in Supabase speichern ──
+async function saveWocheToSupabase() {
+  const btn = document.getElementById('btn-save-woche');
+  const statusEl = document.getElementById('save-woche-status');
+  
+  // Woche-Label lesen
+  const wocheLabel = (document.getElementById('woche') || {}).value || 
+                     (document.getElementById('druck-front-datum') || {}).value || 
+                     'Unbenannte Woche';
+
+  // Gerichte aus den Selects lesen
+  function getMeal(selectId, preisId) {
+    const sel = document.getElementById(selectId);
+    const preis = document.getElementById(preisId);
+    if (!sel) return null;
+    const name = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
+    if (!name || name.includes('wählen') || name.includes('--')) return null;
+    return { name: name, preis: preis ? preis.value : '' };
+  }
+
+  const gerichte = {};
+  const di = getMeal('dienstag', 'preis-dienstag');
+  const mi = getMeal('mittwoch', 'preis-mittwoch');
+  const do_ = getMeal('donnerstag', 'preis-donnerstag');
+  const fr = getMeal('freitag', 'preis-freitag');
+  if (di) gerichte.dienstag = [di];
+  if (mi) gerichte.mittwoch = [mi];
+  if (do_) gerichte.donnerstag = [do_];
+  if (fr) gerichte.freitag = [fr];
+
+  if (!Object.keys(gerichte).length) {
+    statusEl.style.color = '#b00020';
+    statusEl.style.display = 'block';
+    statusEl.textContent = '⚠️ Bitte zuerst Gerichte auswählen.';
+    return;
+  }
+
+  // KW berechnen
+  function getKW() {
+    const d = new Date();
+    const dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    dt.setUTCDate(dt.getUTCDate() + 4 - (dt.getUTCDay() || 7));
+    const y1 = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
+    return Math.ceil((((dt - y1) / 86400000) + 1) / 7);
+  }
+
+  // Supabase Client
+  const SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  // Kunde-ID aus Session
+  const { data: { session } } = await sb.auth.getSession();
+  const kundeId = session ? session.user.id.substring(0, 8) : 'demo';
+
+  btn.textContent = '⏳ Wird gespeichert…';
+  btn.disabled = true;
+
+  const { error } = await sb.from('wochen').insert({
+    kunde_id: kundeId,
+    woche_label: wocheLabel,
+    kw: getKW(),
+    jahr: new Date().getFullYear(),
+    gerichte: gerichte
+  });
+
+  btn.disabled = false;
+  btn.innerHTML = '💾 Als Woche speichern (Display)';
+
+  if (error) {
+    statusEl.style.color = '#b00020';
+    statusEl.textContent = '❌ Fehler: ' + error.message;
+  } else {
+    statusEl.style.color = '#2d6a4f';
+    statusEl.textContent = '✅ Woche "' + wocheLabel + '" gespeichert! Im Display Manager auswählen und senden.';
+  }
+  statusEl.style.display = 'block';
+  setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
+}
+</script>
 
 </body>
 </html>

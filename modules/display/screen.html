@@ -1,161 +1,72 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MetzgerPost Display</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;800&family=Lora:wght@400;600;700&family=Lato:wght@400;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#000;width:100vw;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center}
+    #screen{position:relative;width:100vw;height:calc(100vw * 9/16);max-height:100vh;max-width:calc(100vh * 16/9)}
+    #bg-image{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;transition:opacity .5s}
+    #overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+    #datum-overlay{position:absolute;top:5%;left:50%;transform:translateX(-50%);font-size:2.2vw;font-weight:700;color:#2d2d2d;white-space:nowrap;font-family:Georgia,serif;pointer-events:none}
+    .day-circle{position:absolute;border-radius:50%;overflow:hidden;border:3px solid #fff;box-shadow:0 3px 12px rgba(0,0,0,.25);transform:translate(-50%,-50%)}
+    .day-circle img{width:100%;height:100%;object-fit:cover}
+    .day-circle .placeholder{width:100%;height:100%;background:linear-gradient(135deg,#87CEEB,#90EE90);display:flex;align-items:center;justify-content:center;font-size:1.5em}
+    .day-text{position:absolute;text-align:center;transform:translateX(-50%);line-height:1.3;pointer-events:none}
+    .day-price{position:absolute;transform:translate(-50%,-50%);font-weight:700;text-align:center;pointer-events:none}
+    .fade-in{animation:fadeIn .6s ease both}
+    @keyframes fadeIn{from{opacity:0;transform:translate(-50%,calc(-50% + 8px))}to{opacity:1;transform:translate(-50%,-50%)}}
+    .day-text.fade-in{animation:fadeInText .6s ease both}
+    @keyframes fadeInText{from{opacity:0;transform:translateX(-50%) translateY(6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+    #no-content{display:none;position:absolute;inset:0;background:#e8e4de;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+    #no-content.show{display:flex}
+    #no-content h1{font-size:4vw;color:#2d4a2d;font-family:Georgia,serif}
+    #no-content p{font-size:2vw;color:#666}
 
-    body {
-      background:#000;
-      width:100vw; height:100vh;
-      overflow:hidden;
-      display:flex; align-items:center; justify-content:center;
-    }
+    /* Drag */
+    .drag-handle{cursor:move!important;pointer-events:all!important;user-select:none;-webkit-user-select:none}
+    .drag-handle:hover{outline:2px dashed rgba(212,133,58,.8);outline-offset:4px}
+    .drag-handle.dragging{outline:2px solid #d4853a;outline-offset:4px;z-index:50}
 
-    #screen {
-      position:relative;
-      width:100vw;
-      height:calc(100vw * 9/16);
-      max-height:100vh;
-      max-width:calc(100vh * 16/9);
-    }
+    /* Vollbild-Button — versteckt wenn Editor offen */
+    #fs-btn{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.75);color:#fff;border:2px solid rgba(255,255,255,.8);padding:24px 52px;font-size:3vw;font-family:Georgia,serif;border-radius:16px;cursor:pointer;z-index:9999;transition:opacity .6s}
+    #fs-btn:hover{background:rgba(0,0,0,.9)}
+    #fs-btn.hidden{opacity:0;pointer-events:none}
 
-    #bg-image {
-      position:absolute; inset:0;
-      width:100%; height:100%;
-      object-fit:fill;
-      transition:opacity 0.5s ease;
-    }
-
-    #overlay {
-      position:absolute; inset:0;
-      width:100%; height:100%;
-      pointer-events:none;
-    }
-
-    #datum-overlay {
-      position:absolute;
-      top:5%; left:50%;
-      transform:translateX(-50%);
-      font-size:2.2vw; font-weight:700;
-      color:#2d2d2d; white-space:nowrap;
-      font-family:Georgia,serif;
-      pointer-events:none;
-    }
-
-    .day-circle {
-      position:absolute;
-      border-radius:50%; overflow:hidden;
-      border:3px solid #fff;
-      box-shadow:0 3px 12px rgba(0,0,0,.25);
-      transform:translate(-50%,-50%);
-    }
-    .day-circle img { width:100%; height:100%; object-fit:cover; }
-    .day-circle .placeholder {
-      width:100%; height:100%;
-      background:linear-gradient(135deg,#87CEEB,#90EE90);
-      display:flex; align-items:center; justify-content:center;
-      font-size:1.5em;
-    }
-
-    .day-text {
-      position:absolute; text-align:center;
-      transform:translateX(-50%);
-      font-family:Georgia,serif; line-height:1.3;
-      pointer-events:none;
-    }
-
-    .day-price {
-      position:absolute;
-      transform:translate(-50%,-50%);
-      font-family:Georgia,serif; font-weight:700;
-      text-align:center; pointer-events:none;
-    }
-
-    .fade-in { animation:fadeIn .6s ease both; }
-    @keyframes fadeIn {
-      from { opacity:0; transform:translate(-50%,calc(-50% + 8px)); }
-      to   { opacity:1; transform:translate(-50%,-50%); }
-    }
-    .day-text.fade-in { animation:fadeInText .6s ease both; }
-    @keyframes fadeInText {
-      from { opacity:0; transform:translateX(-50%) translateY(6px); }
-      to   { opacity:1; transform:translateX(-50%) translateY(0); }
-    }
-
-    #no-content {
-      display:none; position:absolute; inset:0;
-      background:#e8e4de;
-      align-items:center; justify-content:center;
-      flex-direction:column; gap:16px;
-    }
-    #no-content.show { display:flex; }
-    #no-content h1 { font-size:4vw; color:#2d4a2d; font-family:Georgia,serif; }
-    #no-content p  { font-size:2vw; color:#666; }
-
-    /* ── Vollbild-Button ── */
-    #fs-btn {
-      position:fixed;
-      top:50%; left:50%;
-      transform:translate(-50%,-50%);
-      background:rgba(0,0,0,.75);
-      color:#fff;
-      border:2px solid rgba(255,255,255,.8);
-      padding:24px 52px;
-      font-size:3vw;
-      font-family:Georgia,serif;
-      border-radius:16px;
-      cursor:pointer;
-      z-index:9999;
-      transition:opacity .6s;
-    }
-    #fs-btn:hover { background:rgba(0,0,0,.9); }
-    #fs-btn.hidden { opacity:0; pointer-events:none; }
-
-    /* ── Editor-Panel ── */
-    #editor-panel {
-      display:none;
-      position:fixed; top:0; right:0; bottom:0;
-      width:320px;
-      background:rgba(15,13,11,.95);
-      border-left:1px solid #2e2a24;
-      overflow-y:auto;
-      z-index:100; padding:16px;
-      font-family:Georgia,sans-serif; color:#f0ece4;
-      pointer-events:all;
-    }
-    #editor-panel.open { display:block; }
-    .ep-title { font-size:14px; font-weight:700; color:#d4853a; margin-bottom:12px; text-transform:uppercase; letter-spacing:.5px; }
-    .ep-day { background:#1a1714; border:1px solid #2e2a24; border-radius:8px; padding:12px; margin-bottom:10px; }
-    .ep-day-name { font-size:12px; font-weight:700; margin-bottom:8px; color:#d4853a; }
-    .ep-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-    .ep-row label { font-size:11px; color:#8a8070; width:80px; flex-shrink:0; }
-    .ep-row input[type=number] {
-      flex:1; background:#242018; border:1px solid #2e2a24; border-radius:4px;
-      color:#f0ece4; padding:4px 6px; font-size:12px; outline:none;
-    }
-    .ep-row input[type=number]:focus { border-color:#d4853a; }
-    .ep-row select {
-      flex:1; background:#242018; border:1px solid #2e2a24; border-radius:4px;
-      color:#f0ece4; padding:4px 6px; font-size:12px; outline:none;
-    }
-    .ep-btn {
-      width:100%; padding:10px; border:none; border-radius:6px;
-      font-size:13px; font-weight:600; cursor:pointer; margin-top:8px;
-    }
-    .ep-btn-save { background:#d4853a; color:#fff; }
-    .ep-btn-close { background:#242018; color:#8a8070; border:1px solid #2e2a24; margin-bottom:8px; }
-    .ep-day-slider { display:flex; gap:4px; margin-bottom:12px; }
-    .ep-day-btn {
-      flex:1; padding:6px 4px; border:1px solid #2e2a24; border-radius:4px;
-      background:#242018; color:#8a8070; font-size:11px; cursor:pointer; text-align:center;
-    }
-    .ep-day-btn.active { border-color:#d4853a; color:#d4853a; background:rgba(212,133,58,.1); }
-    .drag-handle { cursor:move !important; pointer-events:all !important; }
-    .drag-handle:hover { outline:2px dashed #d4853a; outline-offset:3px; }
+    /* Editor Panel */
+    #editor-panel{display:none;position:fixed;top:0;right:0;bottom:0;width:300px;background:rgba(13,11,9,.97);border-left:1px solid #2e2a24;overflow-y:auto;z-index:100;padding:12px;font-family:'Lato',sans-serif;color:#f0ece4;pointer-events:all}
+    #editor-panel.open{display:block}
+    .ep-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #2e2a24}
+    .ep-title{font-size:12px;font-weight:700;color:#d4853a;text-transform:uppercase;letter-spacing:.6px}
+    .ep-close{background:none;border:none;color:#666;font-size:16px;cursor:pointer;padding:2px 6px}
+    .ep-close:hover{color:#f0ece4}
+    .ep-hint{font-size:10px;color:#6a6050;margin-bottom:8px;background:#1a1714;border-radius:4px;padding:6px 8px;line-height:1.5}
+    .ep-tabs{display:flex;gap:3px;margin-bottom:10px}
+    .ep-tab{flex:1;padding:6px 3px;border:1px solid #2e2a24;border-radius:4px;background:#1a1714;color:#666;font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s}
+    .ep-tab.active{border-color:#d4853a;color:#d4853a;background:rgba(212,133,58,.12)}
+    .ep-section-title{font-size:9px;font-weight:700;color:#5a5040;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px}
+    .ep-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+    .ep-row label{font-size:10px;color:#8a8070;width:68px;flex-shrink:0}
+    .ep-row input[type=number]{flex:1;background:#1e1c18;border:1px solid #2e2a24;border-radius:3px;color:#f0ece4;padding:4px 6px;font-size:11px;outline:none}
+    .ep-row input[type=number]:focus{border-color:#d4853a}
+    .ep-row select{flex:1;background:#1e1c18;border:1px solid #2e2a24;border-radius:3px;color:#f0ece4;padding:4px 6px;font-size:11px;outline:none}
+    .ep-row select:focus{border-color:#d4853a}
+    .ep-color-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+    .ep-color-row label{font-size:10px;color:#8a8070;width:68px;flex-shrink:0}
+    .ep-color-btns{display:flex;gap:4px;flex:1}
+    .ep-color-btn{flex:1;padding:4px;border-radius:3px;border:2px solid transparent;font-size:10px;font-weight:700;cursor:pointer;text-align:center}
+    .ep-color-btn.dark{background:#1a1a1a;color:#fff}
+    .ep-color-btn.white{background:#f0f0f0;color:#1a1a1a}
+    .ep-color-btn.sel{border-color:#d4853a}
+    .ep-btn{width:100%;padding:9px;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;margin-top:5px}
+    .ep-btn-save{background:#d4853a;color:#fff}
+    .ep-btn-save:hover{background:#e8964a}
+    .ep-btn-reset{background:#1e1c18;color:#7a7060;border:1px solid #2e2a24}
+    .ep-saved{display:none;color:#5cad7a;font-size:11px;text-align:center;margin-top:6px}
   </style>
 </head>
 <body>
@@ -175,281 +86,312 @@
 </div>
 
 <div id="editor-panel">
-  <div class="ep-title">&#9881; Position Editor</div>
-  <div class="ep-day-slider" id="ep-testday-btns">
-    <div class="ep-day-btn active" onclick="setTestDay(2,this)">Di</div>
-    <div class="ep-day-btn" onclick="setTestDay(3,this)">Mi</div>
-    <div class="ep-day-btn" onclick="setTestDay(4,this)">Do</div>
-    <div class="ep-day-btn" onclick="setTestDay(5,this)">Fr</div>
+  <div class="ep-header">
+    <span class="ep-title">&#9881; Position Editor</span>
+    <button class="ep-close" onclick="toggleEditor()">&#10005;</button>
   </div>
-  <div id="ep-positions"></div>
-  <button class="ep-btn ep-btn-save" onclick="saveConfig()">&#128190; Positionen speichern</button>
-  <button class="ep-btn ep-btn-close" onclick="toggleEditor()">&#10005; Editor schlie&szlig;en</button>
+  <div class="ep-hint">&#128073; Elemente direkt auf dem Bild <b>ziehen</b> &mdash; oder Werte eingeben.</div>
+  <div class="ep-tabs" id="ep-tabs">
+    <div class="ep-tab active" onclick="switchTab('dienstag',this)">Di</div>
+    <div class="ep-tab" onclick="switchTab('mittwoch',this)">Mi</div>
+    <div class="ep-tab" onclick="switchTab('donnerstag',this)">Do</div>
+    <div class="ep-tab" onclick="switchTab('freitag',this)">Fr</div>
+  </div>
+  <div id="ep-fields"></div>
+  <button class="ep-btn ep-btn-save" onclick="saveConfig()">&#128190; Speichern</button>
+  <button class="ep-btn ep-btn-reset" onclick="resetDay()">&#8634; Tag zur&uuml;cksetzen</button>
+  <div class="ep-saved" id="ep-saved">&#10003; Gespeichert!</div>
 </div>
 
 <script>
 var SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co';
 var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10';
 
-function getParam(name) {
-  var s = window.location.search;
-  if (!s) return null;
-  var parts = s.substring(1).split('&');
-  for (var i = 0; i < parts.length; i++) {
-    var kv = parts[i].split('=');
-    if (decodeURIComponent(kv[0]) === name) return kv.length > 1 ? decodeURIComponent(kv[1]) : '';
-  }
-  return null;
-}
+function getParam(n){var s=window.location.search;if(!s)return null;var p=s.substring(1).split('&');for(var i=0;i<p.length;i++){var kv=p[i].split('=');if(decodeURIComponent(kv[0])===n)return kv.length>1?decodeURIComponent(kv[1]):''}return null}
 
 var KUNDE_ID  = getParam('kunde')  || 'demo';
 var SCREEN_ID = getParam('screen') || 'screen1';
 var IS_EDITOR = getParam('editor') === 'true';
 var IS_DEMO   = getParam('demo')   === 'true';
 var sb = null;
+var currentContent = null;
+var testDay = null;
+var activeDay = 'dienstag';
 
-var DAY_MAP    = { 2:'dienstag', 3:'mittwoch', 4:'donnerstag', 5:'freitag' };
-var DAY_LABELS = { dienstag:'Dienstag', mittwoch:'Mittwoch', donnerstag:'Donnerstag', freitag:'Freitag' };
+var DAY_MAP    = {2:'dienstag',3:'mittwoch',4:'donnerstag',5:'freitag'};
+var DAY_NUM    = {dienstag:2,mittwoch:3,donnerstag:4,freitag:5};
+var DAY_LABELS = {dienstag:'Dienstag',mittwoch:'Mittwoch',donnerstag:'Donnerstag',freitag:'Freitag'};
+var FONTS = {
+  'Georgia':       'Georgia, serif',
+  'Playfair':      "'Playfair Display', Georgia, serif",
+  'Lora':          "'Lora', Georgia, serif",
+  'Lato':          "'Lato', Arial, sans-serif",
+  'Open Sans':     "'Open Sans', Arial, sans-serif"
+};
 var LAYOUTS = {
   dienstag:   'assets/Bildschim_1_Dienstag.png',
   mittwoch:   'assets/Bildschirm_1_Mittwoch.png',
   donnerstag: 'assets/Bildschirm_1_Donnerstag.png',
   freitag:    'assets/Bildschirm_1_Freitag.png'
 };
-var CONFIG = {
-  dienstag:   { img:{x:12.5,y:30,r:3.8}, text:{x:12.5,y:55,w:20,size:1.8}, preis:{x:12.5,y:70,size:1.5,color:'#1a1a1a'} },
-  mittwoch:   { img:{x:37.5,y:32,r:3.2}, text:{x:37.5,y:55,w:18,size:1.4}, preis:{x:37.5,y:68,size:1.2,color:'#ffffff'} },
-  donnerstag: { img:{x:62.5,y:32,r:3.2}, text:{x:62.5,y:55,w:18,size:1.4}, preis:{x:62.5,y:68,size:1.2,color:'#1a1a1a'} },
-  freitag:    { img:{x:87.5,y:32,r:3.2}, text:{x:87.5,y:55,w:18,size:1.4}, preis:{x:87.5,y:68,size:1.2,color:'#ffffff'} }
+
+var DEFAULT_CONFIG = {
+  dienstag:   {img:{x:12.5,y:34,r:3.8}, text:{x:12.5,y:55,w:20,size:1.8,font:'Georgia',color:'#1a1a1a'}, preis:{x:12.5,y:70,size:1.5,font:'Georgia',color:'#1a1a1a'}},
+  mittwoch:   {img:{x:37.5,y:32,r:3.2}, text:{x:37.5,y:55,w:18,size:1.4,font:'Georgia',color:'#1a1a1a'}, preis:{x:37.5,y:68,size:1.2,font:'Georgia',color:'#ffffff'}},
+  donnerstag: {img:{x:62.5,y:32,r:3.2}, text:{x:62.5,y:55,w:18,size:1.4,font:'Georgia',color:'#1a1a1a'}, preis:{x:62.5,y:68,size:1.2,font:'Georgia',color:'#1a1a1a'}},
+  freitag:    {img:{x:87.5,y:32,r:3.2}, text:{x:87.5,y:55,w:18,size:1.4,font:'Georgia',color:'#1a1a1a'}, preis:{x:87.5,y:68,size:1.2,font:'Georgia',color:'#ffffff'}}
 };
-var currentContent = null;
-var testDay = null;
+var CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 
-function getTodayKey() {
-  var t = getParam('testday') || (testDay ? String(testDay) : null);
-  return DAY_MAP[t ? parseInt(t,10) : new Date().getDay()] || null;
-}
+function getTodayKey(){var t=getParam('testday')||(testDay?String(testDay):null);return DAY_MAP[t?parseInt(t,10):new Date().getDay()]||null}
+function getKW(d){if(!d)d=new Date();var dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));dt.setUTCDate(dt.getUTCDate()+4-(dt.getUTCDay()||7));var y1=new Date(Date.UTC(dt.getUTCFullYear(),0,1));return Math.ceil((((dt-y1)/86400000)+1)/7)}
 
-function getKW(d) {
-  if (!d) d = new Date();
-  var dt = new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
-  dt.setUTCDate(dt.getUTCDate()+4-(dt.getUTCDay()||7));
-  var y1 = new Date(Date.UTC(dt.getUTCFullYear(),0,1));
-  return Math.ceil((((dt-y1)/86400000)+1)/7);
-}
+/* Vollbild */
+function goFullscreen(){var el=document.documentElement;if(el.requestFullscreen)el.requestFullscreen();else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();else if(el.mozRequestFullScreen)el.mozRequestFullScreen();document.getElementById('fs-btn').className='hidden'}
+function onFsChange(){if(!document.fullscreenElement&&!document.webkitFullscreenElement)document.getElementById('fs-btn').className=''}
+document.addEventListener('fullscreenchange',onFsChange);
+document.addEventListener('webkitfullscreenchange',onFsChange);
 
-// ── Vollbild ──
-function goFullscreen() {
-  var el = document.documentElement;
-  if (el.requestFullscreen)            el.requestFullscreen();
-  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-  else if (el.mozRequestFullScreen)    el.mozRequestFullScreen();
-  else if (el.msRequestFullscreen)     el.msRequestFullscreen();
-  document.getElementById('fs-btn').className = 'hidden';
-}
-function onFsChange() {
-  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-    document.getElementById('fs-btn').className = '';
+/* Render */
+function renderDisplay(content){
+  if(!content)return;
+  currentContent=content;
+  var todayKey=getTodayKey();
+  if(!todayKey){document.getElementById('no-content').className='show';document.getElementById('bg-image').style.opacity='0';return}
+  document.getElementById('no-content').className='';
+
+  var bgImg=document.getElementById('bg-image');
+  var newSrc=LAYOUTS[todayKey];
+  if(bgImg.getAttribute('data-src')!==newSrc){
+    bgImg.style.opacity='0';
+    var tmp=new Image();
+    tmp.onload=function(){bgImg.src=newSrc;bgImg.style.opacity='1';bgImg.setAttribute('data-src',newSrc)};
+    tmp.src=newSrc;
   }
-}
-document.addEventListener('fullscreenchange', onFsChange);
-document.addEventListener('webkitfullscreenchange', onFsChange);
+  document.getElementById('datum-overlay').textContent=content.woche||'';
 
-// ── Render ──
-function renderDisplay(content) {
-  if (!content) return;
-  currentContent = content;
-  var todayKey = getTodayKey();
-  if (!todayKey) {
-    document.getElementById('no-content').className = 'show';
-    document.getElementById('bg-image').style.opacity = '0';
-    return;
-  }
-  document.getElementById('no-content').className = '';
+  var overlay=document.getElementById('gerichte-overlay');
+  overlay.innerHTML='';
+  var gerichte=content.gerichte||{};
+  var days=['dienstag','mittwoch','donnerstag','freitag'];
 
-  var bgImg = document.getElementById('bg-image');
-  var newSrc = LAYOUTS[todayKey];
-  if (bgImg.getAttribute('data-src') !== newSrc) {
-    bgImg.style.opacity = '0';
-    var tmp = new Image();
-    tmp.onload = function() { bgImg.src=newSrc; bgImg.style.opacity='1'; bgImg.setAttribute('data-src',newSrc); };
-    tmp.src = newSrc;
-  }
+  for(var i=0;i<days.length;i++){
+    var day=days[i];
+    var arr=gerichte[day];
+    var m=(arr&&arr[0])?arr[0]:null;
+    if(!m||!m.name)continue;
+    var cfg=CONFIG[day];
+    var isToday=(day===todayKey);
+    var ec=IS_EDITOR?' drag-handle':'';
+    var sz=(cfg.img.r/100)*document.getElementById('screen').offsetWidth*2;
+    var tf=FONTS[cfg.text.font]||FONTS['Georgia'];
+    var pf=FONTS[cfg.preis.font]||FONTS['Georgia'];
 
-  document.getElementById('datum-overlay').textContent = content.woche || '';
-
-  var overlay = document.getElementById('gerichte-overlay');
-  overlay.innerHTML = '';
-  var gerichte = content.gerichte || {};
-  var days = ['dienstag','mittwoch','donnerstag','freitag'];
-
-  for (var i = 0; i < days.length; i++) {
-    var day = days[i];
-    var arr = gerichte[day];
-    var m = (arr && arr[0]) ? arr[0] : null;
-    if (!m || !m.name) continue;
-    var cfg = CONFIG[day];
-    var isToday = (day === todayKey);
-    var ec = IS_EDITOR ? ' drag-handle' : '';
-    var sz = (cfg.img.r/100) * document.getElementById('screen').offsetWidth * 2;
-
-    var imgEl = document.createElement('div');
-    imgEl.className = 'day-circle fade-in'+ec;
-    imgEl.setAttribute('data-day',day); imgEl.setAttribute('data-type','img');
-    imgEl.style.cssText = 'left:'+cfg.img.x+'%;top:'+cfg.img.y+'%;width:'+sz+'px;height:'+sz+'px;';
-    imgEl.innerHTML = m.bild
-      ? '<img src="../../'+m.bild+'" onerror="this.parentNode.innerHTML=\'<div class=placeholder>\uD83C\uDF7D\uFE0F</div>\'">'
-      : '<div class="placeholder">\uD83C\uDF7D\uFE0F</div>';
+    var imgEl=document.createElement('div');
+    imgEl.className='day-circle'+(IS_EDITOR?'':' fade-in')+ec;
+    imgEl.setAttribute('data-day',day);imgEl.setAttribute('data-type','img');
+    imgEl.style.cssText='left:'+cfg.img.x+'%;top:'+cfg.img.y+'%;width:'+sz+'px;height:'+sz+'px;';
+    imgEl.innerHTML=m.bild?'<img src="../../'+m.bild+'" onerror="this.parentNode.innerHTML=\'<div class=placeholder>\uD83C\uDF7D\uFE0F</div>\'">':'<div class="placeholder">\uD83C\uDF7D\uFE0F</div>';
+    if(IS_EDITOR)attachDrag(imgEl);
     overlay.appendChild(imgEl);
 
-    var txtEl = document.createElement('div');
-    txtEl.className = 'day-text fade-in'+ec;
-    txtEl.setAttribute('data-day',day); txtEl.setAttribute('data-type','text');
-    txtEl.style.cssText = 'left:'+cfg.text.x+'%;top:'+cfg.text.y+'%;width:'+cfg.text.w+'%;font-size:'+(isToday?cfg.text.size*1.3:cfg.text.size)+'vw;font-weight:'+(isToday?800:600)+';color:#1a1a1a;';
-    txtEl.textContent = m.name;
+    var txtEl=document.createElement('div');
+    txtEl.className='day-text'+(IS_EDITOR?'':' fade-in')+ec;
+    txtEl.setAttribute('data-day',day);txtEl.setAttribute('data-type','text');
+    txtEl.style.cssText='left:'+cfg.text.x+'%;top:'+cfg.text.y+'%;width:'+cfg.text.w+'%;font-size:'+(isToday?cfg.text.size*1.3:cfg.text.size)+'vw;font-weight:'+(isToday?800:600)+';color:'+cfg.text.color+';font-family:'+tf+';';
+    txtEl.textContent=m.name;
+    if(IS_EDITOR)attachDrag(txtEl);
     overlay.appendChild(txtEl);
 
-    if (m.preis) {
-      var prEl = document.createElement('div');
-      prEl.className = 'day-price fade-in'+ec;
-      prEl.setAttribute('data-day',day); prEl.setAttribute('data-type','preis');
-      prEl.style.cssText = 'left:'+cfg.preis.x+'%;top:'+cfg.preis.y+'%;font-size:'+(isToday?cfg.preis.size*1.2:cfg.preis.size)+'vw;color:'+cfg.preis.color+';';
-      prEl.textContent = m.preis;
+    if(m.preis){
+      var prEl=document.createElement('div');
+      prEl.className='day-price'+(IS_EDITOR?'':' fade-in')+ec;
+      prEl.setAttribute('data-day',day);prEl.setAttribute('data-type','preis');
+      prEl.style.cssText='left:'+cfg.preis.x+'%;top:'+cfg.preis.y+'%;font-size:'+(isToday?cfg.preis.size*1.2:cfg.preis.size)+'vw;color:'+cfg.preis.color+';font-family:'+pf+';';
+      prEl.textContent=m.preis;
+      if(IS_EDITOR)attachDrag(prEl);
       overlay.appendChild(prEl);
     }
   }
 }
 
-function showDemo() {
+function showDemo(){
   renderDisplay({
-    woche: '28.04. - 02.05.2026',
-    gerichte: {
-      dienstag:   [{name:'Sch\u00e4ufele mit Kn\u00f6del', preis:'8,50 \u20ac'}],
-      mittwoch:   [{name:'Gulasch mit Sp\u00e4tzle',       preis:'6,80 \u20ac'}],
-      donnerstag: [{name:'Cordon Bleu',                    preis:'6,80 \u20ac'}],
-      freitag:    [{name:'Backfisch',                      preis:'6,80 \u20ac'}]
+    woche:'28.04. - 02.05.2026',
+    gerichte:{
+      dienstag:  [{name:'Sch\u00e4ufele mit Kn\u00f6del',preis:'8,50 \u20ac'}],
+      mittwoch:  [{name:'Gulasch mit Sp\u00e4tzle',      preis:'6,80 \u20ac'}],
+      donnerstag:[{name:'Cordon Bleu',                   preis:'6,80 \u20ac'}],
+      freitag:   [{name:'Backfisch',                     preis:'6,80 \u20ac'}]
     }
   });
 }
 
-function loadConfig() {
-  if (!sb) return Promise.resolve();
+/* Drag & Drop */
+var dragState=null;
+function attachDrag(el){
+  el.addEventListener('mousedown',startDrag);
+  el.addEventListener('touchstart',startDrag,{passive:false});
+}
+function startDrag(e){
+  e.preventDefault();
+  var el=e.currentTarget;
+  var screenEl=document.getElementById('screen');
+  var rect=screenEl.getBoundingClientRect();
+  el.classList.add('dragging');
+  dragState={el:el,day:el.getAttribute('data-day'),type:el.getAttribute('data-type'),rect:rect};
+  document.addEventListener('mousemove',onDrag);
+  document.addEventListener('touchmove',onDrag,{passive:false});
+  document.addEventListener('mouseup',stopDrag);
+  document.addEventListener('touchend',stopDrag);
+}
+function onDrag(e){
+  if(!dragState)return;
+  e.preventDefault();
+  var cx=e.touches?e.touches[0].clientX:e.clientX;
+  var cy=e.touches?e.touches[0].clientY:e.clientY;
+  var r=dragState.rect;
+  var xp=Math.round(((cx-r.left)/r.width)*1000)/10;
+  var yp=Math.round(((cy-r.top)/r.height)*1000)/10;
+  xp=Math.max(0,Math.min(100,xp));
+  yp=Math.max(0,Math.min(100,yp));
+  var d=dragState.day,t=dragState.type;
+  if(t==='img'){CONFIG[d].img.x=xp;CONFIG[d].img.y=yp}
+  if(t==='text'){CONFIG[d].text.x=xp;CONFIG[d].text.y=yp}
+  if(t==='preis'){CONFIG[d].preis.x=xp;CONFIG[d].preis.y=yp}
+  dragState.el.style.left=xp+'%';
+  dragState.el.style.top=yp+'%';
+  var xi=document.getElementById(d+'_'+t+'_x');
+  var yi=document.getElementById(d+'_'+t+'_y');
+  if(xi)xi.value=xp;
+  if(yi)yi.value=yp;
+}
+function stopDrag(){
+  if(!dragState)return;
+  dragState.el.classList.remove('dragging');
+  document.removeEventListener('mousemove',onDrag);
+  document.removeEventListener('touchmove',onDrag);
+  document.removeEventListener('mouseup',stopDrag);
+  document.removeEventListener('touchend',stopDrag);
+  dragState=null;
+}
+
+/* Editor UI */
+function toggleEditor(){
+  var p=document.getElementById('editor-panel');
+  var fsBtn=document.getElementById('fs-btn');
+  if(p.className==='open'){
+    p.className='';
+    fsBtn.className=''; // Vollbild-Button wieder zeigen
+  } else {
+    p.className='open';
+    fsBtn.className='hidden'; // Vollbild-Button verstecken
+    buildEditorFields();
+  }
+}
+
+function switchTab(day,btn){
+  activeDay=day;
+  testDay=DAY_NUM[day];
+  var tabs=document.querySelectorAll('.ep-tab');
+  for(var i=0;i<tabs.length;i++)tabs[i].className='ep-tab';
+  btn.className='ep-tab active';
+  buildEditorFields();
+  if(currentContent)renderDisplay(currentContent);else showDemo();
+}
+
+function buildEditorFields(){
+  var d=activeDay,c=CONFIG[d];
+  var fk=Object.keys(FONTS);
+  var fo='',pfo='';
+  for(var i=0;i<fk.length;i++){
+    fo+='<option value="'+fk[i]+'"'+(c.text.font===fk[i]?' selected':'')+'>'+fk[i]+'</option>';
+    pfo+='<option value="'+fk[i]+'"'+(c.preis.font===fk[i]?' selected':'')+'>'+fk[i]+'</option>';
+  }
+  var dc=c.preis.color==='#1a1a1a';
+  var h='';
+  h+='<div class="ep-section-title">Bild-Kreis</div>';
+  h+='<div class="ep-row"><label>X %</label><input type="number" id="'+d+'_img_x" value="'+c.img.x+'" step="0.5" oninput="onFieldInput(\''+d+'\',\'img\',\'x\',this.value)"></div>';
+  h+='<div class="ep-row"><label>Y %</label><input type="number" id="'+d+'_img_y" value="'+c.img.y+'" step="0.5" oninput="onFieldInput(\''+d+'\',\'img\',\'y\',this.value)"></div>';
+  h+='<div class="ep-row"><label>Radius</label><input type="number" id="'+d+'_img_r" value="'+c.img.r+'" step="0.1" oninput="onFieldInput(\''+d+'\',\'img\',\'r\',this.value)"></div>';
+  h+='<div class="ep-section-title">Gerichtsname</div>';
+  h+='<div class="ep-row"><label>X %</label><input type="number" id="'+d+'_text_x" value="'+c.text.x+'" step="0.5" oninput="onFieldInput(\''+d+'\',\'text\',\'x\',this.value)"></div>';
+  h+='<div class="ep-row"><label>Y %</label><input type="number" id="'+d+'_text_y" value="'+c.text.y+'" step="0.5" oninput="onFieldInput(\''+d+'\',\'text\',\'y\',this.value)"></div>';
+  h+='<div class="ep-row"><label>Breite %</label><input type="number" id="'+d+'_text_w" value="'+c.text.w+'" step="0.5" oninput="onFieldInput(\''+d+'\',\'text\',\'w\',this.value)"></div>';
+  h+='<div class="ep-row"><label>Schriftgr.</label><input type="number" id="'+d+'_text_size" value="'+c.text.size+'" step="0.1" oninput="onFieldInput(\''+d+'\',\'text\',\'size\',this.value)"></div>';
+  h+='<div class="ep-row"><label>Schriftart</label><select id="'+d+'_text_font" onchange="onFieldInput(\''+d+'\',\'text\',\'font\',this.value)">'+fo+'</select></div>';
+  h+='<div class="ep-section-title">Preis</div>';
+  h+='<div class="ep-row"><label>X %</label><input type="number" id="'+d+'_preis_x" value="'+c.preis.x+'" step="0.5" oninput="onFieldInput(\''+d+'\',\'preis\',\'x\',this.value)"></div>';
+  h+='<div class="ep-row"><label>Y %</label><input type="number" id="'+d+'_preis_y" value="'+c.preis.y+'" step="0.5" oninput="onFieldInput(\''+d+'\',\'preis\',\'y\',this.value)"></div>';
+  h+='<div class="ep-row"><label>Schriftgr.</label><input type="number" id="'+d+'_preis_size" value="'+c.preis.size+'" step="0.1" oninput="onFieldInput(\''+d+'\',\'preis\',\'size\',this.value)"></div>';
+  h+='<div class="ep-row"><label>Schriftart</label><select id="'+d+'_preis_font" onchange="onFieldInput(\''+d+'\',\'preis\',\'font\',this.value)">'+pfo+'</select></div>';
+  h+='<div class="ep-color-row"><label>Farbe</label><div class="ep-color-btns">';
+  h+='<button class="ep-color-btn dark'+(dc?' sel':'')+'" onclick="setPreisColor(\''+d+'\',\'#1a1a1a\')">Dunkel</button>';
+  h+='<button class="ep-color-btn white'+(!dc?' sel':'')+'" onclick="setPreisColor(\''+d+'\',\'#ffffff\')">Wei&szlig;</button>';
+  h+='</div></div>';
+  document.getElementById('ep-fields').innerHTML=h;
+}
+
+function onFieldInput(day,type,key,val){
+  var v=parseFloat(val);
+  if(isNaN(v)&&key!=='font')return;
+  if(key==='font')CONFIG[day][type][key]=val;
+  else CONFIG[day][type][key]=v;
+  if(currentContent)renderDisplay(currentContent);else showDemo();
+}
+
+function setPreisColor(day,color){
+  CONFIG[day].preis.color=color;
+  buildEditorFields();
+  if(currentContent)renderDisplay(currentContent);else showDemo();
+}
+
+function resetDay(){
+  CONFIG[activeDay]=JSON.parse(JSON.stringify(DEFAULT_CONFIG[activeDay]));
+  buildEditorFields();
+  if(currentContent)renderDisplay(currentContent);else showDemo();
+}
+
+/* Supabase */
+function loadConfig(){
+  if(!sb)return Promise.resolve();
   return sb.from('display_configs').select('config').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1)
-    .then(function(r) {
-      var row = r && r.data && r.data[0];
-      if (row && row.config) { var k=Object.keys(row.config); for(var i=0;i<k.length;i++) CONFIG[k[i]]=row.config[k[i]]; }
-    }).catch(function(){});
+    .then(function(r){var row=r&&r.data&&r.data[0];if(row&&row.config){var k=Object.keys(row.config);for(var i=0;i<k.length;i++)CONFIG[k[i]]=row.config[k[i]]}})
+    .catch(function(){});
 }
-
-function loadContent() {
-  if (!sb) { showDemo(); return Promise.resolve(); }
+function loadContent(){
+  if(!sb){showDemo();return Promise.resolve()}
   return sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).single()
-    .then(function(r) { var d=r&&r.data; if(d&&d.content) renderDisplay(d.content); else showDemo(); })
-    .catch(function() { showDemo(); });
+    .then(function(r){var d=r&&r.data;if(d&&d.content)renderDisplay(d.content);else showDemo()})
+    .catch(function(){showDemo()});
 }
-
-function subscribeRealtime() {
-  if (!sb) return;
-  try {
-    sb.channel('disp-'+SCREEN_ID)
-      .on('postgres_changes',{event:'*',schema:'public',table:'displays',filter:'kunde_id=eq.'+KUNDE_ID},
-        function(p){ if(p&&p.new&&p.new.content) renderDisplay(p.new.content); })
-      .subscribe(function(){});
-  } catch(e) { setInterval(loadContent,60000); }
+function subscribeRealtime(){
+  if(!sb)return;
+  try{sb.channel('disp-'+SCREEN_ID).on('postgres_changes',{event:'*',schema:'public',table:'displays',filter:'kunde_id=eq.'+KUNDE_ID},function(p){if(p&&p.new&&p.new.content)renderDisplay(p.new.content)}).subscribe(function(){})}
+  catch(e){setInterval(loadContent,60000)}
 }
-
-function toggleEditor() {
-  var p = document.getElementById('editor-panel');
-  p.className = (p.className === 'open') ? '' : 'open';
-  if (p.className === 'open') buildEditorUI();
-}
-
-function livePreview() {
-  var days=['dienstag','mittwoch','donnerstag','freitag'];
-  for(var i=0;i<days.length;i++){
-    var d=days[i], ix=document.getElementById(d+'_img_x');
-    if(!ix) continue;
-    CONFIG[d].img.x  =parseFloat(ix.value)||CONFIG[d].img.x;
-    CONFIG[d].img.y  =parseFloat((document.getElementById(d+'_img_y')||{}).value)||CONFIG[d].img.y;
-    CONFIG[d].img.r  =parseFloat((document.getElementById(d+'_img_r')||{}).value)||CONFIG[d].img.r;
-    CONFIG[d].text.x =parseFloat((document.getElementById(d+'_text_x')||{}).value)||CONFIG[d].text.x;
-    CONFIG[d].text.y =parseFloat((document.getElementById(d+'_text_y')||{}).value)||CONFIG[d].text.y;
-    CONFIG[d].preis.x=parseFloat((document.getElementById(d+'_preis_x')||{}).value)||CONFIG[d].preis.x;
-    CONFIG[d].preis.y=parseFloat((document.getElementById(d+'_preis_y')||{}).value)||CONFIG[d].preis.y;
-  }
-  if(currentContent) renderDisplay(currentContent); else showDemo();
-}
-
-function saveConfig() {
-  if(!sb) return;
-  var days=['dienstag','mittwoch','donnerstag','freitag'];
-  for(var i=0;i<days.length;i++){
-    var d=days[i];
-    CONFIG[d].img.x      =parseFloat((document.getElementById(d+'_img_x')||{}).value)     ||CONFIG[d].img.x;
-    CONFIG[d].img.y      =parseFloat((document.getElementById(d+'_img_y')||{}).value)     ||CONFIG[d].img.y;
-    CONFIG[d].img.r      =parseFloat((document.getElementById(d+'_img_r')||{}).value)     ||CONFIG[d].img.r;
-    CONFIG[d].text.x     =parseFloat((document.getElementById(d+'_text_x')||{}).value)    ||CONFIG[d].text.x;
-    CONFIG[d].text.y     =parseFloat((document.getElementById(d+'_text_y')||{}).value)    ||CONFIG[d].text.y;
-    CONFIG[d].text.size  =parseFloat((document.getElementById(d+'_text_size')||{}).value) ||CONFIG[d].text.size;
-    CONFIG[d].preis.x    =parseFloat((document.getElementById(d+'_preis_x')||{}).value)   ||CONFIG[d].preis.x;
-    CONFIG[d].preis.y    =parseFloat((document.getElementById(d+'_preis_y')||{}).value)   ||CONFIG[d].preis.y;
-    CONFIG[d].preis.size =parseFloat((document.getElementById(d+'_preis_size')||{}).value)||CONFIG[d].preis.size;
-    var ce=document.getElementById(d+'_preis_color'); if(ce) CONFIG[d].preis.color=ce.value;
-  }
+function saveConfig(){
+  if(!sb)return;
   sb.from('display_configs').upsert({kunde_id:KUNDE_ID,screen_id:SCREEN_ID,config:CONFIG})
-    .then(function(){ if(currentContent) renderDisplay(currentContent); }).catch(function(){});
+    .then(function(){var el=document.getElementById('ep-saved');el.style.display='block';setTimeout(function(){el.style.display='none'},2000)})
+    .catch(function(){});
 }
 
-function buildEditorUI() {
-  var el=document.getElementById('ep-positions'), days=['dienstag','mittwoch','donnerstag','freitag'], h='';
-  for(var i=0;i<days.length;i++){
-    var d=days[i],c=CONFIG[d];
-    h+='<div class="ep-day"><div class="ep-day-name">'+DAY_LABELS[d]+'</div>';
-    h+='<div class="ep-row"><label>Bild X %</label><input type="number" id="'+d+'_img_x" value="'+c.img.x+'" step="0.5" oninput="livePreview()"></div>';
-    h+='<div class="ep-row"><label>Bild Y %</label><input type="number" id="'+d+'_img_y" value="'+c.img.y+'" step="0.5" oninput="livePreview()"></div>';
-    h+='<div class="ep-row"><label>Radius</label><input type="number" id="'+d+'_img_r" value="'+c.img.r+'" step="0.1" oninput="livePreview()"></div>';
-    h+='<div class="ep-row"><label>Text X %</label><input type="number" id="'+d+'_text_x" value="'+c.text.x+'" step="0.5" oninput="livePreview()"></div>';
-    h+='<div class="ep-row"><label>Text Y %</label><input type="number" id="'+d+'_text_y" value="'+c.text.y+'" step="0.5" oninput="livePreview()"></div>';
-    h+='<div class="ep-row"><label>Text Gr&#246;&#223;e</label><input type="number" id="'+d+'_text_size" value="'+c.text.size+'" step="0.1"></div>';
-    h+='<div class="ep-row"><label>Preis X %</label><input type="number" id="'+d+'_preis_x" value="'+c.preis.x+'" step="0.5" oninput="livePreview()"></div>';
-    h+='<div class="ep-row"><label>Preis Y %</label><input type="number" id="'+d+'_preis_y" value="'+c.preis.y+'" step="0.5" oninput="livePreview()"></div>';
-    h+='<div class="ep-row"><label>Preis Gr&#246;&#223;e</label><input type="number" id="'+d+'_preis_size" value="'+c.preis.size+'" step="0.1"></div>';
-    h+='<div class="ep-row"><label>Preis Farbe</label><select id="'+d+'_preis_color">';
-    h+='<option value="#1a1a1a"'+(c.preis.color==='#1a1a1a'?' selected':'')+'>Dunkel</option>';
-    h+='<option value="#ffffff"'+(c.preis.color==='#ffffff'?' selected':'')+'>Wei&#223;</option>';
-    h+='</select></div></div>';
-  }
-  el.innerHTML=h;
-}
-
-function setTestDay(day,btn) {
-  testDay=day;
-  var dk=DAY_MAP[day], bg=document.getElementById('bg-image');
-  bg.style.opacity='0';
-  var tmp=new Image();
-  tmp.onload=function(){ bg.src=LAYOUTS[dk]; bg.style.opacity='1'; bg.setAttribute('data-src',LAYOUTS[dk]); };
-  tmp.src=LAYOUTS[dk];
-  var btns=document.querySelectorAll('.ep-day-btn');
-  for(var i=0;i<btns.length;i++) btns[i].className='ep-day-btn';
-  btn.className='ep-day-btn active';
-  if(currentContent) renderDisplay(currentContent); else showDemo();
-}
-
-window.addEventListener('DOMContentLoaded', function() {
-  if (IS_DEMO) {
+window.addEventListener('DOMContentLoaded',function(){
+  if(IS_DEMO){
     showDemo();
-    if (IS_EDITOR) { document.getElementById('editor-panel').className='open'; buildEditorUI(); }
+    if(IS_EDITOR){document.getElementById('editor-panel').className='open';document.getElementById('fs-btn').className='hidden';buildEditorFields()}
     return;
   }
-  if (!window.supabase) { showDemo(); return; }
-  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-  var fb = setTimeout(function(){ if(!currentContent) showDemo(); }, 8000);
-  loadConfig().then(function(){ return loadContent(); }).then(function(){
+  if(!window.supabase){showDemo();return}
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
+  var fb=setTimeout(function(){if(!currentContent)showDemo()},8000);
+  loadConfig().then(function(){return loadContent()}).then(function(){
     clearTimeout(fb);
     subscribeRealtime();
-    if (IS_EDITOR) { document.getElementById('editor-panel').className='open'; buildEditorUI(); }
-    var now=new Date(), mn=new Date(now); mn.setHours(24,0,5,0);
-    setTimeout(function(){ loadContent(); setInterval(loadContent,86400000); }, mn-now);
+    if(IS_EDITOR){document.getElementById('editor-panel').className='open';document.getElementById('fs-btn').className='hidden';buildEditorFields()}
+    var now=new Date(),mn=new Date(now);mn.setHours(24,0,5,0);
+    setTimeout(function(){loadContent();setInterval(loadContent,86400000)},mn-now);
   });
 });
 </script>

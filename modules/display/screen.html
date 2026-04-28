@@ -16,11 +16,10 @@
     }
 
     #screen {
-      position:relative;
+      position:fixed;
+      inset:0;
       width:100vw;
-      height:calc(100vw * 9/16);
-      max-height:100vh;
-      max-width:calc(100vh * 16/9);
+      height:100vh;
     }
 
     #bg-image {
@@ -172,13 +171,20 @@
     .ep-day-btn.active { border-color:#d4853a; color:#d4853a; background:rgba(212,133,58,.1); }
 
     #fs-btn {
-      position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-      background:rgba(0,0,0,.75); color:#fff; border:2px solid #fff;
-      padding:20px 40px; font-size:2.5vw; font-family:Georgia,serif;
-      border-radius:12px; cursor:pointer; z-index:9999;
-      transition:opacity .5s;
+      position:fixed; inset:0;
+      background:rgba(0,0,0,0);
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; z-index:9999;
+      transition:opacity .8s;
     }
     #fs-btn.hidden { opacity:0; pointer-events:none; }
+    #fs-btn-inner {
+      background:rgba(0,0,0,.6); color:#fff; border:2px solid rgba(255,255,255,.6);
+      padding:18px 36px; font-size:2.5vw; font-family:Georgia,serif;
+      border-radius:12px; pointer-events:none;
+      animation: fspulse 2s ease-in-out infinite;
+    }
+    @keyframes fspulse { 0%,100%{opacity:.7} 50%{opacity:1} }
 
     .drag-handle { cursor:move !important; pointer-events:all !important; }
     .drag-handle:hover { outline:2px dashed #d4853a; outline-offset:3px; }
@@ -187,7 +193,7 @@
 <body>
 
 <!-- Lade-Anzeige (TV sieht sofort was passiert) -->
-<button id="fs-btn" onclick="goFullscreen()">&#x26F6; Vollbild</button>
+<div id="fs-btn" onclick="goFullscreen()"><div id="fs-btn-inner">Tippen zum Starten</div></div>
 
 <div id="loading-screen">
   <div id="loading-text">MetzgerPost</div>
@@ -588,18 +594,12 @@ function updateClock() {
 }
 
 
-var fsTimer = setTimeout(function() { goFullscreen(); }, 5000);
-
 document.addEventListener('mousemove', function() {
-  clearTimeout(fsTimer);
   if (document.fullscreenElement || document.webkitFullscreenElement) {
     if (document.exitFullscreen) document.exitFullscreen();
     else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
     document.getElementById('fs-btn').className = '';
   }
-});
-document.addEventListener('keydown', function() {
-  clearTimeout(fsTimer);
 });
 
 function goFullscreen() {
@@ -608,7 +608,7 @@ function goFullscreen() {
   else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
   else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
   else if (el.msRequestFullscreen) el.msRequestFullscreen();
-  document.getElementById('fs-btn').className = 'hidden';
+  setTimeout(function(){ document.getElementById('fs-btn').className = 'hidden'; }, 300);
 }
 document.addEventListener('fullscreenchange', function() {
   if (document.fullscreenElement) {

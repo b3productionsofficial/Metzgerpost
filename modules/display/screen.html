@@ -171,6 +171,15 @@
     .ep-day-btn { flex:1; padding:6px 4px; border:1px solid #2e2a24; border-radius:4px; background:#242018; color:#8a8070; font-size:11px; cursor:pointer; text-align:center; }
     .ep-day-btn.active { border-color:#d4853a; color:#d4853a; background:rgba(212,133,58,.1); }
 
+    #fs-btn {
+      position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+      background:rgba(0,0,0,.75); color:#fff; border:2px solid #fff;
+      padding:20px 40px; font-size:2.5vw; font-family:Georgia,serif;
+      border-radius:12px; cursor:pointer; z-index:9999;
+      transition:opacity .5s;
+    }
+    #fs-btn.hidden { opacity:0; pointer-events:none; }
+
     .drag-handle { cursor:move !important; pointer-events:all !important; }
     .drag-handle:hover { outline:2px dashed #d4853a; outline-offset:3px; }
   </style>
@@ -178,6 +187,8 @@
 <body>
 
 <!-- Lade-Anzeige (TV sieht sofort was passiert) -->
+<button id="fs-btn" onclick="goFullscreen()">&#x26F6; Vollbild</button>
+
 <div id="loading-screen">
   <div id="loading-text">MetzgerPost</div>
   <div class="loader-bar"><div class="loader-fill"></div></div>
@@ -575,6 +586,21 @@ function updateClock() {
   var m = String(n.getMinutes()).length < 2 ? '0' + n.getMinutes() : String(n.getMinutes());
   document.getElementById('s-time').textContent = h + ':' + m + ' \u00B7 KW ' + getKW();
 }
+
+
+function goFullscreen() {
+  var el = document.documentElement;
+  if (el.requestFullscreen) el.requestFullscreen();
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+  else if (el.msRequestFullscreen) el.msRequestFullscreen();
+  document.getElementById('fs-btn').className = 'hidden';
+}
+document.addEventListener('fullscreenchange', function() {
+  if (document.fullscreenElement) {
+    document.getElementById('fs-btn').className = 'hidden';
+  }
+});
 
 // ── Start ──
 window.addEventListener('DOMContentLoaded', function() {

@@ -67,11 +67,22 @@
     .ep-save:hover{background:#e8964a}
     .ep-reset{background:#1e1c18;color:#7a7060;border:1px solid #2e2a24}
     .ep-ok{display:none;color:#5cad7a;font-size:11px;text-align:center;margin-top:6px}
+    #back-btn {
+      position:fixed; top:12px; left:12px;
+      background:rgba(0,0,0,.7); color:#fff;
+      border:1px solid rgba(255,255,255,.3);
+      padding:8px 14px; font-size:13px;
+      font-family:Georgia,serif; border-radius:8px;
+      cursor:pointer; z-index:9998; text-decoration:none;
+      display:none;
+    }
+    #back-btn.show { display:block; }
   </style>
 </head>
 <body>
 
 <button id="fs-btn" onclick="goFullscreen()">&#x26F6;&nbsp; Vollbild</button>
+<a id="back-btn" href="../../modules/display/index.html">&#8592; Display Manager</a>
 
 <div id="screen">
   <img id="bg-image" src="" alt="">
@@ -314,8 +325,9 @@ function stopDrag(){
 function toggleEditor(){
   var p=document.getElementById('ep');
   var fs=document.getElementById('fs-btn');
-  if(p.className==='open'){p.className='';fs.className=''}
-  else{p.className='open';fs.className='hidden';buildEditorFields()}
+  var bb=document.getElementById('back-btn');
+  if(p.className==='open'){p.className='';fs.className='';if(bb)bb.className=''}
+  else{p.className='open';fs.className='hidden';if(bb)bb.className='show';buildEditorFields()}
 }
 
 function switchLayout(lay,btn){
@@ -467,7 +479,13 @@ window.addEventListener('DOMContentLoaded',function(){
   if(IS_EDITOR)overrideLayout='dienstag';
   if(IS_DEMO){
     showDemo();
-    if(IS_EDITOR){document.getElementById('ep').className='open';document.getElementById('fs-btn').className='hidden';buildEditorFields()}
+    if(IS_EDITOR){
+    document.getElementById('ep').className='open';
+    document.getElementById('fs-btn').className='hidden';
+    var bb=document.getElementById('back-btn');
+    if(bb)bb.className='show';
+    buildEditorFields();
+  }
     return;
   }
   if(!window.supabase){showDemo();return}
@@ -475,7 +493,13 @@ window.addEventListener('DOMContentLoaded',function(){
   var fb=setTimeout(function(){if(!currentContent)showDemo()},8000);
   loadConfig().then(function(){return loadContent()}).then(function(){
     clearTimeout(fb);subscribeRealtime();
-    if(IS_EDITOR){document.getElementById('ep').className='open';document.getElementById('fs-btn').className='hidden';buildEditorFields()}
+    if(IS_EDITOR){
+    document.getElementById('ep').className='open';
+    document.getElementById('fs-btn').className='hidden';
+    var bb=document.getElementById('back-btn');
+    if(bb)bb.className='show';
+    buildEditorFields();
+  }
     var now=new Date(),mn=new Date(now);mn.setHours(24,0,5,0);
     setTimeout(function(){loadContent();setInterval(loadContent,86400000)},mn-now);
   });

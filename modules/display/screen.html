@@ -16,10 +16,11 @@
     }
 
     #screen {
-      position:fixed;
-      inset:0;
+      position:relative;
       width:100vw;
-      height:100vh;
+      height:calc(100vw * 9/16);
+      max-height:100vh;
+      max-width:calc(100vh * 16/9);
     }
 
     #bg-image {
@@ -193,7 +194,7 @@
 <body>
 
 <!-- Lade-Anzeige (TV sieht sofort was passiert) -->
-<div id="fs-btn" onclick="goFullscreen()"><div id="fs-btn-inner">Tippen zum Starten</div></div>
+<div id="fs-btn" onclick="goFullscreen()"><div id="fs-btn-inner">&#x26F6; Vollbild</div></div>
 
 <div id="loading-screen">
   <div id="loading-text">MetzgerPost</div>

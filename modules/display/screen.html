@@ -3,46 +3,171 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MetzgerPost — Bildschirm 1</title>
+  <title>MetzgerPost — Display</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { width:100vw; height:100vh; overflow:hidden; background:#e8e4de; }
-    /* 16:9 Letterbox wenn Browser nicht 16:9 ist */
-    @media not all and (aspect-ratio: 16/9) {
-      #screen {
-        position: absolute;
-        aspect-ratio: 16/9;
-        width: min(100vw, 177.78vh);
-        height: min(100vh, 56.25vw);
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-      }
-      body { background: #000; }
+
+    body {
+      background:#000;
+      width:100vw; height:100vh;
+      overflow:hidden;
+      display:flex; align-items:center; justify-content:center;
     }
-    #screen { position:relative; width:100vw; height:100vh; }
-    #bg-image { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:opacity 0.6s ease; }
-    #overlay { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
-    #datum-overlay { position:absolute; top:5.5%; left:50%; transform:translateX(-50%); font-size:2.2vw; font-weight:700; color:#2d2d2d; white-space:nowrap; font-family:Georgia,serif; }
-    .day-img-wrap { position:absolute; border-radius:50%; overflow:hidden; border:4px solid #fff; box-shadow:0 4px 20px rgba(0,0,0,.2); }
-    .day-img-wrap img { width:100%; height:100%; object-fit:cover; }
-    .day-img-placeholder { width:100%; height:100%; background:linear-gradient(135deg,#87CEEB,#90EE90); display:flex; align-items:center; justify-content:center; font-size:2em; }
-    .day-name-text { position:absolute; text-align:center; line-height:1.3; font-family:Georgia,serif; }
-    .day-price { position:absolute; border-radius:50px; display:flex; align-items:center; justify-content:center; font-weight:700; font-family:Georgia,serif; white-space:nowrap; }
-    .fade-in { animation:fadeIn .8s ease both; }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-    #no-content { display:none; position:absolute; inset:0; background:#e8e4de; align-items:center; justify-content:center; flex-direction:column; gap:20px; }
+
+    /* 16:9 Container — füllt immer den ganzen Bildschirm */
+    #screen {
+      position:relative;
+      width:100vw;
+      height:calc(100vw * 9/16);
+      max-height:100vh;
+      max-width:calc(100vh * 16/9);
+    }
+
+    #bg-image {
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      object-fit:fill;
+      transition:opacity 0.5s ease;
+    }
+
+    #overlay {
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      pointer-events:none;
+    }
+
+    /* Datum */
+    #datum-overlay {
+      position:absolute;
+      top:5%;
+      left:50%;
+      transform:translateX(-50%);
+      font-size:2.2vw;
+      font-weight:700;
+      color:#2d2d2d;
+      white-space:nowrap;
+      font-family:Georgia,serif;
+      pointer-events:none;
+    }
+
+    /* Gericht Overlays */
+    .day-circle {
+      position:absolute;
+      border-radius:50%;
+      overflow:hidden;
+      border:3px solid #fff;
+      box-shadow:0 3px 12px rgba(0,0,0,.25);
+      transform:translate(-50%,-50%);
+    }
+    .day-circle img {
+      width:100%; height:100%; object-fit:cover;
+    }
+    .day-circle .placeholder {
+      width:100%; height:100%;
+      background:linear-gradient(135deg,#87CEEB,#90EE90);
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.5em;
+    }
+
+    .day-text {
+      position:absolute;
+      text-align:center;
+      transform:translateX(-50%);
+      font-family:Georgia,serif;
+      line-height:1.3;
+      pointer-events:none;
+    }
+
+    .day-price {
+      position:absolute;
+      transform:translate(-50%,-50%);
+      font-family:Georgia,serif;
+      font-weight:700;
+      text-align:center;
+      pointer-events:none;
+    }
+
+    /* Fade Animation */
+    .fade-in { animation:fadeIn .6s ease both; }
+    @keyframes fadeIn { from{opacity:0;transform:translate(-50%,calc(-50% + 8px))} to{opacity:1;transform:translate(-50%,-50%)} }
+    .day-text.fade-in { animation:fadeInText .6s ease both; }
+    @keyframes fadeInText { from{opacity:0;transform:translateX(-50%) translateY(6px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+    /* Wochenende */
+    #no-content {
+      display:none; position:absolute; inset:0;
+      background:#e8e4de;
+      align-items:center; justify-content:center;
+      flex-direction:column; gap:16px;
+    }
     #no-content.show { display:flex; }
     #no-content h1 { font-size:4vw; color:#2d4a2d; font-family:Georgia,serif; }
-    #no-content p { font-size:2vw; color:#666; }
-    #status-bar { position:fixed; bottom:0; left:0; right:0; height:26px; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:space-between; padding:0 16px; font-family:monospace; font-size:11px; color:rgba(255,255,255,.5); z-index:999; }
-    .status-live { display:flex; align-items:center; gap:6px; color:#5cad7a; }
-    .status-dot { width:5px; height:5px; border-radius:50%; background:#5cad7a; animation:pulse 2s infinite; }
+    #no-content p  { font-size:2vw; color:#666; }
+
+    /* Status Bar */
+    #status-bar {
+      position:fixed; bottom:0; left:0; right:0; height:24px;
+      background:rgba(0,0,0,.45);
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 14px;
+      font-family:monospace; font-size:11px; color:rgba(255,255,255,.5);
+      z-index:999; pointer-events:none;
+    }
+    .s-live { display:flex; align-items:center; gap:5px; color:#5cad7a; }
+    .s-dot  { width:5px; height:5px; border-radius:50%; background:#5cad7a; animation:pulse 2s infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ══ EDITOR MODE ══ */
+    #editor-panel {
+      display:none;
+      position:fixed; top:0; right:0; bottom:24px;
+      width:320px;
+      background:rgba(15,13,11,.95);
+      border-left:1px solid #2e2a24;
+      overflow-y:auto;
+      z-index:100;
+      padding:16px;
+      font-family:'DM Sans',sans-serif;
+      color:#f0ece4;
+      pointer-events:all;
+    }
+    #editor-panel.open { display:block; }
+    .ep-title { font-size:14px; font-weight:700; color:#d4853a; margin-bottom:12px; text-transform:uppercase; letter-spacing:.5px; }
+    .ep-day { background:#1a1714; border:1px solid #2e2a24; border-radius:8px; padding:12px; margin-bottom:10px; }
+    .ep-day-name { font-size:12px; font-weight:700; margin-bottom:8px; color:#d4853a; }
+    .ep-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .ep-row label { font-size:11px; color:#8a8070; width:80px; flex-shrink:0; }
+    .ep-row input[type=number] {
+      flex:1; background:#242018; border:1px solid #2e2a24; border-radius:4px;
+      color:#f0ece4; padding:4px 6px; font-size:12px; outline:none;
+    }
+    .ep-row input[type=number]:focus { border-color:#d4853a; }
+    .ep-row select {
+      flex:1; background:#242018; border:1px solid #2e2a24; border-radius:4px;
+      color:#f0ece4; padding:4px 6px; font-size:12px; outline:none;
+    }
+    .ep-btn {
+      width:100%; padding:10px; border:none; border-radius:6px;
+      font-size:13px; font-weight:600; cursor:pointer; margin-top:8px;
+    }
+    .ep-btn-save { background:#d4853a; color:#fff; }
+    .ep-btn-save:hover { background:#e8a055; }
+    .ep-btn-test { background:#242018; color:#8a8070; border:1px solid #2e2a24; margin-bottom:8px; }
+    .ep-day-slider { display:flex; gap:4px; margin-bottom:12px; }
+    .ep-day-btn { flex:1; padding:6px 4px; border:1px solid #2e2a24; border-radius:4px; background:#242018; color:#8a8070; font-size:11px; cursor:pointer; text-align:center; }
+    .ep-day-btn.active { border-color:#d4853a; color:#d4853a; background:rgba(212,133,58,.1); }
+
+    /* Drag handles im Editor-Modus */
+    .drag-handle {
+      cursor:move !important;
+      pointer-events:all !important;
+    }
+    .drag-handle:hover { outline:2px dashed #d4853a; outline-offset:3px; }
   </style>
 </head>
 <body>
+
 <div id="screen">
   <img id="bg-image" src="" alt="">
   <div id="overlay">
@@ -54,118 +179,184 @@
     <p>Heute kein Mittagstisch</p>
   </div>
 </div>
-<div id="status-bar">
-  <div class="status-live"><div class="status-dot"></div><span id="status-text">Verbinde…</span></div>
-  <span id="status-time"></span>
+
+<!-- Editor Panel -->
+<div id="editor-panel">
+  <div class="ep-title">⚙️ Position Editor</div>
+
+  <div class="ep-day-slider" id="ep-testday-btns">
+    <div class="ep-day-btn active" onclick="setTestDay(2,this)">Di</div>
+    <div class="ep-day-btn" onclick="setTestDay(3,this)">Mi</div>
+    <div class="ep-day-btn" onclick="setTestDay(4,this)">Do</div>
+    <div class="ep-day-btn" onclick="setTestDay(5,this)">Fr</div>
+  </div>
+
+  <div id="ep-positions"></div>
+
+  <button class="ep-btn ep-btn-save" onclick="saveConfig()">💾 Positionen speichern</button>
+  <button class="ep-btn ep-btn-test" onclick="toggleEditor()">✕ Editor schließen</button>
 </div>
+
+<div id="status-bar">
+  <div class="s-live"><div class="s-dot"></div><span id="s-text">Verbinde…</span></div>
+  <span id="s-time"></span>
+</div>
+
 <script>
 const SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co'
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10'
-const params   = new URLSearchParams(window.location.search)
-const KUNDE_ID = params.get('kunde') || 'demo'
-const SCREEN_ID= params.get('screen') || 'screen1'
+const params    = new URLSearchParams(window.location.search)
+const KUNDE_ID  = params.get('kunde')  || 'demo'
+const SCREEN_ID = params.get('screen') || 'screen1'
+const IS_EDITOR = params.get('editor') === 'true'
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
 
-// Layout-Bilder je Tag
+const DAY_MAP    = { 2:'dienstag', 3:'mittwoch', 4:'donnerstag', 5:'freitag' }
+const DAY_LABELS = { dienstag:'Dienstag', mittwoch:'Mittwoch', donnerstag:'Donnerstag', freitag:'Freitag' }
+
 const LAYOUTS = {
   dienstag:   'assets/Bildschim_1_Dienstag.png',
   mittwoch:   'assets/Bildschirm_1_Mittwoch.png',
   donnerstag: 'assets/Bildschirm_1_Donnerstag.png',
   freitag:    'assets/Bildschirm_1_Freitag.png',
 }
-const DAY_MAP = { 2:'dienstag', 3:'mittwoch', 4:'donnerstag', 5:'freitag' }
-const DAY_LABELS = { dienstag:'Dienstag', mittwoch:'Mittwoch', donnerstag:'Donnerstag', freitag:'Freitag' }
 
-// Positionen (% des Viewports) — basierend auf den Canva-Layouts
-// Highlighted = aktiver Tag (größer), Inactive = kleinere Karten
-const POSITIONS = {
-  dienstag:   { img:{x:12.5, y:32, r:5.5}, text:{x:12.5, y:62, w:20}, preis:{x:12.5, y:76, w:11}, activeSize:true },
-  mittwoch:   { img:{x:37.5, y:34, r:4.5}, text:{x:37.5, y:62, w:18}, preis:{x:37.5, y:73, w:10}, activeSize:false },
-  donnerstag: { img:{x:62.5, y:34, r:4.5}, text:{x:62.5, y:62, w:18}, preis:{x:62.5, y:73, w:10}, activeSize:false },
-  freitag:    { img:{x:87.5, y:34, r:4.5}, text:{x:87.5, y:62, w:18}, preis:{x:87.5, y:73, w:10}, activeSize:false },
+// Standard-Konfiguration (Fallback wenn Supabase leer)
+let CONFIG = {
+  dienstag:   { img:{x:12.5,y:30,r:3.8}, text:{x:12.5,y:55,w:20,size:1.8}, preis:{x:12.5,y:70,size:1.5,color:'#1a1a1a'} },
+  mittwoch:   { img:{x:37.5,y:32,r:3.2}, text:{x:37.5,y:55,w:18,size:1.4}, preis:{x:37.5,y:68,size:1.2,color:'#ffffff'} },
+  donnerstag: { img:{x:62.5,y:32,r:3.2}, text:{x:62.5,y:55,w:18,size:1.4}, preis:{x:62.5,y:68,size:1.2,color:'#1a1a1a'} },
+  freitag:    { img:{x:87.5,y:32,r:3.2}, text:{x:87.5,y:55,w:18,size:1.4}, preis:{x:87.5,y:68,size:1.2,color:'#ffffff'} },
 }
 
-function getCurrentDayName() { const t = new URLSearchParams(window.location.search).get('testday'); return DAY_MAP[t ? parseInt(t) : new Date().getDay()] || null }
+let currentContent = null
+let testDay = null
+
+// ── Tag ermitteln ──
+function getTodayKey() {
+  const t = params.get('testday') || (testDay ? String(testDay) : null)
+  return DAY_MAP[t ? parseInt(t) : new Date().getDay()] || null
+}
+
+// ── KW ──
 function getKW(d=new Date()) {
-  const date = new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))
+  const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))
   date.setUTCDate(date.getUTCDate()+4-(date.getUTCDay()||7))
-  const y = new Date(Date.UTC(date.getUTCFullYear(),0,1))
+  const y=new Date(Date.UTC(date.getUTCFullYear(),0,1))
   return Math.ceil((((date-y)/86400000)+1)/7)
 }
 
+// ── Konfiguration aus Supabase laden ──
+async function loadConfig() {
+  try {
+    const { data } = await sb.from('display_configs').select('config').eq('kunde_id', KUNDE_ID).eq('screen_id', SCREEN_ID).single()
+    if (data?.config) CONFIG = { ...CONFIG, ...data.config }
+  } catch(e) { /* nutze Standard-Config */ }
+}
+
+// ── Konfiguration in Supabase speichern ──
+async function saveConfig() {
+  // Werte aus Editor-Feldern lesen
+  const days = ['dienstag','mittwoch','donnerstag','freitag']
+  days.forEach(day => {
+    CONFIG[day].img.x  = parseFloat(document.getElementById(`${day}_img_x`)?.value || CONFIG[day].img.x)
+    CONFIG[day].img.y  = parseFloat(document.getElementById(`${day}_img_y`)?.value || CONFIG[day].img.y)
+    CONFIG[day].img.r  = parseFloat(document.getElementById(`${day}_img_r`)?.value || CONFIG[day].img.r)
+    CONFIG[day].text.x = parseFloat(document.getElementById(`${day}_text_x`)?.value || CONFIG[day].text.x)
+    CONFIG[day].text.y = parseFloat(document.getElementById(`${day}_text_y`)?.value || CONFIG[day].text.y)
+    CONFIG[day].text.size = parseFloat(document.getElementById(`${day}_text_size`)?.value || CONFIG[day].text.size)
+    CONFIG[day].preis.x = parseFloat(document.getElementById(`${day}_preis_x`)?.value || CONFIG[day].preis.x)
+    CONFIG[day].preis.y = parseFloat(document.getElementById(`${day}_preis_y`)?.value || CONFIG[day].preis.y)
+    CONFIG[day].preis.size = parseFloat(document.getElementById(`${day}_preis_size`)?.value || CONFIG[day].preis.size)
+    CONFIG[day].preis.color = document.getElementById(`${day}_preis_color`)?.value || CONFIG[day].preis.color
+  })
+
+  try {
+    await sb.from('display_configs').upsert({ kunde_id: KUNDE_ID, screen_id: SCREEN_ID, config: CONFIG })
+    document.getElementById('s-text').textContent = '✓ Gespeichert!'
+    setTimeout(() => renderDisplay(currentContent), 300)
+  } catch(e) {
+    document.getElementById('s-text').textContent = 'Fehler beim Speichern'
+  }
+}
+
+// ── Display rendern ──
 function renderDisplay(content) {
-  const todayKey = getCurrentDayName()
-  if (!todayKey || !content?.gerichte) {
+  if (!content) return
+  currentContent = content
+  const todayKey = getTodayKey()
+
+  if (!todayKey) {
     document.getElementById('no-content').classList.add('show')
     document.getElementById('bg-image').style.opacity = '0'
     return
   }
   document.getElementById('no-content').classList.remove('show')
 
-  // Hintergrundbild wechseln
+  // Hintergrundbild
   const bgImg = document.getElementById('bg-image')
   const newSrc = LAYOUTS[todayKey]
-  console.log('Lade Bild:', newSrc)
   if (bgImg.getAttribute('data-src') !== newSrc) {
     bgImg.style.opacity = '0'
-    const tmpImg = new Image()
-    tmpImg.onload = () => { bgImg.src = newSrc; bgImg.style.opacity = '1'; bgImg.setAttribute('data-src', newSrc) }
-    tmpImg.src = newSrc
+    const tmp = new Image()
+    tmp.onload = () => { bgImg.src = newSrc; bgImg.style.opacity='1'; bgImg.setAttribute('data-src',newSrc) }
+    tmp.src = newSrc
   }
 
   // Datum
   document.getElementById('datum-overlay').textContent = content.woche || ''
 
-  // Gerichte-Overlays
+  // Gerichte
   const overlay = document.getElementById('gerichte-overlay')
   overlay.innerHTML = ''
   const gerichte = content.gerichte || {}
 
-  Object.keys(POSITIONS).forEach(day => {
-    const mahlzeit = gerichte[day]?.[0]
-    if (!mahlzeit?.name) return
-    const pos = POSITIONS[day]
+  Object.keys(CONFIG).forEach(day => {
+    const m = gerichte[day]?.[0]
+    if (!m?.name) return
+    const cfg = CONFIG[day]
     const isToday = day === todayKey
+    const editorClass = IS_EDITOR ? ' drag-handle' : ''
 
-    // Bild
-    const imgSize = (pos.img.r / 100) * window.innerWidth * 2
+    // Bild-Kreis
+    const imgSize = (cfg.img.r/100) * document.getElementById('screen').offsetWidth * 2
     const imgEl = document.createElement('div')
-    imgEl.className = 'day-img-wrap fade-in'
-    imgEl.style.cssText = `left:${pos.img.x}%;top:${pos.img.y}%;width:${imgSize}px;height:${imgSize}px;transform:translate(-50%,-50%);`
-    if (mahlzeit.bild) {
-      imgEl.innerHTML = `<img src="../../${mahlzeit.bild}" onerror="this.parentNode.innerHTML='<div class=day-img-placeholder>🍽️</div>'">`
+    imgEl.className = 'day-circle fade-in' + editorClass
+    imgEl.setAttribute('data-day', day)
+    imgEl.setAttribute('data-type', 'img')
+    imgEl.style.cssText = `left:${cfg.img.x}%;top:${cfg.img.y}%;width:${imgSize}px;height:${imgSize}px;`
+    if (m.bild) {
+      imgEl.innerHTML = `<img src="../../${m.bild}" onerror="this.parentNode.innerHTML='<div class=placeholder>🍽️</div>'">`
     } else {
-      imgEl.innerHTML = '<div class="day-img-placeholder">🍽️</div>'
+      imgEl.innerHTML = '<div class="placeholder">🍽️</div>'
     }
     overlay.appendChild(imgEl)
 
-    // Name
-    const nameEl = document.createElement('div')
-    nameEl.className = 'day-name-text fade-in'
-    nameEl.style.cssText = `left:${pos.text.x}%;top:${pos.text.y}%;width:${pos.text.w}%;transform:translateX(-50%);font-size:${isToday?'2.0vw':'1.5vw'};font-weight:${isToday?800:600};color:#1a1a1a;`
-    nameEl.textContent = mahlzeit.name
-    overlay.appendChild(nameEl)
+    // Text
+    const txtEl = document.createElement('div')
+    txtEl.className = 'day-text fade-in' + editorClass
+    txtEl.setAttribute('data-day', day)
+    txtEl.setAttribute('data-type', 'text')
+    txtEl.style.cssText = `left:${cfg.text.x}%;top:${cfg.text.y}%;width:${cfg.text.w}%;font-size:${isToday ? cfg.text.size*1.3 : cfg.text.size}vw;font-weight:${isToday?800:600};color:#1a1a1a;`
+    txtEl.textContent = m.name
+    overlay.appendChild(txtEl)
 
-    // Preis
-    if (mahlzeit.preis) {
-      const priceEl = document.createElement('div')
-      priceEl.style.cssText = `position:absolute;left:${pos.preis.x}%;top:${pos.preis.y}%;transform:translate(-50%,-50%);font-weight:700;font-family:Georgia,serif;font-size:${isToday?'1.6vw':'1.2vw'};color:#1a1a1a;text-align:center;`
-      priceEl.textContent = mahlzeit.preis
-      overlay.appendChild(priceEl)
+    // Preis — NUR TEXT, keine Form
+    if (m.preis) {
+      const prEl = document.createElement('div')
+      prEl.className = 'day-price fade-in' + editorClass
+      prEl.setAttribute('data-day', day)
+      prEl.setAttribute('data-type', 'preis')
+      prEl.style.cssText = `left:${cfg.preis.x}%;top:${cfg.preis.y}%;font-size:${isToday ? cfg.preis.size*1.2 : cfg.preis.size}vw;color:${cfg.preis.color};`
+      prEl.textContent = m.preis
+      overlay.appendChild(prEl)
     }
   })
 
-  document.getElementById('status-text').textContent = `Live · KW ${getKW()} · ${DAY_LABELS[todayKey]||'Heute'}`
+  document.getElementById('s-text').textContent = `Live · KW ${getKW()} · ${DAY_LABELS[todayKey]||'Heute'}`
 }
 
-async function loadContent() {
-  try {
-    const { data } = await sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).single()
-    if (data?.content) renderDisplay(data.content)
-    else showDemo()
-  } catch(e) { showDemo() }
-}
-
+// ── Demo Inhalt ──
 function showDemo() {
   renderDisplay({
     woche: '28.04. - 02.05.2026',
@@ -176,26 +367,84 @@ function showDemo() {
       freitag:    [{name:'Backfisch',             preis:'6,80 €'}]
     }
   })
-  document.getElementById('status-text').textContent = 'Demo-Modus'
+  document.getElementById('s-text').textContent = 'Demo-Modus'
 }
 
+// ── Supabase laden ──
+async function loadContent() {
+  try {
+    const { data } = await sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).single()
+    if (data?.content) renderDisplay(data.content)
+    else showDemo()
+  } catch(e) { showDemo() }
+}
+
+// ── Realtime ──
 function subscribeRealtime() {
-  sb.channel('display-'+SCREEN_ID)
+  sb.channel('disp-'+SCREEN_ID)
     .on('postgres_changes',{event:'*',schema:'public',table:'displays',filter:`kunde_id=eq.${KUNDE_ID}`},
-      payload => { if (payload.new?.content) renderDisplay(payload.new.content) })
-    .subscribe(s => { if(s==='SUBSCRIBED') document.getElementById('status-text').textContent='Live ✓' })
+      p => { if(p.new?.content) renderDisplay(p.new.content) })
+    .subscribe(s => { if(s==='SUBSCRIBED') document.getElementById('s-text').textContent='● Live' })
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+// ── Editor ──
+function toggleEditor() {
+  document.getElementById('editor-panel').classList.toggle('open')
+  buildEditorUI()
+}
+
+function buildEditorUI() {
+  const el = document.getElementById('ep-positions')
+  const days = ['dienstag','mittwoch','donnerstag','freitag']
+  el.innerHTML = days.map(day => `
+    <div class="ep-day">
+      <div class="ep-day-name">${DAY_LABELS[day]}</div>
+      <div class="ep-row"><label>Bild X %</label><input type="number" id="${day}_img_x" value="${CONFIG[day].img.x}" step="0.5"></div>
+      <div class="ep-row"><label>Bild Y %</label><input type="number" id="${day}_img_y" value="${CONFIG[day].img.y}" step="0.5"></div>
+      <div class="ep-row"><label>Bild Radius</label><input type="number" id="${day}_img_r" value="${CONFIG[day].img.r}" step="0.1"></div>
+      <div class="ep-row"><label>Text X %</label><input type="number" id="${day}_text_x" value="${CONFIG[day].text.x}" step="0.5"></div>
+      <div class="ep-row"><label>Text Y %</label><input type="number" id="${day}_text_y" value="${CONFIG[day].text.y}" step="0.5"></div>
+      <div class="ep-row"><label>Text Größe</label><input type="number" id="${day}_text_size" value="${CONFIG[day].text.size}" step="0.1"></div>
+      <div class="ep-row"><label>Preis X %</label><input type="number" id="${day}_preis_x" value="${CONFIG[day].preis.x}" step="0.5"></div>
+      <div class="ep-row"><label>Preis Y %</label><input type="number" id="${day}_preis_y" value="${CONFIG[day].preis.y}" step="0.5"></div>
+      <div class="ep-row"><label>Preis Größe</label><input type="number" id="${day}_preis_size" value="${CONFIG[day].preis.size}" step="0.1"></div>
+      <div class="ep-row"><label>Preis Farbe</label>
+        <select id="${day}_preis_color">
+          <option value="#1a1a1a" ${CONFIG[day].preis.color==='#1a1a1a'?'selected':''}>Dunkel</option>
+          <option value="#ffffff" ${CONFIG[day].preis.color==='#ffffff'?'selected':''}>Weiß</option>
+        </select>
+      </div>
+    </div>`).join('')
+}
+
+function setTestDay(day, btn) {
+  testDay = day
+  document.querySelectorAll('.ep-day-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  if (currentContent) renderDisplay(currentContent)
+  else showDemo()
+}
+
+// ── Start ──
+window.addEventListener('DOMContentLoaded', async () => {
   setInterval(() => {
-    const n = new Date()
-    document.getElementById('status-time').textContent = n.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' · KW '+getKW()
-  }, 1000)
-  loadContent()
+    const n=new Date()
+    document.getElementById('s-time').textContent=n.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' · KW '+getKW()
+  },1000)
+
+  await loadConfig()
+  await loadContent()
   subscribeRealtime()
-  // Täglich um Mitternacht neu laden
-  const now=new Date(), midnight=new Date(now); midnight.setHours(24,0,5,0)
-  setTimeout(()=>{ loadContent(); setInterval(loadContent,86400000) }, midnight-now)
+
+  if (IS_EDITOR) {
+    document.getElementById('editor-panel').classList.add('open')
+    buildEditorUI()
+  }
+
+  // Mitternacht
+  const now=new Date(),midnight=new Date(now)
+  midnight.setHours(24,0,5,0)
+  setTimeout(()=>{ loadContent(); setInterval(loadContent,86400000) },midnight-now)
 })
 </script>
 </body>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetzgerPost — Display Manager</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="../../shared/style.css" />
+  <style>
+    .screen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;margin-bottom:32px;}
+    .screen-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all .2s;}
+    .screen-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+    .screen-preview{width:100%;aspect-ratio:16/9;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:40px;border-bottom:1px solid var(--border);position:relative;cursor:pointer;}
+    .screen-preview:hover .prev-ov{opacity:1;}
+    .prev-ov{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:.2s;color:#fff;font-size:14px;font-weight:600;}
+    .live-dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 6px var(--success);}
+    .live-dot.offline{background:var(--muted2);box-shadow:none;}
+    .screen-body{padding:16px 18px;}
+    .screen-name{font-size:15px;font-weight:600;margin-bottom:4px;}
+    .screen-meta{font-size:12px;color:var(--muted);margin-bottom:14px;}
+    .screen-actions{display:flex;gap:8px;flex-wrap:wrap;}
+    .send-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;}
+    .week-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;max-height:200px;overflow-y:auto;}
+    .week-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:.15s;}
+    .week-item:hover{border-color:var(--border2);}
+    .week-item.selected{border-color:var(--accent);background:var(--accent-dim);}
+    .week-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);flex-shrink:0;}
+    .week-item.selected .week-dot{background:var(--accent);}
+    .week-name{font-size:13px;font-weight:600;flex:1;}
+    .week-date{font-size:11px;color:var(--muted);}
+    .url-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:10px;}
+    .url-text{font-size:11px;color:var(--accent);word-break:break-all;font-family:monospace;margin:6px 0 10px;}
+  </style>
+</head>
+<body class="mp-bg-glow">
+<nav class="mp-nav" id="mp-nav"></nav>
+<div class="mp-main">
+
+  <div class="mp-flex-between" style="margin-bottom:32px;">
+    <div>
+      <div class="mp-section-title mp-animate">📺 Display Manager</div>
+      <div class="mp-section-sub">Steuere was auf deinen Bildschirmen im Laden läuft</div>
+    </div>
+  </div>
+
+  <div class="mp-label" style="margin-bottom:14px;">Deine Bildschirme</div>
+  <div class="screen-grid">
+    <div class="screen-card mp-animate mp-animate-d1">
+      <div class="screen-preview" onclick="openScreen('screen1')">
+        <span>📺</span>
+        <div class="live-dot" id="dot-screen1"></div>
+        <div class="prev-ov">🔗 Vollbild öffnen</div>
+      </div>
+      <div class="screen-body">
+        <div class="screen-name">Bildschirm 1 — Mittagstisch</div>
+        <div class="screen-meta" id="meta-screen1">Wird geladen…</div>
+        <div class="screen-actions">
+          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openEditor('screen1')">⚙️ Editor</button>
+          <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('screen1')">🔗 URL</button>
+          <button class="mp-btn mp-btn-primary mp-btn-sm" onclick="selectScreenBtn('screen1')">Senden auf →</button>
+        </div>
+      </div>
+    </div>
+    <div class="screen-card mp-animate mp-animate-d2">
+      <div class="screen-preview" onclick="openScreen('screen2')">
+        <span>📋</span>
+        <div class="live-dot offline" id="dot-screen2"></div>
+        <div class="prev-ov">🔗 Vollbild öffnen</div>
+      </div>
+      <div class="screen-body">
+        <div class="screen-name">Bildschirm 2 — Tagesgerichte</div>
+        <div class="screen-meta">Noch nicht konfiguriert</div>
+        <div class="screen-actions">
+          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openEditor('screen2')">⚙️ Editor</button>
+          <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('screen2')">🔗 URL</button>
+          <button class="mp-btn mp-btn-primary mp-btn-sm" onclick="selectScreenBtn('screen2')">Senden auf →</button>
+        </div>
+      </div>
+    </div>
+    <div class="screen-card mp-animate mp-animate-d3">
+      <div class="screen-preview" onclick="openScreen('screen3')">
+        <span>🏷️</span>
+        <div class="live-dot offline" id="dot-screen3"></div>
+        <div class="prev-ov">🔗 Vollbild öffnen</div>
+      </div>
+      <div class="screen-body">
+        <div class="screen-name">Bildschirm 3 — Angebote</div>
+        <div class="screen-meta">Noch nicht konfiguriert</div>
+        <div class="screen-actions">
+          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openEditor('screen3')">⚙️ Editor</button>
+          <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('screen3')">🔗 URL</button>
+          <button class="mp-btn mp-btn-primary mp-btn-sm" onclick="selectScreenBtn('screen3')">Senden auf →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="send-panel mp-animate">
+    <div class="mp-section-title" style="font-size:18px;margin-bottom:6px;">Inhalt senden</div>
+    <div class="mp-section-sub">Wähle eine Woche und sende sie auf den Bildschirm</div>
+    <div class="mp-field" style="margin-top:16px;">
+      <label class="mp-label">Ziel-Bildschirm</label>
+      <select class="mp-select" id="target-screen">
+        <option value="screen1">Bildschirm 1 — Mittagstisch</option>
+        <option value="screen2">Bildschirm 2 — Tagesgerichte</option>
+        <option value="screen3">Bildschirm 3 — Angebote</option>
+        <option value="all">Alle Bildschirme</option>
+      </select>
+    </div>
+    <div class="mp-label" style="margin-bottom:8px;">Woche auswählen</div>
+    <div class="week-list" id="week-list">
+      <div style="color:var(--muted);font-size:13px;padding:10px 0;">Keine gespeicherten Wochen.</div>
+    </div>
+    <button class="mp-btn mp-btn-primary mp-btn-full" onclick="sendToScreen()">📡 Jetzt auf Bildschirm senden</button>
+  </div>
+
+  <div class="send-panel mp-animate">
+    <div class="mp-section-title" style="font-size:18px;margin-bottom:6px;">Bildschirm-URLs</div>
+    <div class="mp-section-sub">Diese URLs auf dem TV im Browser öffnen</div>
+    <div id="url-list"></div>
+  </div>
+
+</div>
+<div class="mp-toast" id="mp-toast"></div>
+<script src="../../shared/supabase.js"></script>
+<script src="../../shared/components.js"></script>
+<script>
+const SCREENS=['screen1','screen2','screen3']
+let selectedWeek=null, kundeId=''
+
+window.addEventListener('DOMContentLoaded',async()=>{
+  const user=await mpInit({nav:{backUrl:'../../dashboard.html',backLabel:'Dashboard'}})
+  if(!user)return
+  kundeId=user.id.substring(0,8)
+  loadWeeks(); buildUrls(); checkStatus()
+})
+
+function loadWeeks(){
+  const weeks=JSON.parse(localStorage.getItem('mp_weeks')||'[]')
+  const list=document.getElementById('week-list')
+  if(!weeks.length)return
+  list.innerHTML=weeks.sort((a,b)=>b.createdAt-a.createdAt).slice(0,10).map(w=>`
+    <div class="week-item" onclick="selectWeek(this,${JSON.stringify(w).replace(/"/g,'&quot;')})">
+      <div class="week-dot"></div>
+      <div class="week-name">${w.woche||'Unbenannte Woche'}</div>
+      <div class="week-date">${formatRelative(new Date(w.createdAt).toISOString())}</div>
+    </div>`).join('')
+}
+
+function selectWeek(el,w){
+  document.querySelectorAll('.week-item').forEach(i=>i.classList.remove('selected'))
+  el.classList.add('selected')
+  selectedWeek=w
+  showToast('Woche ausgewählt: '+w.woche)
+}
+
+function selectScreenBtn(id){
+  document.getElementById('target-screen').value=id
+  showToast(id+' als Ziel ausgewählt ✓')
+}
+
+async function sendToScreen(){
+  if(!selectedWeek){showToast('Bitte zuerst eine Woche auswählen','error');return}
+  const target=document.getElementById('target-screen').value
+  const screens=target==='all'?SCREENS:[target]
+  const content={type:'mittagstisch',woche:selectedWeek.woche||'',gerichte:selectedWeek.meals||selectedWeek.gerichte||{},updatedAt:new Date().toISOString()}
+  for(const s of screens) await MP.publishDisplay(kundeId,s,content)
+  showToast('✅ Gesendet auf '+(target==='all'?'alle Bildschirme':target))
+}
+
+function buildUrls(){
+  const base=window.location.origin
+  document.getElementById('url-list').innerHTML=SCREENS.map((s,i)=>{
+    const url=`${base}/modules/display/screen.html?kunde=${kundeId}&screen=${s}`
+    return `<div class="url-box">
+      <div style="font-size:13px;font-weight:600;">Bildschirm ${i+1}</div>
+      <div class="url-text" id="url-${s}">${url}</div>
+      <div style="display:flex;gap:8px;">
+        <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('${s}')">URL kopieren</button>
+        <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openScreen('${s}')">Öffnen</button>
+        <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="openEditor('${s}')">⚙️ Editor</button>
+      </div>
+    </div>`
+  }).join('')
+}
+
+function copyUrl(s){const el=document.getElementById('url-'+s);if(el)navigator.clipboard.writeText(el.textContent).then(()=>showToast('URL kopiert ✓'))}
+function openScreen(s){const el=document.getElementById('url-'+s);if(el)window.open(el.textContent+'&testday=2','_blank')}
+function openEditor(s){const el=document.getElementById('url-'+s);if(el)window.open(el.textContent+'&testday=2&editor=true','_blank')}
+
+async function checkStatus(){
+  for(const s of SCREENS){
+    try{
+      const data=await MP.getDisplayContent(kundeId,s)
+      const dot=document.getElementById('dot-'+s)
+      const meta=document.getElementById('meta-'+s)
+      if(data?.content){
+        if(dot)dot.classList.remove('offline')
+        if(meta)meta.textContent='Zuletzt: '+formatRelative(data.content.updatedAt||new Date().toISOString())+' · '+(data.content.woche||'')
+      }
+    }catch(e){}
+  }
+}
+</script>
+</body>
+</html>

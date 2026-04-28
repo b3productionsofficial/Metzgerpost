@@ -393,20 +393,37 @@ function toggleEditor() {
   buildEditorUI()
 }
 
+function livePreview() {
+  const days = ['dienstag','mittwoch','donnerstag','freitag']
+  days.forEach(day => {
+    const ix = document.getElementById(day+'_img_x')
+    if (!ix) return
+    CONFIG[day].img.x   = parseFloat(ix.value) || CONFIG[day].img.x
+    CONFIG[day].img.y   = parseFloat(document.getElementById(day+'_img_y')?.value) || CONFIG[day].img.y
+    CONFIG[day].img.r   = parseFloat(document.getElementById(day+'_img_r')?.value) || CONFIG[day].img.r
+    CONFIG[day].text.x  = parseFloat(document.getElementById(day+'_text_x')?.value) || CONFIG[day].text.x
+    CONFIG[day].text.y  = parseFloat(document.getElementById(day+'_text_y')?.value) || CONFIG[day].text.y
+    CONFIG[day].preis.x = parseFloat(document.getElementById(day+'_preis_x')?.value) || CONFIG[day].preis.x
+    CONFIG[day].preis.y = parseFloat(document.getElementById(day+'_preis_y')?.value) || CONFIG[day].preis.y
+  })
+  if (currentContent) renderDisplay(currentContent)
+  else showDemo()
+}
+
 function buildEditorUI() {
   const el = document.getElementById('ep-positions')
   const days = ['dienstag','mittwoch','donnerstag','freitag']
   el.innerHTML = days.map(day => `
     <div class="ep-day">
       <div class="ep-day-name">${DAY_LABELS[day]}</div>
-      <div class="ep-row"><label>Bild X %</label><input type="number" id="${day}_img_x" value="${CONFIG[day].img.x}" step="0.5"></div>
-      <div class="ep-row"><label>Bild Y %</label><input type="number" id="${day}_img_y" value="${CONFIG[day].img.y}" step="0.5"></div>
-      <div class="ep-row"><label>Bild Radius</label><input type="number" id="${day}_img_r" value="${CONFIG[day].img.r}" step="0.1"></div>
-      <div class="ep-row"><label>Text X %</label><input type="number" id="${day}_text_x" value="${CONFIG[day].text.x}" step="0.5"></div>
-      <div class="ep-row"><label>Text Y %</label><input type="number" id="${day}_text_y" value="${CONFIG[day].text.y}" step="0.5"></div>
+      <div class="ep-row"><label>Bild X %</label><input type="number" id="${day}_img_x" value="${CONFIG[day].img.x}" step="0.5" oninput="livePreview()"></div>
+      <div class="ep-row"><label>Bild Y %</label><input type="number" id="${day}_img_y" value="${CONFIG[day].img.y}" step="0.5" oninput="livePreview()"></div>
+      <div class="ep-row"><label>Bild Radius</label><input type="number" id="${day}_img_r" value="${CONFIG[day].img.r}" step="0.1" oninput="livePreview()"></div>
+      <div class="ep-row"><label>Text X %</label><input type="number" id="${day}_text_x" value="${CONFIG[day].text.x}" step="0.5" oninput="livePreview()"></div>
+      <div class="ep-row"><label>Text Y %</label><input type="number" id="${day}_text_y" value="${CONFIG[day].text.y}" step="0.5" oninput="livePreview()"></div>
       <div class="ep-row"><label>Text Größe</label><input type="number" id="${day}_text_size" value="${CONFIG[day].text.size}" step="0.1"></div>
-      <div class="ep-row"><label>Preis X %</label><input type="number" id="${day}_preis_x" value="${CONFIG[day].preis.x}" step="0.5"></div>
-      <div class="ep-row"><label>Preis Y %</label><input type="number" id="${day}_preis_y" value="${CONFIG[day].preis.y}" step="0.5"></div>
+      <div class="ep-row"><label>Preis X %</label><input type="number" id="${day}_preis_x" value="${CONFIG[day].preis.x}" step="0.5" oninput="livePreview()"></div>
+      <div class="ep-row"><label>Preis Y %</label><input type="number" id="${day}_preis_y" value="${CONFIG[day].preis.y}" step="0.5" oninput="livePreview()"></div>
       <div class="ep-row"><label>Preis Größe</label><input type="number" id="${day}_preis_size" value="${CONFIG[day].preis.size}" step="0.1"></div>
       <div class="ep-row"><label>Preis Farbe</label>
         <select id="${day}_preis_color">
@@ -418,7 +435,18 @@ function buildEditorUI() {
 }
 
 function setTestDay(day, btn) {
-  testDay = day
+  // URL-Param überschreiben mit neuem testday
+  const url = new URL(window.location.href)
+  url.searchParams.set('testday', day)
+  window.history.replaceState({}, '', url)
+  // Hintergrundbild direkt wechseln
+  const dayKey = DAY_MAP[day]
+  const bgImg = document.getElementById('bg-image')
+  bgImg.style.opacity = '0'
+  const tmp = new Image()
+  tmp.onload = () => { bgImg.src = LAYOUTS[dayKey]; bgImg.style.opacity='1'; bgImg.setAttribute('data-src', LAYOUTS[dayKey]) }
+  tmp.src = LAYOUTS[dayKey]
+  // Content neu rendern
   document.querySelectorAll('.ep-day-btn').forEach(b => b.classList.remove('active'))
   btn.classList.add('active')
   if (currentContent) renderDisplay(currentContent)

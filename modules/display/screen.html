@@ -449,10 +449,13 @@ function loadConfig(){
     .then(function(r){
       var row=r&&r.data&&r.data[0];
       if(row&&row.config){
-        // Deep merge
         var lays=['dienstag','mittwoch','donnerstag','freitag'];
         for(var i=0;i<lays.length;i++){
-          if(row.config[lays[i]])CONFIG[lays[i]]=row.config[lays[i]];
+          var lay=row.config[lays[i]];
+          // Nur neues Format übernehmen (hat 'datum' + verschachtelte Tage)
+          if(lay&&lay.datum&&lay.dienstag){
+            CONFIG[lays[i]]=lay;
+          }
         }
       }
     }).catch(function(){});

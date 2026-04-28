@@ -15,7 +15,6 @@
       display:flex; align-items:center; justify-content:center;
     }
 
-    /* 16:9 Container — füllt immer den ganzen Bildschirm */
     #screen {
       position:relative;
       width:100vw;
@@ -37,7 +36,6 @@
       pointer-events:none;
     }
 
-    /* Datum */
     #datum-overlay {
       position:absolute;
       top:5%;
@@ -51,7 +49,6 @@
       pointer-events:none;
     }
 
-    /* Gericht Overlays */
     .day-circle {
       position:absolute;
       border-radius:50%;
@@ -88,13 +85,11 @@
       pointer-events:none;
     }
 
-    /* Fade Animation */
     .fade-in { animation:fadeIn .6s ease both; }
     @keyframes fadeIn { from{opacity:0;transform:translate(-50%,calc(-50% + 8px))} to{opacity:1;transform:translate(-50%,-50%)} }
     .day-text.fade-in { animation:fadeInText .6s ease both; }
     @keyframes fadeInText { from{opacity:0;transform:translateX(-50%) translateY(6px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 
-    /* Wochenende */
     #no-content {
       display:none; position:absolute; inset:0;
       background:#e8e4de;
@@ -105,7 +100,26 @@
     #no-content h1 { font-size:4vw; color:#2d4a2d; font-family:Georgia,serif; }
     #no-content p  { font-size:2vw; color:#666; }
 
-    /* Status Bar */
+    /* Lade-Screen */
+    #loading-screen {
+      position:fixed; inset:0;
+      background:#111;
+      display:flex; align-items:center; justify-content:center;
+      flex-direction:column; gap:12px;
+      z-index:500;
+    }
+    #loading-screen.hidden { display:none; }
+    #loading-text { color:#d4853a; font-family:Georgia,serif; font-size:2vw; }
+    #loading-sub  { color:#666; font-family:monospace; font-size:1.2vw; }
+    .loader-bar {
+      width:200px; height:3px; background:#222; border-radius:2px; overflow:hidden;
+    }
+    .loader-fill {
+      height:100%; background:#d4853a; border-radius:2px;
+      animation: loadpulse 1.5s ease-in-out infinite;
+    }
+    @keyframes loadpulse { 0%{width:0%} 50%{width:80%} 100%{width:100%} }
+
     #status-bar {
       position:fixed; bottom:0; left:0; right:0; height:24px;
       background:rgba(0,0,0,.45);
@@ -128,7 +142,7 @@
       overflow-y:auto;
       z-index:100;
       padding:16px;
-      font-family:'DM Sans',sans-serif;
+      font-family:Georgia,sans-serif;
       color:#f0ece4;
       pointer-events:all;
     }
@@ -152,21 +166,23 @@
       font-size:13px; font-weight:600; cursor:pointer; margin-top:8px;
     }
     .ep-btn-save { background:#d4853a; color:#fff; }
-    .ep-btn-save:hover { background:#e8a055; }
     .ep-btn-test { background:#242018; color:#8a8070; border:1px solid #2e2a24; margin-bottom:8px; }
     .ep-day-slider { display:flex; gap:4px; margin-bottom:12px; }
     .ep-day-btn { flex:1; padding:6px 4px; border:1px solid #2e2a24; border-radius:4px; background:#242018; color:#8a8070; font-size:11px; cursor:pointer; text-align:center; }
     .ep-day-btn.active { border-color:#d4853a; color:#d4853a; background:rgba(212,133,58,.1); }
 
-    /* Drag handles im Editor-Modus */
-    .drag-handle {
-      cursor:move !important;
-      pointer-events:all !important;
-    }
+    .drag-handle { cursor:move !important; pointer-events:all !important; }
     .drag-handle:hover { outline:2px dashed #d4853a; outline-offset:3px; }
   </style>
 </head>
 <body>
+
+<!-- Lade-Anzeige (TV sieht sofort was passiert) -->
+<div id="loading-screen">
+  <div id="loading-text">MetzgerPost</div>
+  <div class="loader-bar"><div class="loader-fill"></div></div>
+  <div id="loading-sub">Verbinde mit Server…</div>
+</div>
 
 <div id="screen">
   <img id="bg-image" src="" alt="">
@@ -182,7 +198,7 @@
 
 <!-- Editor Panel -->
 <div id="editor-panel">
-  <div class="ep-title">⚙️ Position Editor</div>
+  <div class="ep-title">&#9881;&#65039; Position Editor</div>
 
   <div class="ep-day-slider" id="ep-testday-btns">
     <div class="ep-day-btn active" onclick="setTestDay(2,this)">Di</div>
@@ -193,168 +209,179 @@
 
   <div id="ep-positions"></div>
 
-  <button class="ep-btn ep-btn-save" onclick="saveConfig()">💾 Positionen speichern</button>
-  <button class="ep-btn ep-btn-test" onclick="toggleEditor()">✕ Editor schließen</button>
+  <button class="ep-btn ep-btn-save" onclick="saveConfig()">&#128190; Positionen speichern</button>
+  <button class="ep-btn ep-btn-test" onclick="toggleEditor()">&#10005; Editor schlie&szlig;en</button>
 </div>
 
 <div id="status-bar">
-  <div class="s-live"><div class="s-dot"></div><span id="s-text">Verbinde…</span></div>
+  <div class="s-live"><div class="s-dot"></div><span id="s-text">Verbinde&#8230;</span></div>
   <span id="s-time"></span>
 </div>
 
 <script>
-const SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co'
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10'
-const params    = new URLSearchParams(window.location.search)
-const KUNDE_ID  = params.get('kunde')  || 'demo'
-const SCREEN_ID = params.get('screen') || 'screen1'
-const IS_EDITOR = params.get('editor') === 'true'
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
+// ════════════════════════════════════════════
+// TV-KOMPATIBEL: Kein async/await, kein ?., kein URLSearchParams, kein new URL()
+// ════════════════════════════════════════════
 
-const DAY_MAP    = { 2:'dienstag', 3:'mittwoch', 4:'donnerstag', 5:'freitag' }
-const DAY_LABELS = { dienstag:'Dienstag', mittwoch:'Mittwoch', donnerstag:'Donnerstag', freitag:'Freitag' }
+var SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co';
+var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10';
 
-const LAYOUTS = {
+// ── URL-Parameter OHNE URLSearchParams ──
+function getParam(name) {
+  var search = window.location.search;
+  if (!search) return null;
+  var pairs = search.substring(1).split('&');
+  for (var i = 0; i < pairs.length; i++) {
+    var pair = pairs[i].split('=');
+    if (decodeURIComponent(pair[0]) === name) {
+      return pair.length > 1 ? decodeURIComponent(pair[1]) : '';
+    }
+  }
+  return null;
+}
+
+var KUNDE_ID  = getParam('kunde')  || 'demo';
+var SCREEN_ID = getParam('screen') || 'screen1';
+var IS_EDITOR = getParam('editor') === 'true';
+var IS_DEMO   = getParam('demo')   === 'true';
+
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+var DAY_MAP    = { 2:'dienstag', 3:'mittwoch', 4:'donnerstag', 5:'freitag' };
+var DAY_LABELS = { dienstag:'Dienstag', mittwoch:'Mittwoch', donnerstag:'Donnerstag', freitag:'Freitag' };
+
+var LAYOUTS = {
   dienstag:   'assets/Bildschim_1_Dienstag.png',
   mittwoch:   'assets/Bildschirm_1_Mittwoch.png',
   donnerstag: 'assets/Bildschirm_1_Donnerstag.png',
-  freitag:    'assets/Bildschirm_1_Freitag.png',
-}
+  freitag:    'assets/Bildschirm_1_Freitag.png'
+};
 
-// Standard-Konfiguration (Fallback wenn Supabase leer)
-let CONFIG = {
+var CONFIG = {
   dienstag:   { img:{x:12.5,y:30,r:3.8}, text:{x:12.5,y:55,w:20,size:1.8}, preis:{x:12.5,y:70,size:1.5,color:'#1a1a1a'} },
   mittwoch:   { img:{x:37.5,y:32,r:3.2}, text:{x:37.5,y:55,w:18,size:1.4}, preis:{x:37.5,y:68,size:1.2,color:'#ffffff'} },
   donnerstag: { img:{x:62.5,y:32,r:3.2}, text:{x:62.5,y:55,w:18,size:1.4}, preis:{x:62.5,y:68,size:1.2,color:'#1a1a1a'} },
-  freitag:    { img:{x:87.5,y:32,r:3.2}, text:{x:87.5,y:55,w:18,size:1.4}, preis:{x:87.5,y:68,size:1.2,color:'#ffffff'} },
-}
+  freitag:    { img:{x:87.5,y:32,r:3.2}, text:{x:87.5,y:55,w:18,size:1.4}, preis:{x:87.5,y:68,size:1.2,color:'#ffffff'} }
+};
 
-let currentContent = null
-let testDay = null
+var currentContent = null;
+var testDay = null;
 
-// ── Tag ermitteln ──
+// ── Hilfsfunktionen ──
 function getTodayKey() {
-  const t = params.get('testday') || (testDay ? String(testDay) : null)
-  return DAY_MAP[t ? parseInt(t) : new Date().getDay()] || null
+  var t = getParam('testday') || (testDay ? String(testDay) : null);
+  var dayNum = t ? parseInt(t, 10) : new Date().getDay();
+  return DAY_MAP[dayNum] || null;
 }
 
-// ── KW ──
-function getKW(d=new Date()) {
-  const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))
-  date.setUTCDate(date.getUTCDate()+4-(date.getUTCDay()||7))
-  const y=new Date(Date.UTC(date.getUTCFullYear(),0,1))
-  return Math.ceil((((date-y)/86400000)+1)/7)
+function getKW(d) {
+  if (!d) d = new Date();
+  var date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+  var y = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - y) / 86400000) + 1) / 7);
 }
 
-// ── Konfiguration aus Supabase laden ──
-async function loadConfig() {
-  try {
-    const { data: cfgRows } = await sb.from('display_configs').select('config').eq('kunde_id', KUNDE_ID).eq('screen_id', SCREEN_ID).limit(1)
-  const data = cfgRows?.[0] || null
-    if (data?.config) CONFIG = { ...CONFIG, ...data.config }
-  } catch(e) { /* nutze Standard-Config */ }
+function setLoadingText(txt) {
+  var el = document.getElementById('loading-sub');
+  if (el) el.textContent = txt;
 }
 
-// ── Konfiguration in Supabase speichern ──
-async function saveConfig() {
-  // Werte aus Editor-Feldern lesen
-  const days = ['dienstag','mittwoch','donnerstag','freitag']
-  days.forEach(day => {
-    CONFIG[day].img.x  = parseFloat(document.getElementById(`${day}_img_x`)?.value || CONFIG[day].img.x)
-    CONFIG[day].img.y  = parseFloat(document.getElementById(`${day}_img_y`)?.value || CONFIG[day].img.y)
-    CONFIG[day].img.r  = parseFloat(document.getElementById(`${day}_img_r`)?.value || CONFIG[day].img.r)
-    CONFIG[day].text.x = parseFloat(document.getElementById(`${day}_text_x`)?.value || CONFIG[day].text.x)
-    CONFIG[day].text.y = parseFloat(document.getElementById(`${day}_text_y`)?.value || CONFIG[day].text.y)
-    CONFIG[day].text.size = parseFloat(document.getElementById(`${day}_text_size`)?.value || CONFIG[day].text.size)
-    CONFIG[day].preis.x = parseFloat(document.getElementById(`${day}_preis_x`)?.value || CONFIG[day].preis.x)
-    CONFIG[day].preis.y = parseFloat(document.getElementById(`${day}_preis_y`)?.value || CONFIG[day].preis.y)
-    CONFIG[day].preis.size = parseFloat(document.getElementById(`${day}_preis_size`)?.value || CONFIG[day].preis.size)
-    CONFIG[day].preis.color = document.getElementById(`${day}_preis_color`)?.value || CONFIG[day].preis.color
-  })
-
-  try {
-    await sb.from('display_configs').upsert({ kunde_id: KUNDE_ID, screen_id: SCREEN_ID, config: CONFIG })
-    document.getElementById('s-text').textContent = '✓ Gespeichert!'
-    setTimeout(() => renderDisplay(currentContent), 300)
-  } catch(e) {
-    document.getElementById('s-text').textContent = 'Fehler beim Speichern'
-  }
+function hideLoading() {
+  var el = document.getElementById('loading-screen');
+  if (el) el.className = 'hidden';
 }
 
 // ── Display rendern ──
 function renderDisplay(content) {
-  if (!content) return
-  currentContent = content
-  const todayKey = getTodayKey()
+  if (!content) return;
+  currentContent = content;
+  var todayKey = getTodayKey();
 
   if (!todayKey) {
-    document.getElementById('no-content').classList.add('show')
-    document.getElementById('bg-image').style.opacity = '0'
-    return
+    document.getElementById('no-content').className = 'show';
+    document.getElementById('bg-image').style.opacity = '0';
+    hideLoading();
+    return;
   }
-  document.getElementById('no-content').classList.remove('show')
+  document.getElementById('no-content').className = '';
 
   // Hintergrundbild
-  const bgImg = document.getElementById('bg-image')
-  const newSrc = LAYOUTS[todayKey]
+  var bgImg = document.getElementById('bg-image');
+  var newSrc = LAYOUTS[todayKey];
   if (bgImg.getAttribute('data-src') !== newSrc) {
-    bgImg.style.opacity = '0'
-    const tmp = new Image()
-    tmp.onload = () => { bgImg.src = newSrc; bgImg.style.opacity='1'; bgImg.setAttribute('data-src',newSrc) }
-    tmp.src = newSrc
+    bgImg.style.opacity = '0';
+    var tmp = new Image();
+    tmp.onload = function() {
+      bgImg.src = newSrc;
+      bgImg.style.opacity = '1';
+      bgImg.setAttribute('data-src', newSrc);
+      hideLoading();
+    };
+    tmp.onerror = function() { hideLoading(); };
+    tmp.src = newSrc;
+  } else {
+    hideLoading();
   }
 
   // Datum
-  document.getElementById('datum-overlay').textContent = content.woche || ''
+  document.getElementById('datum-overlay').textContent = content.woche || '';
 
   // Gerichte
-  const overlay = document.getElementById('gerichte-overlay')
-  overlay.innerHTML = ''
-  const gerichte = content.gerichte || {}
+  var overlay = document.getElementById('gerichte-overlay');
+  overlay.innerHTML = '';
+  var gerichte = content.gerichte || {};
+  var days = ['dienstag','mittwoch','donnerstag','freitag'];
 
-  Object.keys(CONFIG).forEach(day => {
-    const m = gerichte[day]?.[0]
-    if (!m?.name) return
-    const cfg = CONFIG[day]
-    const isToday = day === todayKey
-    const editorClass = IS_EDITOR ? ' drag-handle' : ''
+  for (var i = 0; i < days.length; i++) {
+    var day = days[i];
+    var dayGerichte = gerichte[day];
+    var m = (dayGerichte && dayGerichte[0]) ? dayGerichte[0] : null;
+    if (!m || !m.name) continue;
+
+    var cfg = CONFIG[day];
+    var isToday = (day === todayKey);
+    var editorClass = IS_EDITOR ? ' drag-handle' : '';
 
     // Bild-Kreis
-    const imgSize = (cfg.img.r/100) * document.getElementById('screen').offsetWidth * 2
-    const imgEl = document.createElement('div')
-    imgEl.className = 'day-circle fade-in' + editorClass
-    imgEl.setAttribute('data-day', day)
-    imgEl.setAttribute('data-type', 'img')
-    imgEl.style.cssText = `left:${cfg.img.x}%;top:${cfg.img.y}%;width:${imgSize}px;height:${imgSize}px;`
+    var imgSize = (cfg.img.r / 100) * document.getElementById('screen').offsetWidth * 2;
+    var imgEl = document.createElement('div');
+    imgEl.className = 'day-circle fade-in' + editorClass;
+    imgEl.setAttribute('data-day', day);
+    imgEl.setAttribute('data-type', 'img');
+    imgEl.style.cssText = 'left:' + cfg.img.x + '%;top:' + cfg.img.y + '%;width:' + imgSize + 'px;height:' + imgSize + 'px;';
     if (m.bild) {
-      imgEl.innerHTML = `<img src="../../${m.bild}" onerror="this.parentNode.innerHTML='<div class=placeholder>🍽️</div>'">`
+      imgEl.innerHTML = '<img src="../../' + m.bild + '" onerror="this.parentNode.innerHTML=\'<div class=placeholder>\uD83C\uDF7D\uFE0F</div>\'">';
     } else {
-      imgEl.innerHTML = '<div class="placeholder">🍽️</div>'
+      imgEl.innerHTML = '<div class="placeholder">\uD83C\uDF7D\uFE0F</div>';
     }
-    overlay.appendChild(imgEl)
+    overlay.appendChild(imgEl);
 
     // Text
-    const txtEl = document.createElement('div')
-    txtEl.className = 'day-text fade-in' + editorClass
-    txtEl.setAttribute('data-day', day)
-    txtEl.setAttribute('data-type', 'text')
-    txtEl.style.cssText = `left:${cfg.text.x}%;top:${cfg.text.y}%;width:${cfg.text.w}%;font-size:${isToday ? cfg.text.size*1.3 : cfg.text.size}vw;font-weight:${isToday?800:600};color:#1a1a1a;`
-    txtEl.textContent = m.name
-    overlay.appendChild(txtEl)
+    var txtEl = document.createElement('div');
+    txtEl.className = 'day-text fade-in' + editorClass;
+    txtEl.setAttribute('data-day', day);
+    txtEl.setAttribute('data-type', 'text');
+    var txtSize = isToday ? cfg.text.size * 1.3 : cfg.text.size;
+    var txtWeight = isToday ? 800 : 600;
+    txtEl.style.cssText = 'left:' + cfg.text.x + '%;top:' + cfg.text.y + '%;width:' + cfg.text.w + '%;font-size:' + txtSize + 'vw;font-weight:' + txtWeight + ';color:#1a1a1a;';
+    txtEl.textContent = m.name;
+    overlay.appendChild(txtEl);
 
-    // Preis — NUR TEXT, keine Form
+    // Preis
     if (m.preis) {
-      const prEl = document.createElement('div')
-      prEl.className = 'day-price fade-in' + editorClass
-      prEl.setAttribute('data-day', day)
-      prEl.setAttribute('data-type', 'preis')
-      prEl.style.cssText = `left:${cfg.preis.x}%;top:${cfg.preis.y}%;font-size:${isToday ? cfg.preis.size*1.2 : cfg.preis.size}vw;color:${cfg.preis.color};`
-      prEl.textContent = m.preis
-      overlay.appendChild(prEl)
+      var prEl = document.createElement('div');
+      prEl.className = 'day-price fade-in' + editorClass;
+      prEl.setAttribute('data-day', day);
+      prEl.setAttribute('data-type', 'preis');
+      var prSize = isToday ? cfg.preis.size * 1.2 : cfg.preis.size;
+      prEl.style.cssText = 'left:' + cfg.preis.x + '%;top:' + cfg.preis.y + '%;font-size:' + prSize + 'vw;color:' + cfg.preis.color + ';';
+      prEl.textContent = m.preis;
+      overlay.appendChild(prEl);
     }
-  })
+  }
 
-  document.getElementById('s-text').textContent = `Live · KW ${getKW()} · ${DAY_LABELS[todayKey]||'Heute'}`
+  document.getElementById('s-text').textContent = 'Live \u00B7 KW ' + getKW() + ' \u00B7 ' + (DAY_LABELS[todayKey] || 'Heute');
 }
 
 // ── Demo Inhalt ──
@@ -367,114 +394,227 @@ function showDemo() {
       donnerstag: [{name:'Cordon Bleu',           preis:'6,80 €'}],
       freitag:    [{name:'Backfisch',             preis:'6,80 €'}]
     }
-  })
-  document.getElementById('s-text').textContent = 'Demo-Modus'
+  });
+  document.getElementById('s-text').textContent = 'Demo-Modus';
 }
 
-// ── Supabase laden ──
-async function loadContent() {
-  try {
-    const { data } = await sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).single()
-    if (data?.content) renderDisplay(data.content)
-    else showDemo()
-  } catch(e) { showDemo() }
+// ── Konfiguration laden (Promise-basiert, kein async/await) ──
+function loadConfig() {
+  setLoadingText('Lade Konfiguration…');
+  return sb.from('display_configs')
+    .select('config')
+    .eq('kunde_id', KUNDE_ID)
+    .eq('screen_id', SCREEN_ID)
+    .limit(1)
+    .then(function(result) {
+      var cfgRows = result && result.data;
+      var data = (cfgRows && cfgRows[0]) ? cfgRows[0] : null;
+      if (data && data.config) {
+        var keys = Object.keys(data.config);
+        for (var i = 0; i < keys.length; i++) {
+          CONFIG[keys[i]] = data.config[keys[i]];
+        }
+      }
+    })
+    .catch(function(e) { /* nutze Standard-Config */ });
 }
 
-// ── Realtime ──
+// ── Inhalt laden ──
+function loadContent() {
+  setLoadingText('Lade Mittagstisch…');
+  return sb.from('displays')
+    .select('content')
+    .eq('kunde_id', KUNDE_ID)
+    .eq('screen_id', SCREEN_ID)
+    .single()
+    .then(function(result) {
+      var data = result && result.data;
+      if (data && data.content) {
+        renderDisplay(data.content);
+      } else {
+        showDemo();
+      }
+    })
+    .catch(function(e) { showDemo(); });
+}
+
+// ── Realtime (mit Fehlerbehandlung) ──
 function subscribeRealtime() {
-  sb.channel('disp-'+SCREEN_ID)
-    .on('postgres_changes',{event:'*',schema:'public',table:'displays',filter:`kunde_id=eq.${KUNDE_ID}`},
-      p => { if(p.new?.content) renderDisplay(p.new.content) })
-    .subscribe(s => { if(s==='SUBSCRIBED') document.getElementById('s-text').textContent='● Live' })
+  try {
+    sb.channel('disp-' + SCREEN_ID)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'displays',
+        filter: 'kunde_id=eq.' + KUNDE_ID
+      }, function(p) {
+        if (p && p.new && p.new.content) renderDisplay(p.new.content);
+      })
+      .subscribe(function(s) {
+        if (s === 'SUBSCRIBED') {
+          document.getElementById('s-text').textContent = '\u25CF Live';
+        }
+      });
+  } catch(e) {
+    // Kein Realtime → polling alle 60 Sekunden als Fallback
+    setInterval(loadContent, 60000);
+  }
+}
+
+// ── Konfiguration speichern ──
+function saveConfig() {
+  var days = ['dienstag','mittwoch','donnerstag','freitag'];
+  for (var i = 0; i < days.length; i++) {
+    var day = days[i];
+    var ixEl = document.getElementById(day + '_img_x');
+    if (!ixEl) continue;
+    CONFIG[day].img.x    = parseFloat(ixEl.value) || CONFIG[day].img.x;
+    CONFIG[day].img.y    = parseFloat((document.getElementById(day + '_img_y') || {}).value) || CONFIG[day].img.y;
+    CONFIG[day].img.r    = parseFloat((document.getElementById(day + '_img_r') || {}).value) || CONFIG[day].img.r;
+    CONFIG[day].text.x   = parseFloat((document.getElementById(day + '_text_x') || {}).value) || CONFIG[day].text.x;
+    CONFIG[day].text.y   = parseFloat((document.getElementById(day + '_text_y') || {}).value) || CONFIG[day].text.y;
+    CONFIG[day].text.size= parseFloat((document.getElementById(day + '_text_size') || {}).value) || CONFIG[day].text.size;
+    CONFIG[day].preis.x  = parseFloat((document.getElementById(day + '_preis_x') || {}).value) || CONFIG[day].preis.x;
+    CONFIG[day].preis.y  = parseFloat((document.getElementById(day + '_preis_y') || {}).value) || CONFIG[day].preis.y;
+    CONFIG[day].preis.size = parseFloat((document.getElementById(day + '_preis_size') || {}).value) || CONFIG[day].preis.size;
+    var colorEl = document.getElementById(day + '_preis_color');
+    CONFIG[day].preis.color = colorEl ? colorEl.value : CONFIG[day].preis.color;
+  }
+
+  sb.from('display_configs')
+    .upsert({ kunde_id: KUNDE_ID, screen_id: SCREEN_ID, config: CONFIG })
+    .then(function() {
+      document.getElementById('s-text').textContent = '\u2713 Gespeichert!';
+      setTimeout(function() { renderDisplay(currentContent); }, 300);
+    })
+    .catch(function() {
+      document.getElementById('s-text').textContent = 'Fehler beim Speichern';
+    });
 }
 
 // ── Editor ──
 function toggleEditor() {
-  document.getElementById('editor-panel').classList.toggle('open')
-  buildEditorUI()
+  var panel = document.getElementById('editor-panel');
+  if (panel.className === 'open') {
+    panel.className = '';
+  } else {
+    panel.className = 'open';
+    buildEditorUI();
+  }
 }
 
 function livePreview() {
-  const days = ['dienstag','mittwoch','donnerstag','freitag']
-  days.forEach(day => {
-    const ix = document.getElementById(day+'_img_x')
-    if (!ix) return
-    CONFIG[day].img.x   = parseFloat(ix.value) || CONFIG[day].img.x
-    CONFIG[day].img.y   = parseFloat(document.getElementById(day+'_img_y')?.value) || CONFIG[day].img.y
-    CONFIG[day].img.r   = parseFloat(document.getElementById(day+'_img_r')?.value) || CONFIG[day].img.r
-    CONFIG[day].text.x  = parseFloat(document.getElementById(day+'_text_x')?.value) || CONFIG[day].text.x
-    CONFIG[day].text.y  = parseFloat(document.getElementById(day+'_text_y')?.value) || CONFIG[day].text.y
-    CONFIG[day].preis.x = parseFloat(document.getElementById(day+'_preis_x')?.value) || CONFIG[day].preis.x
-    CONFIG[day].preis.y = parseFloat(document.getElementById(day+'_preis_y')?.value) || CONFIG[day].preis.y
-  })
-  if (currentContent) renderDisplay(currentContent)
-  else showDemo()
+  var days = ['dienstag','mittwoch','donnerstag','freitag'];
+  for (var i = 0; i < days.length; i++) {
+    var day = days[i];
+    var ixEl = document.getElementById(day + '_img_x');
+    if (!ixEl) continue;
+    CONFIG[day].img.x   = parseFloat(ixEl.value) || CONFIG[day].img.x;
+    CONFIG[day].img.y   = parseFloat((document.getElementById(day + '_img_y') || {}).value) || CONFIG[day].img.y;
+    CONFIG[day].img.r   = parseFloat((document.getElementById(day + '_img_r') || {}).value) || CONFIG[day].img.r;
+    CONFIG[day].text.x  = parseFloat((document.getElementById(day + '_text_x') || {}).value) || CONFIG[day].text.x;
+    CONFIG[day].text.y  = parseFloat((document.getElementById(day + '_text_y') || {}).value) || CONFIG[day].text.y;
+    CONFIG[day].preis.x = parseFloat((document.getElementById(day + '_preis_x') || {}).value) || CONFIG[day].preis.x;
+    CONFIG[day].preis.y = parseFloat((document.getElementById(day + '_preis_y') || {}).value) || CONFIG[day].preis.y;
+  }
+  if (currentContent) renderDisplay(currentContent);
+  else showDemo();
 }
 
 function buildEditorUI() {
-  const el = document.getElementById('ep-positions')
-  const days = ['dienstag','mittwoch','donnerstag','freitag']
-  el.innerHTML = days.map(day => `
-    <div class="ep-day">
-      <div class="ep-day-name">${DAY_LABELS[day]}</div>
-      <div class="ep-row"><label>Bild X %</label><input type="number" id="${day}_img_x" value="${CONFIG[day].img.x}" step="0.5" oninput="livePreview()"></div>
-      <div class="ep-row"><label>Bild Y %</label><input type="number" id="${day}_img_y" value="${CONFIG[day].img.y}" step="0.5" oninput="livePreview()"></div>
-      <div class="ep-row"><label>Bild Radius</label><input type="number" id="${day}_img_r" value="${CONFIG[day].img.r}" step="0.1" oninput="livePreview()"></div>
-      <div class="ep-row"><label>Text X %</label><input type="number" id="${day}_text_x" value="${CONFIG[day].text.x}" step="0.5" oninput="livePreview()"></div>
-      <div class="ep-row"><label>Text Y %</label><input type="number" id="${day}_text_y" value="${CONFIG[day].text.y}" step="0.5" oninput="livePreview()"></div>
-      <div class="ep-row"><label>Text Größe</label><input type="number" id="${day}_text_size" value="${CONFIG[day].text.size}" step="0.1"></div>
-      <div class="ep-row"><label>Preis X %</label><input type="number" id="${day}_preis_x" value="${CONFIG[day].preis.x}" step="0.5" oninput="livePreview()"></div>
-      <div class="ep-row"><label>Preis Y %</label><input type="number" id="${day}_preis_y" value="${CONFIG[day].preis.y}" step="0.5" oninput="livePreview()"></div>
-      <div class="ep-row"><label>Preis Größe</label><input type="number" id="${day}_preis_size" value="${CONFIG[day].preis.size}" step="0.1"></div>
-      <div class="ep-row"><label>Preis Farbe</label>
-        <select id="${day}_preis_color">
-          <option value="#1a1a1a" ${CONFIG[day].preis.color==='#1a1a1a'?'selected':''}>Dunkel</option>
-          <option value="#ffffff" ${CONFIG[day].preis.color==='#ffffff'?'selected':''}>Weiß</option>
-        </select>
-      </div>
-    </div>`).join('')
+  var el = document.getElementById('ep-positions');
+  var days = ['dienstag','mittwoch','donnerstag','freitag'];
+  var html = '';
+  for (var i = 0; i < days.length; i++) {
+    var day = days[i];
+    var c = CONFIG[day];
+    html += '<div class="ep-day">';
+    html += '<div class="ep-day-name">' + DAY_LABELS[day] + '</div>';
+    html += '<div class="ep-row"><label>Bild X %</label><input type="number" id="' + day + '_img_x" value="' + c.img.x + '" step="0.5" oninput="livePreview()"></div>';
+    html += '<div class="ep-row"><label>Bild Y %</label><input type="number" id="' + day + '_img_y" value="' + c.img.y + '" step="0.5" oninput="livePreview()"></div>';
+    html += '<div class="ep-row"><label>Bild Radius</label><input type="number" id="' + day + '_img_r" value="' + c.img.r + '" step="0.1" oninput="livePreview()"></div>';
+    html += '<div class="ep-row"><label>Text X %</label><input type="number" id="' + day + '_text_x" value="' + c.text.x + '" step="0.5" oninput="livePreview()"></div>';
+    html += '<div class="ep-row"><label>Text Y %</label><input type="number" id="' + day + '_text_y" value="' + c.text.y + '" step="0.5" oninput="livePreview()"></div>';
+    html += '<div class="ep-row"><label>Text Gr&#246;&#223;e</label><input type="number" id="' + day + '_text_size" value="' + c.text.size + '" step="0.1"></div>';
+    html += '<div class="ep-row"><label>Preis X %</label><input type="number" id="' + day + '_preis_x" value="' + c.preis.x + '" step="0.5" oninput="livePreview()"></div>';
+    html += '<div class="ep-row"><label>Preis Y %</label><input type="number" id="' + day + '_preis_y" value="' + c.preis.y + '" step="0.5" oninput="livePreview()"></div>';
+    html += '<div class="ep-row"><label>Preis Gr&#246;&#223;e</label><input type="number" id="' + day + '_preis_size" value="' + c.preis.size + '" step="0.1"></div>';
+    html += '<div class="ep-row"><label>Preis Farbe</label><select id="' + day + '_preis_color">';
+    html += '<option value="#1a1a1a"' + (c.preis.color === '#1a1a1a' ? ' selected' : '') + '>Dunkel</option>';
+    html += '<option value="#ffffff"' + (c.preis.color === '#ffffff' ? ' selected' : '') + '>Wei&#223;</option>';
+    html += '</select></div>';
+    html += '</div>';
+  }
+  el.innerHTML = html;
 }
 
 function setTestDay(day, btn) {
-  // URL-Param überschreiben mit neuem testday
-  const url = new URL(window.location.href)
-  url.searchParams.set('testday', day)
-  window.history.replaceState({}, '', url)
-  // Hintergrundbild direkt wechseln
-  const dayKey = DAY_MAP[day]
-  const bgImg = document.getElementById('bg-image')
-  bgImg.style.opacity = '0'
-  const tmp = new Image()
-  tmp.onload = () => { bgImg.src = LAYOUTS[dayKey]; bgImg.style.opacity='1'; bgImg.setAttribute('data-src', LAYOUTS[dayKey]) }
-  tmp.src = LAYOUTS[dayKey]
-  // Content neu rendern
-  document.querySelectorAll('.ep-day-btn').forEach(b => b.classList.remove('active'))
-  btn.classList.add('active')
-  if (currentContent) renderDisplay(currentContent)
-  else showDemo()
+  testDay = day;
+  var dayKey = DAY_MAP[day];
+  var bgImg = document.getElementById('bg-image');
+  bgImg.style.opacity = '0';
+  var tmp = new Image();
+  tmp.onload = function() {
+    bgImg.src = LAYOUTS[dayKey];
+    bgImg.style.opacity = '1';
+    bgImg.setAttribute('data-src', LAYOUTS[dayKey]);
+  };
+  tmp.src = LAYOUTS[dayKey];
+  var btns = document.querySelectorAll('.ep-day-btn');
+  for (var i = 0; i < btns.length; i++) btns[i].className = 'ep-day-btn';
+  btn.className = 'ep-day-btn active';
+  if (currentContent) renderDisplay(currentContent);
+  else showDemo();
+}
+
+// ── Uhr ──
+function updateClock() {
+  var n = new Date();
+  var h = String(n.getHours()).length < 2 ? '0' + n.getHours() : String(n.getHours());
+  var m = String(n.getMinutes()).length < 2 ? '0' + n.getMinutes() : String(n.getMinutes());
+  document.getElementById('s-time').textContent = h + ':' + m + ' \u00B7 KW ' + getKW();
 }
 
 // ── Start ──
-window.addEventListener('DOMContentLoaded', async () => {
-  setInterval(() => {
-    const n=new Date()
-    document.getElementById('s-time').textContent=n.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' · KW '+getKW()
-  },1000)
+window.addEventListener('DOMContentLoaded', function() {
+  setInterval(updateClock, 1000);
+  updateClock();
 
-  await loadConfig()
-  await loadContent()
-  subscribeRealtime()
-
-  if (IS_EDITOR) {
-    document.getElementById('editor-panel').classList.add('open')
-    buildEditorUI()
+  // Demo-Modus: sofort anzeigen ohne Supabase
+  if (IS_DEMO) {
+    showDemo();
+    return;
   }
 
-  // Mitternacht
-  const now=new Date(),midnight=new Date(now)
-  midnight.setHours(24,0,5,0)
-  setTimeout(()=>{ loadContent(); setInterval(loadContent,86400000) },midnight-now)
-})
+  // Supabase-Timeout: Falls nach 8 Sekunden nichts kommt → Demo
+  var fallbackTimer = setTimeout(function() {
+    if (!currentContent) {
+      setLoadingText('Keine Verbindung — zeige Demo');
+      showDemo();
+    }
+  }, 8000);
+
+  loadConfig().then(function() {
+    return loadContent();
+  }).then(function() {
+    clearTimeout(fallbackTimer);
+    subscribeRealtime();
+
+    if (IS_EDITOR) {
+      document.getElementById('editor-panel').className = 'open';
+      buildEditorUI();
+    }
+
+    // Mitternachts-Reload
+    var now = new Date();
+    var midnight = new Date(now);
+    midnight.setHours(24, 0, 5, 0);
+    setTimeout(function() {
+      loadContent();
+      setInterval(loadContent, 86400000);
+    }, midnight - now);
+  });
+});
 </script>
 </body>
 </html>

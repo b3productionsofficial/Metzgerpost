@@ -245,7 +245,7 @@ var SCREEN_ID = getParam('screen') || 'screen1';
 var IS_EDITOR = getParam('editor') === 'true';
 var IS_DEMO   = getParam('demo')   === 'true';
 
-var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+var sb = null;
 
 var DAY_MAP    = { 2:'dienstag', 3:'mittwoch', 4:'donnerstag', 5:'freitag' };
 var DAY_LABELS = { dienstag:'Dienstag', mittwoch:'Mittwoch', donnerstag:'Donnerstag', freitag:'Freitag' };
@@ -586,6 +586,12 @@ window.addEventListener('DOMContentLoaded', function() {
     showDemo();
     return;
   }
+  if (!window.supabase) {
+    setLoadingText('Supabase nicht verfuegbar');
+    setTimeout(showDemo, 1000);
+    return;
+  }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
   // Supabase-Timeout: Falls nach 8 Sekunden nichts kommt → Demo
   var fallbackTimer = setTimeout(function() {

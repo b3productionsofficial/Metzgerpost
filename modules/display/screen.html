@@ -249,7 +249,8 @@ function getKW(d=new Date()) {
 // ── Konfiguration aus Supabase laden ──
 async function loadConfig() {
   try {
-    const { data } = await sb.from('display_configs').select('config').eq('kunde_id', KUNDE_ID).eq('screen_id', SCREEN_ID).single()
+    const { data: cfgRows } = await sb.from('display_configs').select('config').eq('kunde_id', KUNDE_ID).eq('screen_id', SCREEN_ID).limit(1)
+  const data = cfgRows?.[0] || null
     if (data?.config) CONFIG = { ...CONFIG, ...data.config }
   } catch(e) { /* nutze Standard-Config */ }
 }

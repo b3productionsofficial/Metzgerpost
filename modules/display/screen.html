@@ -136,9 +136,7 @@ function renderDisplay(content) {
     // Preis
     if (mahlzeit.preis) {
       const priceEl = document.createElement('div')
-      priceEl.className = 'day-price fade-in'
-      const pw = (pos.preis.w/100)*window.innerWidth
-      priceEl.style.cssText = `left:${pos.preis.x}%;top:${pos.preis.y}%;width:${pw}px;height:${pw*0.28}px;transform:translate(-50%,-50%);background:${isToday?'#c8dcb8':'#1a1a1a'};color:${isToday?'#1a1a1a':'#fff'};font-size:${isToday?'1.6vw':'1.2vw'};`
+      priceEl.style.cssText = `position:absolute;left:${pos.preis.x}%;top:${pos.preis.y}%;transform:translate(-50%,-50%);font-weight:700;font-family:Georgia,serif;font-size:${isToday?'1.6vw':'1.2vw'};color:${isToday?'#1a1a1a':'#ffffff'};text-align:center;`
       priceEl.textContent = mahlzeit.preis
       overlay.appendChild(priceEl)
     }

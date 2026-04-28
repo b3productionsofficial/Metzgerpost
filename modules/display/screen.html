@@ -120,14 +120,14 @@
     }
     @keyframes loadpulse { 0%{width:0%} 50%{width:80%} 100%{width:100%} }
 
-    #status-bar {
+    #status-bar { display:none !important; opacity:0 !important; /*
       position:fixed; bottom:0; left:0; right:0; height:24px;
       background:rgba(0,0,0,.45);
       display:flex; align-items:center; justify-content:space-between;
       padding:0 14px;
       font-family:monospace; font-size:11px; color:rgba(255,255,255,.5);
       z-index:999; pointer-events:none;
-    }
+    */
     .s-live { display:flex; align-items:center; gap:5px; color:#5cad7a; }
     .s-dot  { width:5px; height:5px; border-radius:50%; background:#5cad7a; animation:pulse 2s infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
@@ -587,6 +587,20 @@ function updateClock() {
   document.getElementById('s-time').textContent = h + ':' + m + ' \u00B7 KW ' + getKW();
 }
 
+
+var fsTimer = setTimeout(function() { goFullscreen(); }, 5000);
+
+document.addEventListener('mousemove', function() {
+  clearTimeout(fsTimer);
+  if (document.fullscreenElement || document.webkitFullscreenElement) {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    document.getElementById('fs-btn').className = '';
+  }
+});
+document.addEventListener('keydown', function() {
+  clearTimeout(fsTimer);
+});
 
 function goFullscreen() {
   var el = document.documentElement;

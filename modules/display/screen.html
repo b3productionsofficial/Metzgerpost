@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MetzgerPost — Display</title>
+  <title>MetzgerPost Display</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -38,28 +38,22 @@
 
     #datum-overlay {
       position:absolute;
-      top:5%;
-      left:50%;
+      top:5%; left:50%;
       transform:translateX(-50%);
-      font-size:2.2vw;
-      font-weight:700;
-      color:#2d2d2d;
-      white-space:nowrap;
+      font-size:2.2vw; font-weight:700;
+      color:#2d2d2d; white-space:nowrap;
       font-family:Georgia,serif;
       pointer-events:none;
     }
 
     .day-circle {
       position:absolute;
-      border-radius:50%;
-      overflow:hidden;
+      border-radius:50%; overflow:hidden;
       border:3px solid #fff;
       box-shadow:0 3px 12px rgba(0,0,0,.25);
       transform:translate(-50%,-50%);
     }
-    .day-circle img {
-      width:100%; height:100%; object-fit:cover;
-    }
+    .day-circle img { width:100%; height:100%; object-fit:cover; }
     .day-circle .placeholder {
       width:100%; height:100%;
       background:linear-gradient(135deg,#87CEEB,#90EE90);
@@ -68,27 +62,29 @@
     }
 
     .day-text {
-      position:absolute;
-      text-align:center;
+      position:absolute; text-align:center;
       transform:translateX(-50%);
-      font-family:Georgia,serif;
-      line-height:1.3;
+      font-family:Georgia,serif; line-height:1.3;
       pointer-events:none;
     }
 
     .day-price {
       position:absolute;
       transform:translate(-50%,-50%);
-      font-family:Georgia,serif;
-      font-weight:700;
-      text-align:center;
-      pointer-events:none;
+      font-family:Georgia,serif; font-weight:700;
+      text-align:center; pointer-events:none;
     }
 
     .fade-in { animation:fadeIn .6s ease both; }
-    @keyframes fadeIn { from{opacity:0;transform:translate(-50%,calc(-50% + 8px))} to{opacity:1;transform:translate(-50%,-50%)} }
+    @keyframes fadeIn {
+      from { opacity:0; transform:translate(-50%,calc(-50% + 8px)); }
+      to   { opacity:1; transform:translate(-50%,-50%); }
+    }
     .day-text.fade-in { animation:fadeInText .6s ease both; }
-    @keyframes fadeInText { from{opacity:0;transform:translateX(-50%) translateY(6px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+    @keyframes fadeInText {
+      from { opacity:0; transform:translateX(-50%) translateY(6px); }
+      to   { opacity:1; transform:translateX(-50%) translateY(0); }
+    }
 
     #no-content {
       display:none; position:absolute; inset:0;
@@ -100,53 +96,38 @@
     #no-content h1 { font-size:4vw; color:#2d4a2d; font-family:Georgia,serif; }
     #no-content p  { font-size:2vw; color:#666; }
 
-    /* Lade-Screen */
-    #loading-screen {
-      position:fixed; inset:0;
-      background:#111;
-      display:flex; align-items:center; justify-content:center;
-      flex-direction:column; gap:12px;
-      z-index:500;
+    /* ── Vollbild-Button ── */
+    #fs-btn {
+      position:fixed;
+      top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      background:rgba(0,0,0,.75);
+      color:#fff;
+      border:2px solid rgba(255,255,255,.8);
+      padding:24px 52px;
+      font-size:3vw;
+      font-family:Georgia,serif;
+      border-radius:16px;
+      cursor:pointer;
+      z-index:9999;
+      transition:opacity .6s;
     }
-    #loading-screen.hidden { display:none; }
-    #loading-text { color:#d4853a; font-family:Georgia,serif; font-size:2vw; }
-    #loading-sub  { color:#666; font-family:monospace; font-size:1.2vw; }
-    .loader-bar {
-      width:200px; height:3px; background:#222; border-radius:2px; overflow:hidden;
-    }
-    .loader-fill {
-      height:100%; background:#d4853a; border-radius:2px;
-      animation: loadpulse 1.5s ease-in-out infinite;
-    }
-    @keyframes loadpulse { 0%{width:0%} 50%{width:80%} 100%{width:100%} }
+    #fs-btn:hover { background:rgba(0,0,0,.9); }
+    #fs-btn.hidden { opacity:0; pointer-events:none; }
 
-    #status-bar { display:none !important; opacity:0 !important; /*
-      position:fixed; bottom:0; left:0; right:0; height:24px;
-      background:rgba(0,0,0,.45);
-      display:flex; align-items:center; justify-content:space-between;
-      padding:0 14px;
-      font-family:monospace; font-size:11px; color:rgba(255,255,255,.5);
-      z-index:999; pointer-events:none;
-    */
-    .s-live { display:flex; align-items:center; gap:5px; color:#5cad7a; }
-    .s-dot  { width:5px; height:5px; border-radius:50%; background:#5cad7a; animation:pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-
-    /* ══ EDITOR MODE ══ */
+    /* ── Editor-Panel ── */
     #editor-panel {
-      display:none !important;
-      position:fixed; top:0; right:0; bottom:24px;
+      display:none;
+      position:fixed; top:0; right:0; bottom:0;
       width:320px;
       background:rgba(15,13,11,.95);
       border-left:1px solid #2e2a24;
       overflow-y:auto;
-      z-index:100;
-      padding:16px;
-      font-family:Georgia,sans-serif;
-      color:#f0ece4;
+      z-index:100; padding:16px;
+      font-family:Georgia,sans-serif; color:#f0ece4;
       pointer-events:all;
     }
-    #editor-panel.open { display:block !important; }
+    #editor-panel.open { display:block; }
     .ep-title { font-size:14px; font-weight:700; color:#d4853a; margin-bottom:12px; text-transform:uppercase; letter-spacing:.5px; }
     .ep-day { background:#1a1714; border:1px solid #2e2a24; border-radius:8px; padding:12px; margin-bottom:10px; }
     .ep-day-name { font-size:12px; font-weight:700; margin-bottom:8px; color:#d4853a; }
@@ -166,34 +147,20 @@
       font-size:13px; font-weight:600; cursor:pointer; margin-top:8px;
     }
     .ep-btn-save { background:#d4853a; color:#fff; }
-    .ep-btn-test { background:#242018; color:#8a8070; border:1px solid #2e2a24; margin-bottom:8px; }
+    .ep-btn-close { background:#242018; color:#8a8070; border:1px solid #2e2a24; margin-bottom:8px; }
     .ep-day-slider { display:flex; gap:4px; margin-bottom:12px; }
-    .ep-day-btn { flex:1; padding:6px 4px; border:1px solid #2e2a24; border-radius:4px; background:#242018; color:#8a8070; font-size:11px; cursor:pointer; text-align:center; }
-    .ep-day-btn.active { border-color:#d4853a; color:#d4853a; background:rgba(212,133,58,.1); }
-
-    #fs-btn {
-      position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-      background:rgba(0,0,0,.75); color:#fff; border:2px solid #fff;
-      padding:24px 48px; font-size:3vw; font-family:Georgia,serif;
-      border-radius:16px; cursor:pointer; z-index:9999;
-      transition:opacity .5s;
+    .ep-day-btn {
+      flex:1; padding:6px 4px; border:1px solid #2e2a24; border-radius:4px;
+      background:#242018; color:#8a8070; font-size:11px; cursor:pointer; text-align:center;
     }
-    #fs-btn.hidden { opacity:0; pointer-events:none; } }
-
+    .ep-day-btn.active { border-color:#d4853a; color:#d4853a; background:rgba(212,133,58,.1); }
     .drag-handle { cursor:move !important; pointer-events:all !important; }
     .drag-handle:hover { outline:2px dashed #d4853a; outline-offset:3px; }
   </style>
 </head>
 <body>
 
-<!-- Lade-Anzeige (TV sieht sofort was passiert) -->
-<button id="fs-btn" onclick="goFullscreen()">&#x26F6; Vollbild</button></div>
-
-<div id="loading-screen">
-  <div id="loading-text">MetzgerPost</div>
-  <div class="loader-bar"><div class="loader-fill"></div></div>
-  <div id="loading-sub">Verbinde mit Server…</div>
-</div>
+<button id="fs-btn" onclick="goFullscreen()">&#x26F6;&nbsp; Vollbild</button>
 
 <div id="screen">
   <img id="bg-image" src="" alt="">
@@ -207,46 +174,30 @@
   </div>
 </div>
 
-<!-- Editor Panel -->
 <div id="editor-panel">
-  <div class="ep-title">&#9881;&#65039; Position Editor</div>
-
+  <div class="ep-title">&#9881; Position Editor</div>
   <div class="ep-day-slider" id="ep-testday-btns">
     <div class="ep-day-btn active" onclick="setTestDay(2,this)">Di</div>
     <div class="ep-day-btn" onclick="setTestDay(3,this)">Mi</div>
     <div class="ep-day-btn" onclick="setTestDay(4,this)">Do</div>
     <div class="ep-day-btn" onclick="setTestDay(5,this)">Fr</div>
   </div>
-
   <div id="ep-positions"></div>
-
   <button class="ep-btn ep-btn-save" onclick="saveConfig()">&#128190; Positionen speichern</button>
-  <button class="ep-btn ep-btn-test" onclick="toggleEditor()">&#10005; Editor schlie&szlig;en</button>
-</div>
-
-<div id="status-bar">
-  <div class="s-live"><div class="s-dot"></div><span id="s-text">Verbinde&#8230;</span></div>
-  <span id="s-time"></span>
+  <button class="ep-btn ep-btn-close" onclick="toggleEditor()">&#10005; Editor schlie&szlig;en</button>
 </div>
 
 <script>
-// ════════════════════════════════════════════
-// TV-KOMPATIBEL: Kein async/await, kein ?., kein URLSearchParams, kein new URL()
-// ════════════════════════════════════════════
-
 var SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co';
 var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10';
 
-// ── URL-Parameter OHNE URLSearchParams ──
 function getParam(name) {
-  var search = window.location.search;
-  if (!search) return null;
-  var pairs = search.substring(1).split('&');
-  for (var i = 0; i < pairs.length; i++) {
-    var pair = pairs[i].split('=');
-    if (decodeURIComponent(pair[0]) === name) {
-      return pair.length > 1 ? decodeURIComponent(pair[1]) : '';
-    }
+  var s = window.location.search;
+  if (!s) return null;
+  var parts = s.substring(1).split('&');
+  for (var i = 0; i < parts.length; i++) {
+    var kv = parts[i].split('=');
+    if (decodeURIComponent(kv[0]) === name) return kv.length > 1 ? decodeURIComponent(kv[1]) : '';
   }
   return null;
 }
@@ -255,91 +206,78 @@ var KUNDE_ID  = getParam('kunde')  || 'demo';
 var SCREEN_ID = getParam('screen') || 'screen1';
 var IS_EDITOR = getParam('editor') === 'true';
 var IS_DEMO   = getParam('demo')   === 'true';
-
 var sb = null;
 
 var DAY_MAP    = { 2:'dienstag', 3:'mittwoch', 4:'donnerstag', 5:'freitag' };
 var DAY_LABELS = { dienstag:'Dienstag', mittwoch:'Mittwoch', donnerstag:'Donnerstag', freitag:'Freitag' };
-
 var LAYOUTS = {
   dienstag:   'assets/Bildschim_1_Dienstag.png',
   mittwoch:   'assets/Bildschirm_1_Mittwoch.png',
   donnerstag: 'assets/Bildschirm_1_Donnerstag.png',
   freitag:    'assets/Bildschirm_1_Freitag.png'
 };
-
 var CONFIG = {
   dienstag:   { img:{x:12.5,y:30,r:3.8}, text:{x:12.5,y:55,w:20,size:1.8}, preis:{x:12.5,y:70,size:1.5,color:'#1a1a1a'} },
   mittwoch:   { img:{x:37.5,y:32,r:3.2}, text:{x:37.5,y:55,w:18,size:1.4}, preis:{x:37.5,y:68,size:1.2,color:'#ffffff'} },
   donnerstag: { img:{x:62.5,y:32,r:3.2}, text:{x:62.5,y:55,w:18,size:1.4}, preis:{x:62.5,y:68,size:1.2,color:'#1a1a1a'} },
   freitag:    { img:{x:87.5,y:32,r:3.2}, text:{x:87.5,y:55,w:18,size:1.4}, preis:{x:87.5,y:68,size:1.2,color:'#ffffff'} }
 };
-
 var currentContent = null;
 var testDay = null;
 
-// ── Hilfsfunktionen ──
 function getTodayKey() {
   var t = getParam('testday') || (testDay ? String(testDay) : null);
-  var dayNum = t ? parseInt(t, 10) : new Date().getDay();
-  return DAY_MAP[dayNum] || null;
+  return DAY_MAP[t ? parseInt(t,10) : new Date().getDay()] || null;
 }
 
 function getKW(d) {
   if (!d) d = new Date();
-  var date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
-  var y = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  return Math.ceil((((date - y) / 86400000) + 1) / 7);
+  var dt = new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  dt.setUTCDate(dt.getUTCDate()+4-(dt.getUTCDay()||7));
+  var y1 = new Date(Date.UTC(dt.getUTCFullYear(),0,1));
+  return Math.ceil((((dt-y1)/86400000)+1)/7);
 }
 
-function setLoadingText(txt) {
-  var el = document.getElementById('loading-sub');
-  if (el) el.textContent = txt;
+// ── Vollbild ──
+function goFullscreen() {
+  var el = document.documentElement;
+  if (el.requestFullscreen)            el.requestFullscreen();
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  else if (el.mozRequestFullScreen)    el.mozRequestFullScreen();
+  else if (el.msRequestFullscreen)     el.msRequestFullscreen();
+  document.getElementById('fs-btn').className = 'hidden';
 }
-
-function hideLoading() {
-  var el = document.getElementById('loading-screen');
-  if (el) el.className = 'hidden';
+function onFsChange() {
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    document.getElementById('fs-btn').className = '';
+  }
 }
+document.addEventListener('fullscreenchange', onFsChange);
+document.addEventListener('webkitfullscreenchange', onFsChange);
 
-// ── Display rendern ──
+// ── Render ──
 function renderDisplay(content) {
-  hideLoading();
   if (!content) return;
   currentContent = content;
   var todayKey = getTodayKey();
-
   if (!todayKey) {
     document.getElementById('no-content').className = 'show';
     document.getElementById('bg-image').style.opacity = '0';
-    hideLoading();
     return;
   }
   document.getElementById('no-content').className = '';
 
-  // Hintergrundbild
   var bgImg = document.getElementById('bg-image');
   var newSrc = LAYOUTS[todayKey];
   if (bgImg.getAttribute('data-src') !== newSrc) {
     bgImg.style.opacity = '0';
     var tmp = new Image();
-    tmp.onload = function() {
-      bgImg.src = newSrc;
-      bgImg.style.opacity = '1';
-      bgImg.setAttribute('data-src', newSrc);
-      hideLoading();
-    };
-    tmp.onerror = function() { hideLoading(); };
+    tmp.onload = function() { bgImg.src=newSrc; bgImg.style.opacity='1'; bgImg.setAttribute('data-src',newSrc); };
     tmp.src = newSrc;
-  } else {
-    hideLoading();
   }
 
-  // Datum
   document.getElementById('datum-overlay').textContent = content.woche || '';
 
-  // Gerichte
   var overlay = document.getElementById('gerichte-overlay');
   overlay.innerHTML = '';
   var gerichte = content.gerichte || {};
@@ -347,313 +285,171 @@ function renderDisplay(content) {
 
   for (var i = 0; i < days.length; i++) {
     var day = days[i];
-    var dayGerichte = gerichte[day];
-    var m = (dayGerichte && dayGerichte[0]) ? dayGerichte[0] : null;
+    var arr = gerichte[day];
+    var m = (arr && arr[0]) ? arr[0] : null;
     if (!m || !m.name) continue;
-
     var cfg = CONFIG[day];
     var isToday = (day === todayKey);
-    var editorClass = IS_EDITOR ? ' drag-handle' : '';
+    var ec = IS_EDITOR ? ' drag-handle' : '';
+    var sz = (cfg.img.r/100) * document.getElementById('screen').offsetWidth * 2;
 
-    // Bild-Kreis
-    var imgSize = (cfg.img.r / 100) * document.getElementById('screen').offsetWidth * 2;
     var imgEl = document.createElement('div');
-    imgEl.className = 'day-circle fade-in' + editorClass;
-    imgEl.setAttribute('data-day', day);
-    imgEl.setAttribute('data-type', 'img');
-    imgEl.style.cssText = 'left:' + cfg.img.x + '%;top:' + cfg.img.y + '%;width:' + imgSize + 'px;height:' + imgSize + 'px;';
-    if (m.bild) {
-      imgEl.innerHTML = '<img src="../../' + m.bild + '" onerror="this.parentNode.innerHTML=\'<div class=placeholder>\uD83C\uDF7D\uFE0F</div>\'">';
-    } else {
-      imgEl.innerHTML = '<div class="placeholder">\uD83C\uDF7D\uFE0F</div>';
-    }
+    imgEl.className = 'day-circle fade-in'+ec;
+    imgEl.setAttribute('data-day',day); imgEl.setAttribute('data-type','img');
+    imgEl.style.cssText = 'left:'+cfg.img.x+'%;top:'+cfg.img.y+'%;width:'+sz+'px;height:'+sz+'px;';
+    imgEl.innerHTML = m.bild
+      ? '<img src="../../'+m.bild+'" onerror="this.parentNode.innerHTML=\'<div class=placeholder>\uD83C\uDF7D\uFE0F</div>\'">'
+      : '<div class="placeholder">\uD83C\uDF7D\uFE0F</div>';
     overlay.appendChild(imgEl);
 
-    // Text
     var txtEl = document.createElement('div');
-    txtEl.className = 'day-text fade-in' + editorClass;
-    txtEl.setAttribute('data-day', day);
-    txtEl.setAttribute('data-type', 'text');
-    var txtSize = isToday ? cfg.text.size * 1.3 : cfg.text.size;
-    var txtWeight = isToday ? 800 : 600;
-    txtEl.style.cssText = 'left:' + cfg.text.x + '%;top:' + cfg.text.y + '%;width:' + cfg.text.w + '%;font-size:' + txtSize + 'vw;font-weight:' + txtWeight + ';color:#1a1a1a;';
+    txtEl.className = 'day-text fade-in'+ec;
+    txtEl.setAttribute('data-day',day); txtEl.setAttribute('data-type','text');
+    txtEl.style.cssText = 'left:'+cfg.text.x+'%;top:'+cfg.text.y+'%;width:'+cfg.text.w+'%;font-size:'+(isToday?cfg.text.size*1.3:cfg.text.size)+'vw;font-weight:'+(isToday?800:600)+';color:#1a1a1a;';
     txtEl.textContent = m.name;
     overlay.appendChild(txtEl);
 
-    // Preis
     if (m.preis) {
       var prEl = document.createElement('div');
-      prEl.className = 'day-price fade-in' + editorClass;
-      prEl.setAttribute('data-day', day);
-      prEl.setAttribute('data-type', 'preis');
-      var prSize = isToday ? cfg.preis.size * 1.2 : cfg.preis.size;
-      prEl.style.cssText = 'left:' + cfg.preis.x + '%;top:' + cfg.preis.y + '%;font-size:' + prSize + 'vw;color:' + cfg.preis.color + ';';
+      prEl.className = 'day-price fade-in'+ec;
+      prEl.setAttribute('data-day',day); prEl.setAttribute('data-type','preis');
+      prEl.style.cssText = 'left:'+cfg.preis.x+'%;top:'+cfg.preis.y+'%;font-size:'+(isToday?cfg.preis.size*1.2:cfg.preis.size)+'vw;color:'+cfg.preis.color+';';
       prEl.textContent = m.preis;
       overlay.appendChild(prEl);
     }
   }
-
-  document.getElementById('s-text').textContent = 'Live \u00B7 KW ' + getKW() + ' \u00B7 ' + (DAY_LABELS[todayKey] || 'Heute');
 }
 
-// ── Demo Inhalt ──
 function showDemo() {
   renderDisplay({
     woche: '28.04. - 02.05.2026',
     gerichte: {
-      dienstag:   [{name:'Schäufele mit Knödel', preis:'8,50 €'}],
-      mittwoch:   [{name:'Gulasch mit Spätzle',  preis:'6,80 €'}],
-      donnerstag: [{name:'Cordon Bleu',           preis:'6,80 €'}],
-      freitag:    [{name:'Backfisch',             preis:'6,80 €'}]
+      dienstag:   [{name:'Sch\u00e4ufele mit Kn\u00f6del', preis:'8,50 \u20ac'}],
+      mittwoch:   [{name:'Gulasch mit Sp\u00e4tzle',       preis:'6,80 \u20ac'}],
+      donnerstag: [{name:'Cordon Bleu',                    preis:'6,80 \u20ac'}],
+      freitag:    [{name:'Backfisch',                      preis:'6,80 \u20ac'}]
     }
   });
-  document.getElementById('s-text').textContent = 'Demo-Modus';
 }
 
-// ── Konfiguration laden (Promise-basiert, kein async/await) ──
 function loadConfig() {
-  setLoadingText('Lade Konfiguration…');
-  return sb.from('display_configs')
-    .select('config')
-    .eq('kunde_id', KUNDE_ID)
-    .eq('screen_id', SCREEN_ID)
-    .limit(1)
-    .then(function(result) {
-      var cfgRows = result && result.data;
-      var data = (cfgRows && cfgRows[0]) ? cfgRows[0] : null;
-      if (data && data.config) {
-        var keys = Object.keys(data.config);
-        for (var i = 0; i < keys.length; i++) {
-          CONFIG[keys[i]] = data.config[keys[i]];
-        }
-      }
-    })
-    .catch(function(e) { /* nutze Standard-Config */ });
+  if (!sb) return Promise.resolve();
+  return sb.from('display_configs').select('config').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1)
+    .then(function(r) {
+      var row = r && r.data && r.data[0];
+      if (row && row.config) { var k=Object.keys(row.config); for(var i=0;i<k.length;i++) CONFIG[k[i]]=row.config[k[i]]; }
+    }).catch(function(){});
 }
 
-// ── Inhalt laden ──
 function loadContent() {
-  setLoadingText('Lade Mittagstisch…');
-  return sb.from('displays')
-    .select('content')
-    .eq('kunde_id', KUNDE_ID)
-    .eq('screen_id', SCREEN_ID)
-    .single()
-    .then(function(result) {
-      var data = result && result.data;
-      if (data && data.content) {
-        renderDisplay(data.content);
-      } else {
-        showDemo();
-      }
-    })
-    .catch(function(e) { showDemo(); });
+  if (!sb) { showDemo(); return Promise.resolve(); }
+  return sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).single()
+    .then(function(r) { var d=r&&r.data; if(d&&d.content) renderDisplay(d.content); else showDemo(); })
+    .catch(function() { showDemo(); });
 }
 
-// ── Realtime (mit Fehlerbehandlung) ──
 function subscribeRealtime() {
+  if (!sb) return;
   try {
-    sb.channel('disp-' + SCREEN_ID)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'displays',
-        filter: 'kunde_id=eq.' + KUNDE_ID
-      }, function(p) {
-        if (p && p.new && p.new.content) renderDisplay(p.new.content);
-      })
-      .subscribe(function(s) {
-        if (s === 'SUBSCRIBED') {
-          document.getElementById('s-text').textContent = '\u25CF Live';
-        }
-      });
-  } catch(e) {
-    // Kein Realtime → polling alle 60 Sekunden als Fallback
-    setInterval(loadContent, 60000);
-  }
+    sb.channel('disp-'+SCREEN_ID)
+      .on('postgres_changes',{event:'*',schema:'public',table:'displays',filter:'kunde_id=eq.'+KUNDE_ID},
+        function(p){ if(p&&p.new&&p.new.content) renderDisplay(p.new.content); })
+      .subscribe(function(){});
+  } catch(e) { setInterval(loadContent,60000); }
 }
 
-// ── Konfiguration speichern ──
-function saveConfig() {
-  var days = ['dienstag','mittwoch','donnerstag','freitag'];
-  for (var i = 0; i < days.length; i++) {
-    var day = days[i];
-    var ixEl = document.getElementById(day + '_img_x');
-    if (!ixEl) continue;
-    CONFIG[day].img.x    = parseFloat(ixEl.value) || CONFIG[day].img.x;
-    CONFIG[day].img.y    = parseFloat((document.getElementById(day + '_img_y') || {}).value) || CONFIG[day].img.y;
-    CONFIG[day].img.r    = parseFloat((document.getElementById(day + '_img_r') || {}).value) || CONFIG[day].img.r;
-    CONFIG[day].text.x   = parseFloat((document.getElementById(day + '_text_x') || {}).value) || CONFIG[day].text.x;
-    CONFIG[day].text.y   = parseFloat((document.getElementById(day + '_text_y') || {}).value) || CONFIG[day].text.y;
-    CONFIG[day].text.size= parseFloat((document.getElementById(day + '_text_size') || {}).value) || CONFIG[day].text.size;
-    CONFIG[day].preis.x  = parseFloat((document.getElementById(day + '_preis_x') || {}).value) || CONFIG[day].preis.x;
-    CONFIG[day].preis.y  = parseFloat((document.getElementById(day + '_preis_y') || {}).value) || CONFIG[day].preis.y;
-    CONFIG[day].preis.size = parseFloat((document.getElementById(day + '_preis_size') || {}).value) || CONFIG[day].preis.size;
-    var colorEl = document.getElementById(day + '_preis_color');
-    CONFIG[day].preis.color = colorEl ? colorEl.value : CONFIG[day].preis.color;
-  }
-
-  sb.from('display_configs')
-    .upsert({ kunde_id: KUNDE_ID, screen_id: SCREEN_ID, config: CONFIG })
-    .then(function() {
-      document.getElementById('s-text').textContent = '\u2713 Gespeichert!';
-      setTimeout(function() { renderDisplay(currentContent); }, 300);
-    })
-    .catch(function() {
-      document.getElementById('s-text').textContent = 'Fehler beim Speichern';
-    });
-}
-
-// ── Editor ──
 function toggleEditor() {
-  var panel = document.getElementById('editor-panel');
-  if (panel.className === 'open') {
-    panel.className = '';
-  } else {
-    panel.className = 'open';
-    buildEditorUI();
-  }
+  var p = document.getElementById('editor-panel');
+  p.className = (p.className === 'open') ? '' : 'open';
+  if (p.className === 'open') buildEditorUI();
 }
 
 function livePreview() {
-  var days = ['dienstag','mittwoch','donnerstag','freitag'];
-  for (var i = 0; i < days.length; i++) {
-    var day = days[i];
-    var ixEl = document.getElementById(day + '_img_x');
-    if (!ixEl) continue;
-    CONFIG[day].img.x   = parseFloat(ixEl.value) || CONFIG[day].img.x;
-    CONFIG[day].img.y   = parseFloat((document.getElementById(day + '_img_y') || {}).value) || CONFIG[day].img.y;
-    CONFIG[day].img.r   = parseFloat((document.getElementById(day + '_img_r') || {}).value) || CONFIG[day].img.r;
-    CONFIG[day].text.x  = parseFloat((document.getElementById(day + '_text_x') || {}).value) || CONFIG[day].text.x;
-    CONFIG[day].text.y  = parseFloat((document.getElementById(day + '_text_y') || {}).value) || CONFIG[day].text.y;
-    CONFIG[day].preis.x = parseFloat((document.getElementById(day + '_preis_x') || {}).value) || CONFIG[day].preis.x;
-    CONFIG[day].preis.y = parseFloat((document.getElementById(day + '_preis_y') || {}).value) || CONFIG[day].preis.y;
+  var days=['dienstag','mittwoch','donnerstag','freitag'];
+  for(var i=0;i<days.length;i++){
+    var d=days[i], ix=document.getElementById(d+'_img_x');
+    if(!ix) continue;
+    CONFIG[d].img.x  =parseFloat(ix.value)||CONFIG[d].img.x;
+    CONFIG[d].img.y  =parseFloat((document.getElementById(d+'_img_y')||{}).value)||CONFIG[d].img.y;
+    CONFIG[d].img.r  =parseFloat((document.getElementById(d+'_img_r')||{}).value)||CONFIG[d].img.r;
+    CONFIG[d].text.x =parseFloat((document.getElementById(d+'_text_x')||{}).value)||CONFIG[d].text.x;
+    CONFIG[d].text.y =parseFloat((document.getElementById(d+'_text_y')||{}).value)||CONFIG[d].text.y;
+    CONFIG[d].preis.x=parseFloat((document.getElementById(d+'_preis_x')||{}).value)||CONFIG[d].preis.x;
+    CONFIG[d].preis.y=parseFloat((document.getElementById(d+'_preis_y')||{}).value)||CONFIG[d].preis.y;
   }
-  if (currentContent) renderDisplay(currentContent);
-  else showDemo();
+  if(currentContent) renderDisplay(currentContent); else showDemo();
+}
+
+function saveConfig() {
+  if(!sb) return;
+  var days=['dienstag','mittwoch','donnerstag','freitag'];
+  for(var i=0;i<days.length;i++){
+    var d=days[i];
+    CONFIG[d].img.x      =parseFloat((document.getElementById(d+'_img_x')||{}).value)     ||CONFIG[d].img.x;
+    CONFIG[d].img.y      =parseFloat((document.getElementById(d+'_img_y')||{}).value)     ||CONFIG[d].img.y;
+    CONFIG[d].img.r      =parseFloat((document.getElementById(d+'_img_r')||{}).value)     ||CONFIG[d].img.r;
+    CONFIG[d].text.x     =parseFloat((document.getElementById(d+'_text_x')||{}).value)    ||CONFIG[d].text.x;
+    CONFIG[d].text.y     =parseFloat((document.getElementById(d+'_text_y')||{}).value)    ||CONFIG[d].text.y;
+    CONFIG[d].text.size  =parseFloat((document.getElementById(d+'_text_size')||{}).value) ||CONFIG[d].text.size;
+    CONFIG[d].preis.x    =parseFloat((document.getElementById(d+'_preis_x')||{}).value)   ||CONFIG[d].preis.x;
+    CONFIG[d].preis.y    =parseFloat((document.getElementById(d+'_preis_y')||{}).value)   ||CONFIG[d].preis.y;
+    CONFIG[d].preis.size =parseFloat((document.getElementById(d+'_preis_size')||{}).value)||CONFIG[d].preis.size;
+    var ce=document.getElementById(d+'_preis_color'); if(ce) CONFIG[d].preis.color=ce.value;
+  }
+  sb.from('display_configs').upsert({kunde_id:KUNDE_ID,screen_id:SCREEN_ID,config:CONFIG})
+    .then(function(){ if(currentContent) renderDisplay(currentContent); }).catch(function(){});
 }
 
 function buildEditorUI() {
-  var el = document.getElementById('ep-positions');
-  var days = ['dienstag','mittwoch','donnerstag','freitag'];
-  var html = '';
-  for (var i = 0; i < days.length; i++) {
-    var day = days[i];
-    var c = CONFIG[day];
-    html += '<div class="ep-day">';
-    html += '<div class="ep-day-name">' + DAY_LABELS[day] + '</div>';
-    html += '<div class="ep-row"><label>Bild X %</label><input type="number" id="' + day + '_img_x" value="' + c.img.x + '" step="0.5" oninput="livePreview()"></div>';
-    html += '<div class="ep-row"><label>Bild Y %</label><input type="number" id="' + day + '_img_y" value="' + c.img.y + '" step="0.5" oninput="livePreview()"></div>';
-    html += '<div class="ep-row"><label>Bild Radius</label><input type="number" id="' + day + '_img_r" value="' + c.img.r + '" step="0.1" oninput="livePreview()"></div>';
-    html += '<div class="ep-row"><label>Text X %</label><input type="number" id="' + day + '_text_x" value="' + c.text.x + '" step="0.5" oninput="livePreview()"></div>';
-    html += '<div class="ep-row"><label>Text Y %</label><input type="number" id="' + day + '_text_y" value="' + c.text.y + '" step="0.5" oninput="livePreview()"></div>';
-    html += '<div class="ep-row"><label>Text Gr&#246;&#223;e</label><input type="number" id="' + day + '_text_size" value="' + c.text.size + '" step="0.1"></div>';
-    html += '<div class="ep-row"><label>Preis X %</label><input type="number" id="' + day + '_preis_x" value="' + c.preis.x + '" step="0.5" oninput="livePreview()"></div>';
-    html += '<div class="ep-row"><label>Preis Y %</label><input type="number" id="' + day + '_preis_y" value="' + c.preis.y + '" step="0.5" oninput="livePreview()"></div>';
-    html += '<div class="ep-row"><label>Preis Gr&#246;&#223;e</label><input type="number" id="' + day + '_preis_size" value="' + c.preis.size + '" step="0.1"></div>';
-    html += '<div class="ep-row"><label>Preis Farbe</label><select id="' + day + '_preis_color">';
-    html += '<option value="#1a1a1a"' + (c.preis.color === '#1a1a1a' ? ' selected' : '') + '>Dunkel</option>';
-    html += '<option value="#ffffff"' + (c.preis.color === '#ffffff' ? ' selected' : '') + '>Wei&#223;</option>';
-    html += '</select></div>';
-    html += '</div>';
+  var el=document.getElementById('ep-positions'), days=['dienstag','mittwoch','donnerstag','freitag'], h='';
+  for(var i=0;i<days.length;i++){
+    var d=days[i],c=CONFIG[d];
+    h+='<div class="ep-day"><div class="ep-day-name">'+DAY_LABELS[d]+'</div>';
+    h+='<div class="ep-row"><label>Bild X %</label><input type="number" id="'+d+'_img_x" value="'+c.img.x+'" step="0.5" oninput="livePreview()"></div>';
+    h+='<div class="ep-row"><label>Bild Y %</label><input type="number" id="'+d+'_img_y" value="'+c.img.y+'" step="0.5" oninput="livePreview()"></div>';
+    h+='<div class="ep-row"><label>Radius</label><input type="number" id="'+d+'_img_r" value="'+c.img.r+'" step="0.1" oninput="livePreview()"></div>';
+    h+='<div class="ep-row"><label>Text X %</label><input type="number" id="'+d+'_text_x" value="'+c.text.x+'" step="0.5" oninput="livePreview()"></div>';
+    h+='<div class="ep-row"><label>Text Y %</label><input type="number" id="'+d+'_text_y" value="'+c.text.y+'" step="0.5" oninput="livePreview()"></div>';
+    h+='<div class="ep-row"><label>Text Gr&#246;&#223;e</label><input type="number" id="'+d+'_text_size" value="'+c.text.size+'" step="0.1"></div>';
+    h+='<div class="ep-row"><label>Preis X %</label><input type="number" id="'+d+'_preis_x" value="'+c.preis.x+'" step="0.5" oninput="livePreview()"></div>';
+    h+='<div class="ep-row"><label>Preis Y %</label><input type="number" id="'+d+'_preis_y" value="'+c.preis.y+'" step="0.5" oninput="livePreview()"></div>';
+    h+='<div class="ep-row"><label>Preis Gr&#246;&#223;e</label><input type="number" id="'+d+'_preis_size" value="'+c.preis.size+'" step="0.1"></div>';
+    h+='<div class="ep-row"><label>Preis Farbe</label><select id="'+d+'_preis_color">';
+    h+='<option value="#1a1a1a"'+(c.preis.color==='#1a1a1a'?' selected':'')+'>Dunkel</option>';
+    h+='<option value="#ffffff"'+(c.preis.color==='#ffffff'?' selected':'')+'>Wei&#223;</option>';
+    h+='</select></div></div>';
   }
-  el.innerHTML = html;
+  el.innerHTML=h;
 }
 
-function setTestDay(day, btn) {
-  testDay = day;
-  var dayKey = DAY_MAP[day];
-  var bgImg = document.getElementById('bg-image');
-  bgImg.style.opacity = '0';
-  var tmp = new Image();
-  tmp.onload = function() {
-    bgImg.src = LAYOUTS[dayKey];
-    bgImg.style.opacity = '1';
-    bgImg.setAttribute('data-src', LAYOUTS[dayKey]);
-  };
-  tmp.src = LAYOUTS[dayKey];
-  var btns = document.querySelectorAll('.ep-day-btn');
-  for (var i = 0; i < btns.length; i++) btns[i].className = 'ep-day-btn';
-  btn.className = 'ep-day-btn active';
-  if (currentContent) renderDisplay(currentContent);
-  else showDemo();
+function setTestDay(day,btn) {
+  testDay=day;
+  var dk=DAY_MAP[day], bg=document.getElementById('bg-image');
+  bg.style.opacity='0';
+  var tmp=new Image();
+  tmp.onload=function(){ bg.src=LAYOUTS[dk]; bg.style.opacity='1'; bg.setAttribute('data-src',LAYOUTS[dk]); };
+  tmp.src=LAYOUTS[dk];
+  var btns=document.querySelectorAll('.ep-day-btn');
+  for(var i=0;i<btns.length;i++) btns[i].className='ep-day-btn';
+  btn.className='ep-day-btn active';
+  if(currentContent) renderDisplay(currentContent); else showDemo();
 }
 
-// ── Uhr ──
-function updateClock() {
-  var n = new Date();
-  var h = String(n.getHours()).length < 2 ? '0' + n.getHours() : String(n.getHours());
-  var m = String(n.getMinutes()).length < 2 ? '0' + n.getMinutes() : String(n.getMinutes());
-  document.getElementById('s-time').textContent = h + ':' + m + ' \u00B7 KW ' + getKW();
-}
-
-
-document.addEventListener('mousemove', function() {
-  if (document.fullscreenElement || document.webkitFullscreenElement) {
-    if (document.exitFullscreen) document.exitFullscreen();
-    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-    document.getElementById('fs-btn').className = '';
-  }
-});
-
-function goFullscreen() {
-  var el = document.documentElement;
-  if (el.requestFullscreen) el.requestFullscreen();
-  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-  else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
-  else if (el.msRequestFullscreen) el.msRequestFullscreen();
-  setTimeout(function(){ document.getElementById('fs-btn').className = 'hidden'; }, 300);
-}
-document.addEventListener('fullscreenchange', function() {
-  if (document.fullscreenElement) {
-    document.getElementById('fs-btn').className = 'hidden';
-  }
-});
-
-// ── Start ──
 window.addEventListener('DOMContentLoaded', function() {
-  setInterval(updateClock, 1000);
-  updateClock();
-
-  // Demo-Modus: sofort anzeigen ohne Supabase
   if (IS_DEMO) {
     showDemo();
+    if (IS_EDITOR) { document.getElementById('editor-panel').className='open'; buildEditorUI(); }
     return;
   }
-  if (!window.supabase) {
-    setLoadingText('Supabase nicht verfuegbar');
-    setTimeout(showDemo, 1000);
-    return;
-  }
+  if (!window.supabase) { showDemo(); return; }
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-
-  // Supabase-Timeout: Falls nach 8 Sekunden nichts kommt → Demo
-  var fallbackTimer = setTimeout(function() {
-    if (!currentContent) {
-      setLoadingText('Keine Verbindung — zeige Demo');
-      showDemo();
-    }
-  }, 8000);
-
-  loadConfig().then(function() {
-    return loadContent();
-  }).then(function() {
-    clearTimeout(fallbackTimer);
+  var fb = setTimeout(function(){ if(!currentContent) showDemo(); }, 8000);
+  loadConfig().then(function(){ return loadContent(); }).then(function(){
+    clearTimeout(fb);
     subscribeRealtime();
-
-    if (IS_EDITOR) {
-      document.getElementById('editor-panel').className = 'open';
-      buildEditorUI();
-    }
-
-    // Mitternachts-Reload
-    var now = new Date();
-    var midnight = new Date(now);
-    midnight.setHours(24, 0, 5, 0);
-    setTimeout(function() {
-      loadContent();
-      setInterval(loadContent, 86400000);
-    }, midnight - now);
+    if (IS_EDITOR) { document.getElementById('editor-panel').className='open'; buildEditorUI(); }
+    var now=new Date(), mn=new Date(now); mn.setHours(24,0,5,0);
+    setTimeout(function(){ loadContent(); setInterval(loadContent,86400000); }, mn-now);
   });
 });
 </script>

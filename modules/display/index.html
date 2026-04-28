@@ -146,10 +146,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   kundeId = user.id.substring(0, 8)
 
   // Supabase direkt initialisieren für wochen-Tabelle
-  supabaseClient = window.supabase.createClient(
-    'https://jfrqbchgrpixwlecerax.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10'
-  )
+  supabaseClient = getSB()
 
   await loadWeeks()
   buildUrls()
@@ -205,13 +202,15 @@ async function loadWeeks() {
 
 async function migrateLocalWeeks(localWeeks) {
   for (const w of localWeeks) {
-    await supabaseClient.from('wochen').insert({
-      kunde_id: kundeId,
-      woche_label: w.woche || 'Migriert',
-      gerichte: w.meals || w.gerichte || {},
-      kw: null,
-      jahr: null
-    }).catch(() => {})
+    try {
+      await supabaseClient.from('wochen').insert({
+        kunde_id: kundeId,
+        woche_label: w.woche || 'Migriert',
+        gerichte: w.meals || w.gerichte || {},
+        kw: null,
+        jahr: null
+      })
+    } catch(e) {}
   }
 }
 
@@ -289,9 +288,10 @@ async function checkStatus() {
       const data = await MP.getDisplayContent(kundeId, s)
       const dot = document.getElementById('dot-' + s)
       const meta = document.getElementById('meta-' + s)
-      if (data?.content) {
+      const content = data && data.content ? data.content : null
+      if (content) {
         if (dot) dot.classList.remove('offline')
-        if (meta) meta.textContent = 'Zuletzt: ' + formatRelative(data.content.updatedAt || new Date().toISOString()) + ' · ' + (data.content.woche || '')
+        if (meta) meta.textContent = 'Zuletzt: ' + formatRelative(content.updatedAt || new Date().toISOString()) + ' · ' + (content.woche || '')
       }
     } catch(e) {}
   }

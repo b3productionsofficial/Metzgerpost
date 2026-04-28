@@ -606,6 +606,7 @@ input[readonly] {
 
   </div>
 
+  <script src="../../shared/supabase.js"></script>
   <script src="config.js"></script>
   <script src="layouts.js"></script>
   <script src="script.js"></script>
@@ -665,14 +666,11 @@ async function saveWocheToSupabase() {
     return Math.ceil((((dt - y1) / 86400000) + 1) / 7);
   }
 
-  // Supabase Client
-  const SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10';
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  const sb = getSB();
 
   // Kunde-ID aus Session
-  const { data: { session } } = await sb.auth.getSession();
-  const kundeId = session ? session.user.id.substring(0, 8) : 'demo';
+  const user = await MP.getUser();
+  const kundeId = user ? user.id.substring(0, 8) : 'demo';
 
   btn.textContent = '⏳ Wird gespeichert…';
   btn.disabled = true;

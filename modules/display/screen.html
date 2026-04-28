@@ -294,6 +294,7 @@ function hideLoading() {
 
 // ── Display rendern ──
 function renderDisplay(content) {
+  hideLoading();
   if (!content) return;
   currentContent = content;
   var todayKey = getTodayKey();

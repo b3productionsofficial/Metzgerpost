@@ -134,7 +134,7 @@
 
     /* ══ EDITOR MODE ══ */
     #editor-panel {
-      display:none;
+      display:none !important;
       position:fixed; top:0; right:0; bottom:24px;
       width:320px;
       background:rgba(15,13,11,.95);
@@ -146,7 +146,7 @@
       color:#f0ece4;
       pointer-events:all;
     }
-    #editor-panel.open { display:block; }
+    #editor-panel.open { display:block !important; }
     .ep-title { font-size:14px; font-weight:700; color:#d4853a; margin-bottom:12px; text-transform:uppercase; letter-spacing:.5px; }
     .ep-day { background:#1a1714; border:1px solid #2e2a24; border-radius:8px; padding:12px; margin-bottom:10px; }
     .ep-day-name { font-size:12px; font-weight:700; margin-bottom:8px; color:#d4853a; }
@@ -172,20 +172,13 @@
     .ep-day-btn.active { border-color:#d4853a; color:#d4853a; background:rgba(212,133,58,.1); }
 
     #fs-btn {
-      position:fixed; inset:0;
-      background:rgba(0,0,0,0);
-      display:flex; align-items:center; justify-content:center;
-      cursor:pointer; z-index:9999;
-      transition:opacity .8s;
+      position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+      background:rgba(0,0,0,.75); color:#fff; border:2px solid #fff;
+      padding:24px 48px; font-size:3vw; font-family:Georgia,serif;
+      border-radius:16px; cursor:pointer; z-index:9999;
+      transition:opacity .5s;
     }
-    #fs-btn.hidden { opacity:0; pointer-events:none; }
-    #fs-btn-inner {
-      background:rgba(0,0,0,.6); color:#fff; border:2px solid rgba(255,255,255,.6);
-      padding:18px 36px; font-size:2.5vw; font-family:Georgia,serif;
-      border-radius:12px; pointer-events:none;
-      animation: fspulse 2s ease-in-out infinite;
-    }
-    @keyframes fspulse { 0%,100%{opacity:.7} 50%{opacity:1} }
+    #fs-btn.hidden { opacity:0; pointer-events:none; } }
 
     .drag-handle { cursor:move !important; pointer-events:all !important; }
     .drag-handle:hover { outline:2px dashed #d4853a; outline-offset:3px; }
@@ -194,7 +187,7 @@
 <body>
 
 <!-- Lade-Anzeige (TV sieht sofort was passiert) -->
-<div id="fs-btn" onclick="goFullscreen()"><div id="fs-btn-inner">&#x26F6; Vollbild</div></div>
+<button id="fs-btn" onclick="goFullscreen()">&#x26F6; Vollbild</button></div>
 
 <div id="loading-screen">
   <div id="loading-text">MetzgerPost</div>

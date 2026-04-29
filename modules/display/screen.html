@@ -8,8 +8,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{background:#000;width:100vw;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center}
-    #screen{position:relative;width:100vw;height:calc(100vw * 9/16);max-height:100vh;max-width:calc(100vh * 16/9)}
+    body{background:#000;width:100vw;min-height:100vh;overflow-x:hidden;display:flex;flex-direction:column;align-items:center}
+    #screen{position:relative;width:100vw;height:calc(100vw * 9/16)}
     #bg-image{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;transition:opacity .5s}
     #overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
     #datum-overlay{position:absolute;pointer-events:none;white-space:nowrap}
@@ -34,7 +34,7 @@
     #fs-btn.hidden{opacity:0;pointer-events:none}
 
     /* ── Editor ── */
-    #ep{display:none;position:fixed;top:0;right:0;bottom:0;width:310px;background:rgba(13,11,9,.97);border-left:1px solid #2e2a24;overflow-y:auto;z-index:100;padding:12px;font-family:'Lato',sans-serif;color:#f0ece4;pointer-events:all}
+    #ep{display:none;width:100%;max-width:100vw;background:rgba(13,11,9,.97);border-top:2px solid #d4853a;padding:16px 20px;font-family:'Lato',sans-serif;color:#f0ece4;pointer-events:all}
     #ep.open{display:block}
     .ep-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #2e2a24}
     .ep-ttl{font-size:11px;font-weight:700;color:#d4853a;text-transform:uppercase;letter-spacing:.6px}
@@ -61,6 +61,12 @@
     .ep-cb.dark{background:#1a1a1a;color:#fff}
     .ep-cb.white{background:#f0f0f0;color:#1a1a1a}
     .ep-cb.sel{border-color:#d4853a}
+    
+    #ep-layout-row{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px;}
+    .ep-col{flex:1;min-width:160px;}
+    #ep-fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px 16px;}
+    .ep-sec{grid-column:1/-1;font-size:9px;font-weight:700;color:#5a5040;text-transform:uppercase;letter-spacing:.5px;margin:4px 0 2px;}
+
     .ep-hint{font-size:10px;color:#6a6050;background:#1a1714;border-radius:4px;padding:6px 8px;line-height:1.5;margin-bottom:8px}
     .ep-btn{width:100%;padding:9px;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;margin-top:5px}
     .ep-save{background:#d4853a;color:#fff}
@@ -148,7 +154,7 @@ var DAY_MAP  = {2:'dienstag',3:'mittwoch',4:'donnerstag',5:'freitag'};
 var DAY_NUM  = {dienstag:2,mittwoch:3,donnerstag:4,freitag:5};
 var LABELS   = {dienstag:'Dienstag',mittwoch:'Mittwoch',donnerstag:'Donnerstag',freitag:'Freitag'};
 var FONTS    = {'Georgia':'Georgia, serif','Playfair':"'Playfair Display', Georgia, serif",'Lora':"'Lora', Georgia, serif",'Lato':"'Lato', Arial, sans-serif",'Open Sans':"'Open Sans', Arial, sans-serif"};
-var LAYOUTS  = {dienstag:'assets/Bildschim_1_Dienstag.png',mittwoch:'assets/Bildschirm_1_Mittwoch.png',donnerstag:'assets/Bildschirm_1_Donnerstag.png',freitag:'assets/Bildschirm_1_Freitag.png'};
+var LAYOUTS  = {dienstag:'assets/Bildschirm_1_Dienstag.png',mittwoch:'assets/Bildschirm_1_Mittwoch.png',donnerstag:'assets/Bildschirm_1_Donnerstag.png',freitag:'assets/Bildschirm_1_Freitag.png'};
 
 // Slot-Defaults (klein = nicht-aktiver Tag)
 function slotSmall(x){return{img:{x:x,y:32,r:3.2},text:{x:x,y:55,w:18,size:1.4,font:'Georgia',color:'#1a1a1a'},preis:{x:x,y:68,size:1.2,font:'Georgia',color:'#1a1a1a'}}}

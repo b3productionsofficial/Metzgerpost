@@ -640,7 +640,12 @@ async function saveWocheToSupabase() {
     const name = opt ? opt.text.trim() : '';
     if (!name || name.includes('wählen') || name.startsWith('--') || name === '') return null;
     const preis = preisEl ? preisEl.value.trim() : '';
-    return { name, preis };
+    // Bild aus standardGerichte holen
+    const key = sel.value;
+    const gerichtData = typeof standardGerichte !== 'undefined' && standardGerichte[key];
+    // Bildpfad relativ zu display/screen.html anpassen
+    const bild = gerichtData ? '../../modules/mittagstisch/' + gerichtData.bild : null;
+    return { name, preis, bild };
   }
 
   const gerichte = {};

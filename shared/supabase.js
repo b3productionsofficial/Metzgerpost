@@ -68,7 +68,7 @@ async function publishDisplay(kundeId, screenId, content) {
       screen_id: screenId,
       content: content,
       updated_at: new Date().toISOString()
-    })
+    }, { onConflict: 'kunde_id,screen_id' })
 }
 
 async function getDisplayContent(kundeId, screenId) {

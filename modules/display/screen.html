@@ -32,6 +32,16 @@
     #fs-btn{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.75);color:#fff;border:2px solid rgba(255,255,255,.8);padding:24px 52px;font-size:3vw;font-family:Georgia,serif;border-radius:16px;cursor:pointer;z-index:9999;transition:opacity .6s}
     #fs-btn:hover{background:rgba(0,0,0,.9)}
     #fs-btn.hidden{opacity:0;pointer-events:none}
+    #editor-open-btn {
+      position:fixed; bottom:16px; right:16px;
+      background:rgba(212,133,58,.9); color:#fff;
+      border:none; border-radius:50%; width:48px; height:48px;
+      font-size:20px; cursor:pointer; z-index:9998;
+      box-shadow:0 2px 12px rgba(0,0,0,.4);
+      transition:opacity .3s;
+    }
+    #editor-open-btn:hover { background:#e8964a; }
+    #editor-open-btn.hidden { opacity:0; pointer-events:none; }
 
     /* ── Editor ── */
     #ep{display:none;position:fixed;top:0;right:0;bottom:0;width:310px;background:rgba(13,11,9,.97);border-left:1px solid #2e2a24;overflow-y:auto;z-index:100;padding:12px;font-family:'Lato',sans-serif;color:#f0ece4;pointer-events:all}
@@ -72,6 +82,7 @@
 <body>
 
 <button id="fs-btn" onclick="goFullscreen()">&#x26F6;&nbsp; Vollbild</button>
+<button id="editor-open-btn" onclick="toggleEditor()" title="Editor öffnen">&#9881;</button>
 
 <div id="screen">
   <img id="bg-image" src="" alt="">
@@ -314,8 +325,15 @@ function stopDrag(){
 function toggleEditor(){
   var p=document.getElementById('ep');
   var fs=document.getElementById('fs-btn');
-  if(p.className==='open'){p.className='';fs.className=''}
-  else{p.className='open';fs.className='hidden';buildEditorFields()}
+  var eb=document.getElementById('editor-open-btn');
+  if(p.className==='open'){
+    p.className='';fs.className='';
+    if(eb)eb.className='';
+  } else {
+    p.className='open';fs.className='hidden';
+    if(eb)eb.className='hidden';
+    buildEditorFields();
+  }
 }
 
 function switchLayout(lay,btn){

@@ -633,11 +633,16 @@ async function saveWocheToSupabase() {
   // Gerichte aus den Selects lesen
   function getMeal(selectId, preisId) {
     const sel = document.getElementById(selectId);
-    const preis = document.getElementById(preisId);
+    const preisEl = document.getElementById(preisId);
     if (!sel) return null;
-    const name = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
-    if (!name || name.includes('wählen') || name.includes('--')) return null;
-    return { name: name, preis: preis ? preis.value : '' };
+    const opt = sel.options[sel.selectedIndex];
+    const name = opt ? opt.text.trim() : '';
+    if (!name || name.includes('wählen') || name.startsWith('--') || name === '') return null;
+    const preis = preisEl ? preisEl.value.trim() : '';
+    const key = sel.value;
+    const gerichtData = typeof standardGerichte !== 'undefined' && standardGerichte[key];
+    const bild = gerichtData ? '../mittagstisch/' + gerichtData.bild : null;
+    return { name, preis, bild };
   }
 
   const gerichte = {};

@@ -498,7 +498,7 @@ function subscribeRealtime(){
 }
 function saveConfig(){
   if(!sb){alert('Kein Supabase — Config nur lokal');return}
-  sb.from('display_configs').upsert({kunde_id:KUNDE_ID,screen_id:SCREEN_ID,config:CONFIG})
+  sb.from('display_configs').upsert({kunde_id:KUNDE_ID,screen_id:SCREEN_ID,config:CONFIG},{onConflict:'kunde_id,screen_id'})
     .then(function(){var el=document.getElementById('ep-ok');el.style.display='block';setTimeout(function(){el.style.display='none'},2000)})
     .catch(function(){});
 }

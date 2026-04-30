@@ -274,11 +274,11 @@ function copyUrl(s) {
 }
 function openScreen(s) {
   const el = document.getElementById('url-' + s)
-  if (el) window.open(el.textContent + '&testday=2', '_blank')
+  if (el) window.open(el.textContent, '_blank')
 }
 function openEditor(s) {
   const el = document.getElementById('url-' + s)
-  if (el) window.open(el.textContent + '&testday=2&editor=true', '_blank')
+  if (el) window.open(el.textContent + '&editor=true', '_blank')
 }
 
 async function checkStatus() {

@@ -34,8 +34,8 @@
     #fs-btn.hidden{opacity:0;pointer-events:none}
 
     /* ── Editor ── */
-    #ep{display:none;width:100%;max-width:100vw;background:rgba(13,11,9,.97);border-top:2px solid #d4853a;padding:16px 20px;font-family:'Lato',sans-serif;color:#f0ece4;pointer-events:all}
-    #ep.open{display:block}
+    #ep{display:none;position:fixed;top:0;right:0;width:300px;height:100vh;background:rgba(13,11,9,.97);border-left:2px solid #d4853a;overflow-y:auto;z-index:100;padding:12px;font-family:'Lato',sans-serif;color:#f0ece4;pointer-events:all}
+    #ep.open{display:block} body.editor-open #screen{max-width:calc((100vh - 0px) * 16/9);margin-right:300px;}
     .ep-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #2e2a24}
     .ep-ttl{font-size:11px;font-weight:700;color:#d4853a;text-transform:uppercase;letter-spacing:.6px}
     .ep-x{background:none;border:none;color:#666;font-size:16px;cursor:pointer;padding:2px 6px}
@@ -232,7 +232,7 @@ function renderDisplay(content){
     var m=arr&&arr[0]?arr[0]:null;
     if(!m||!m.name)continue;
     var cfg=lCfg[day];
-    var ec=IS_EDITOR?' drag-handle':'';
+    var ec=(IS_EDITOR&&day===activeSlot)?' drag-handle':'';
     var sz=(cfg.img.r/100)*document.getElementById('screen').offsetWidth*2;
     var tf=FONTS[cfg.text.font]||FONTS['Georgia'];
     var pf=FONTS[cfg.preis.font]||FONTS['Georgia'];
@@ -242,7 +242,7 @@ function renderDisplay(content){
     imgEl.setAttribute('data-layout',todayKey);imgEl.setAttribute('data-day',day);imgEl.setAttribute('data-type','img');
     imgEl.style.cssText='left:'+cfg.img.x+'%;top:'+cfg.img.y+'%;width:'+sz+'px;height:'+sz+'px;';
     imgEl.innerHTML=m.bild?'<img src="../../'+m.bild+'" onerror="this.parentNode.innerHTML=\'<div class=ph>\uD83C\uDF7D\uFE0F</div>\'">':'<div class="ph">\uD83C\uDF7D\uFE0F</div>';
-    if(IS_EDITOR)attachDrag(imgEl,day,'img');
+    if(IS_EDITOR&&(day===activeSlot))attachDrag(imgEl,day,'img');
     overlay.appendChild(imgEl);
 
     var txtEl=document.createElement('div');
@@ -250,7 +250,7 @@ function renderDisplay(content){
     txtEl.setAttribute('data-layout',todayKey);txtEl.setAttribute('data-day',day);txtEl.setAttribute('data-type','text');
     txtEl.style.cssText='left:'+cfg.text.x+'%;top:'+cfg.text.y+'%;width:'+cfg.text.w+'%;font-size:'+cfg.text.size+'vw;font-weight:600;color:'+cfg.text.color+';font-family:'+tf+';';
     txtEl.textContent=m.name;
-    if(IS_EDITOR)attachDrag(txtEl,day,'text');
+    if(IS_EDITOR&&(day===activeSlot))attachDrag(txtEl,day,'text');
     overlay.appendChild(txtEl);
 
     if(m.preis){
@@ -259,7 +259,7 @@ function renderDisplay(content){
       prEl.setAttribute('data-layout',todayKey);prEl.setAttribute('data-day',day);prEl.setAttribute('data-type','preis');
       prEl.style.cssText='left:'+cfg.preis.x+'%;top:'+cfg.preis.y+'%;font-size:'+cfg.preis.size+'vw;color:'+cfg.preis.color+';font-family:'+pf+';';
       prEl.textContent=m.preis;
-      if(IS_EDITOR)attachDrag(prEl,day,'preis');
+      if(IS_EDITOR&&(day===activeSlot))attachDrag(prEl,day,'preis');
       overlay.appendChild(prEl);
     }
   }
@@ -332,8 +332,16 @@ function toggleEditor(){
   var p=document.getElementById('ep');
   var fs=document.getElementById('fs-btn');
   var bb=document.getElementById('back-btn');
-  if(p.className==='open'){p.className='';fs.className='';if(bb)bb.className=''}
-  else{p.className='open';fs.className='hidden';if(bb)bb.className='show';buildEditorFields()}
+  if(p.className==='open'){
+    p.className='';fs.className='';
+    document.body.classList.remove('editor-open');
+    if(bb)bb.className='';
+  } else {
+    p.className='open';fs.className='hidden';
+    document.body.classList.add('editor-open');
+    if(bb)bb.className='show';
+    buildEditorFields();
+  }
 }
 
 function switchLayout(lay,btn){
@@ -491,6 +499,7 @@ window.addEventListener('DOMContentLoaded',function(){
     if(IS_EDITOR){
     document.getElementById('ep').className='open';
     document.getElementById('fs-btn').className='hidden';
+    document.body.classList.add('editor-open');
     var bb=document.getElementById('back-btn');
     if(bb)bb.className='show';
     buildEditorFields();
@@ -505,6 +514,7 @@ window.addEventListener('DOMContentLoaded',function(){
     if(IS_EDITOR){
     document.getElementById('ep').className='open';
     document.getElementById('fs-btn').className='hidden';
+    document.body.classList.add('editor-open');
     var bb=document.getElementById('back-btn');
     if(bb)bb.className='show';
     buildEditorFields();

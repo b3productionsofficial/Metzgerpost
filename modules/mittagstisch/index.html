@@ -641,7 +641,7 @@ async function saveWocheToSupabase() {
     const preis = preisEl ? preisEl.value.trim() : '';
     const key = sel.value;
     const gerichtData = typeof standardGerichte !== 'undefined' && standardGerichte[key];
-    const bild = gerichtData ? '../mittagstisch/' + gerichtData.bild : null;
+    const bild = gerichtData ? '/modules/mittagstisch/' + gerichtData.bild : null;
     return { name, preis, bild };
   }
 

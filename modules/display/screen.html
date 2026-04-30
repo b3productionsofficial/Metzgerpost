@@ -8,8 +8,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{margin:0;padding:0;background:#000;width:100vw;height:100vh;overflow:hidden;display:flex;flex-direction:row}
-    #screen{position:relative;width:100%;padding-bottom:56.25%;height:0}
+    body{background:#000;width:100vw;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center}
+    #screen{position:relative;width:100vw;height:calc(100vw * 9/16);max-height:100vh;max-width:calc(100vh * 16/9)}
     #bg-image{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;transition:opacity .5s}
     #overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
     #datum-overlay{position:absolute;pointer-events:none;white-space:nowrap}
@@ -34,8 +34,8 @@
     #fs-btn.hidden{opacity:0;pointer-events:none}
 
     /* ── Editor ── */
-    #ep{display:none;width:300px;min-width:300px;height:100vh;background:rgba(13,11,9,.97);border-left:2px solid #d4853a;overflow-y:auto;z-index:100;padding:12px;font-family:'Lato',sans-serif;color:#f0ece4;flex-shrink:0}
-    #ep.open{display:flex;flex-direction:column}
+    #ep{display:none;position:fixed;top:0;right:0;bottom:0;width:310px;background:rgba(13,11,9,.97);border-left:1px solid #2e2a24;overflow-y:auto;z-index:100;padding:12px;font-family:'Lato',sans-serif;color:#f0ece4;pointer-events:all}
+    #ep.open{display:block}
     .ep-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #2e2a24}
     .ep-ttl{font-size:11px;font-weight:700;color:#d4853a;text-transform:uppercase;letter-spacing:.6px}
     .ep-x{background:none;border:none;color:#666;font-size:16px;cursor:pointer;padding:2px 6px}
@@ -61,36 +61,18 @@
     .ep-cb.dark{background:#1a1a1a;color:#fff}
     .ep-cb.white{background:#f0f0f0;color:#1a1a1a}
     .ep-cb.sel{border-color:#d4853a}
-    
-    #ep-layout-row{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px;}
-    .ep-col{flex:1;min-width:160px;}
-    #ep-fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px 16px;}
-    .ep-sec{grid-column:1/-1;font-size:9px;font-weight:700;color:#5a5040;text-transform:uppercase;letter-spacing:.5px;margin:4px 0 2px;}
-
     .ep-hint{font-size:10px;color:#6a6050;background:#1a1714;border-radius:4px;padding:6px 8px;line-height:1.5;margin-bottom:8px}
     .ep-btn{width:100%;padding:9px;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;margin-top:5px}
     .ep-save{background:#d4853a;color:#fff}
     .ep-save:hover{background:#e8964a}
     .ep-reset{background:#1e1c18;color:#7a7060;border:1px solid #2e2a24}
     .ep-ok{display:none;color:#5cad7a;font-size:11px;text-align:center;margin-top:6px}
-    #back-btn {
-      position:fixed; top:12px; left:12px;
-      background:rgba(0,0,0,.7); color:#fff;
-      border:1px solid rgba(255,255,255,.3);
-      padding:8px 14px; font-size:13px;
-      font-family:Georgia,serif; border-radius:8px;
-      cursor:pointer; z-index:9998; text-decoration:none;
-      display:none;
-    }
-    #back-btn.show { display:block; }
   </style>
 </head>
 <body>
 
 <button id="fs-btn" onclick="goFullscreen()">&#x26F6;&nbsp; Vollbild</button>
-<a id="back-btn" href="../../modules/display/index.html">&#8592; Display Manager</a>
 
-<div id="screen-wrap" style="flex:1;display:flex;align-items:center;justify-content:center;background:#000;height:100vh;overflow:hidden;min-width:0">
 <div id="screen">
   <img id="bg-image" src="" alt="">
   <div id="overlay">
@@ -101,7 +83,6 @@
     <h1>Metzgerei Sorg &amp; Seitz</h1>
     <p>Heute kein Mittagstisch</p>
   </div>
-</div>
 </div>
 
 <div id="ep">
@@ -156,7 +137,7 @@ var DAY_MAP  = {2:'dienstag',3:'mittwoch',4:'donnerstag',5:'freitag'};
 var DAY_NUM  = {dienstag:2,mittwoch:3,donnerstag:4,freitag:5};
 var LABELS   = {dienstag:'Dienstag',mittwoch:'Mittwoch',donnerstag:'Donnerstag',freitag:'Freitag'};
 var FONTS    = {'Georgia':'Georgia, serif','Playfair':"'Playfair Display', Georgia, serif",'Lora':"'Lora', Georgia, serif",'Lato':"'Lato', Arial, sans-serif",'Open Sans':"'Open Sans', Arial, sans-serif"};
-var LAYOUTS  = {dienstag:'assets/Bildschirm_1_Dienstag.png',mittwoch:'assets/Bildschirm_1_Mittwoch.png',donnerstag:'assets/Bildschirm_1_Donnerstag.png',freitag:'assets/Bildschirm_1_Freitag.png'};
+var LAYOUTS  = {dienstag:'assets/Bildschim_1_Dienstag.png',mittwoch:'assets/Bildschirm_1_Mittwoch.png',donnerstag:'assets/Bildschirm_1_Donnerstag.png',freitag:'assets/Bildschirm_1_Freitag.png'};
 
 // Slot-Defaults (klein = nicht-aktiver Tag)
 function slotSmall(x){return{img:{x:x,y:32,r:3.2},text:{x:x,y:55,w:18,size:1.4,font:'Georgia',color:'#1a1a1a'},preis:{x:x,y:68,size:1.2,font:'Georgia',color:'#1a1a1a'}}}
@@ -183,7 +164,6 @@ var DEFAULT_CONFIG={
 var CONFIG=JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 
 function getTodayKey(){
-  if(IS_EDITOR&&overrideLayout)return overrideLayout;
   var t=getParam('testday');
   if(t)return DAY_MAP[parseInt(t,10)]||null;
   return DAY_MAP[new Date().getDay()]||null;
@@ -293,15 +273,6 @@ function startDrag(e){
   var r=document.getElementById('screen').getBoundingClientRect();
   el.classList.add('dragging');
   dragState={el:el,day:el._dragDay,type:el._dragType,rect:r,layout:activeLayout};
-  if(el._dragDay && el._dragDay!==activeSlot){
-    activeSlot=el._dragDay;
-    var tabs=document.querySelectorAll('#slot-tabs .ep-tab');
-    var days=['dienstag','mittwoch','donnerstag','freitag','datum'];
-    for(var i=0;i<tabs.length;i++)tabs[i].className='ep-tab';
-    var idx=days.indexOf(el._dragDay);
-    if(idx>=0&&tabs[idx])tabs[idx].className='ep-tab active';
-    buildEditorFields();
-  }
   document.addEventListener('mousemove',onDrag);
   document.addEventListener('touchmove',onDrag,{passive:false});
   document.addEventListener('mouseup',stopDrag);
@@ -325,10 +296,8 @@ function onDrag(e){
 
   dragState.el.style.left=xp+'%';
   dragState.el.style.top=yp+'%';
-  var xid='f_x',yid='f_y';
-  if(t==='text'){xid='ft_x';yid='ft_y';}
-  if(t==='preis'){xid='fp_x';yid='fp_y';}
-  var xi=document.getElementById(xid),yi=document.getElementById(yid);
+
+  var xi=document.getElementById('f_x'),yi=document.getElementById('f_y');
   if(xi)xi.value=xp;if(yi)yi.value=yp;
 }
 function stopDrag(){
@@ -345,25 +314,19 @@ function stopDrag(){
 function toggleEditor(){
   var p=document.getElementById('ep');
   var fs=document.getElementById('fs-btn');
-  var bb=document.getElementById('back-btn');
-  if(p.className==='open'){
-    p.className='';fs.className='';
-    
-    if(bb)bb.className='';
-  } else {
-    p.className='open';fs.className='hidden';
-    
-    if(bb)bb.className='show';
-    buildEditorFields();
-  }
+  if(p.className==='open'){p.className='';fs.className=''}
+  else{p.className='open';fs.className='hidden';buildEditorFields()}
 }
 
 function switchLayout(lay,btn){
   activeLayout=lay;
-  overrideLayout=lay;
+  // Alle Layout-Tabs deaktivieren
   var lt=document.querySelectorAll('.layout-tab');
   for(var i=0;i<lt.length;i++)lt[i].className='ep-tab layout-tab';
   btn.className='ep-tab layout-tab active';
+  // testday auf Layout setzen damit das richtige PNG gezeigt wird
+  // Wir manipulieren getTodayKey via overrideLayout
+  overrideLayout=lay;
   buildEditorFields();
   if(currentContent)renderDisplay(currentContent);else showDemo();
 }
@@ -474,31 +437,105 @@ function loadConfig(){
     .then(function(r){
       var row=r&&r.data&&r.data[0];
       if(row&&row.config){
+        // Deep merge
         var lays=['dienstag','mittwoch','donnerstag','freitag'];
         for(var i=0;i<lays.length;i++){
-          var lay=row.config[lays[i]];
-          // Nur neues Format übernehmen (hat 'datum' + verschachtelte Tage)
-          if(lay&&lay.datum&&lay.dienstag){
-            CONFIG[lays[i]]=lay;
-          }
+          if(row.config[lays[i]])CONFIG[lays[i]]=row.config[lays[i]];
         }
       }
     }).catch(function(){});
 }
+function getKWFromDate(d){
+  if(!d)d=new Date();
+  var dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  dt.setUTCDate(dt.getUTCDate()+4-(dt.getUTCDay()||7));
+  var y1=new Date(Date.UTC(dt.getUTCFullYear(),0,1));
+  return Math.ceil((((dt-y1)/86400000)+1)/7);
+}
+
+function findAktiveWoche(wochen){
+  var heute=new Date();
+  var heuteStr=heute.toISOString().split('T')[0]; // "2026-04-30"
+  var heuteKW=getKWFromDate(heute);
+  var heuteJahr=heute.getFullYear();
+
+  // 1. Suche Woche wo gueltig_ab in dieser Woche liegt
+  var best=null;
+  for(var i=0;i<wochen.length;i++){
+    var w=wochen[i];
+    if(!w.gueltig_ab) continue;
+    var ab=new Date(w.gueltig_ab);
+    // Woche läuft von gueltig_ab (Mo) bis +6 Tage (So)
+    var bis=new Date(ab); bis.setDate(bis.getDate()+6);
+    var abStr=ab.toISOString().split('T')[0];
+    var bisStr=bis.toISOString().split('T')[0];
+    if(heuteStr>=abStr && heuteStr<=bisStr){
+      best=w; break;
+    }
+  }
+
+  // 2. Fallback: KW+Jahr Match
+  if(!best){
+    for(var j=0;j<wochen.length;j++){
+      if(wochen[j].kw===heuteKW && wochen[j].jahr===heuteJahr){
+        best=wochen[j]; break;
+      }
+    }
+  }
+
+  // 3. Fallback: neueste Woche
+  if(!best && wochen.length>0) best=wochen[0];
+  return best;
+}
+
 function loadContent(){
   if(!sb){showDemo();return Promise.resolve()}
-  return sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).single()
-    .then(function(r){var d=r&&r.data;if(d&&d.content)renderDisplay(d.content);else showDemo()})
+  // Erst aus wochen-Tabelle laden (automatische Wochenerkennung)
+  return sb.from('wochen')
+    .select('*')
+    .eq('kunde_id',KUNDE_ID)
+    .order('gueltig_ab',{ascending:false})
+    .limit(20)
+    .then(function(r){
+      var wochen=r&&r.data?r.data:[];
+      var aktiv=findAktiveWoche(wochen);
+      if(aktiv){
+        renderDisplay({
+          woche: aktiv.woche_label||'',
+          gerichte: aktiv.gerichte||{}
+        });
+        return;
+      }
+      // Fallback: displays Tabelle (manuell gesendeter Inhalt)
+      return sb.from('displays').select('content')
+        .eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID)
+        .limit(1)
+        .then(function(r2){
+          var d=r2&&r2.data&&r2.data[0];
+          if(d&&d.content)renderDisplay(d.content);
+          else showDemo();
+        });
+    })
     .catch(function(){showDemo()});
 }
 function subscribeRealtime(){
   if(!sb)return;
-  try{sb.channel('disp-'+SCREEN_ID).on('postgres_changes',{event:'*',schema:'public',table:'displays',filter:'kunde_id=eq.'+KUNDE_ID},function(p){if(p&&p.new&&p.new.content)renderDisplay(p.new.content)}).subscribe(function(){})}
-  catch(e){setInterval(loadContent,60000)}
+  try{
+    // Auf neue Wochen horchen
+    sb.channel('wochen-'+KUNDE_ID)
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'wochen',filter:'kunde_id=eq.'+KUNDE_ID},
+        function(){loadContent()})
+      .subscribe(function(){});
+    // Auch auf displays horchen (manuelles Senden)
+    sb.channel('disp-'+SCREEN_ID)
+      .on('postgres_changes',{event:'*',schema:'public',table:'displays',filter:'kunde_id=eq.'+KUNDE_ID},
+        function(p){if(p&&p.new&&p.new.content)renderDisplay(p.new.content)})
+      .subscribe(function(){});
+  }catch(e){setInterval(loadContent,60000)}
 }
 function saveConfig(){
   if(!sb){alert('Kein Supabase — Config nur lokal');return}
-  sb.from('display_configs').upsert({kunde_id:KUNDE_ID,screen_id:SCREEN_ID,config:CONFIG},{onConflict:'kunde_id,screen_id'})
+  sb.from('display_configs').upsert({kunde_id:KUNDE_ID,screen_id:SCREEN_ID,config:CONFIG})
     .then(function(){var el=document.getElementById('ep-ok');el.style.display='block';setTimeout(function(){el.style.display='none'},2000)})
     .catch(function(){});
 }
@@ -507,14 +544,7 @@ window.addEventListener('DOMContentLoaded',function(){
   if(IS_EDITOR)overrideLayout='dienstag';
   if(IS_DEMO){
     showDemo();
-    if(IS_EDITOR){
-    document.getElementById('ep').className='open';
-    document.getElementById('fs-btn').className='hidden';
-    
-    var bb=document.getElementById('back-btn');
-    if(bb)bb.className='show';
-    buildEditorFields();
-  }
+    if(IS_EDITOR){document.getElementById('ep').className='open';document.getElementById('fs-btn').className='hidden';buildEditorFields()}
     return;
   }
   if(!window.supabase){showDemo();return}
@@ -522,14 +552,14 @@ window.addEventListener('DOMContentLoaded',function(){
   var fb=setTimeout(function(){if(!currentContent)showDemo()},8000);
   loadConfig().then(function(){return loadContent()}).then(function(){
     clearTimeout(fb);subscribeRealtime();
-    if(IS_EDITOR){
-    document.getElementById('ep').className='open';
-    document.getElementById('fs-btn').className='hidden';
-    
-    var bb=document.getElementById('back-btn');
-    if(bb)bb.className='show';
-    buildEditorFields();
-  }
+    if(IS_EDITOR){document.getElementById('ep').className='open';document.getElementById('fs-btn').className='hidden';buildEditorFields()}
+    // Jede Minute prüfen ob Tageswechsel (für automatisches Layout-Wechseln)
+    var lastDay=new Date().getDay();
+    setInterval(function(){
+      var today=new Date().getDay();
+      if(today!==lastDay){lastDay=today;loadContent();}
+    },60000);
+    // Exakter Mitternachts-Reload
     var now=new Date(),mn=new Date(now);mn.setHours(24,0,5,0);
     setTimeout(function(){loadContent();setInterval(loadContent,86400000)},mn-now);
   });

@@ -8,8 +8,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{background:#000;width:100vw;min-height:100vh;overflow-x:hidden;display:flex;flex-direction:column;align-items:center}
-    #screen{position:relative;width:100vw;height:calc(100vw * 9/16)}
+    body{margin:0;padding:0;background:#000;width:100vw;height:100vh;overflow:hidden;display:flex;flex-direction:row}
+    #screen{position:relative;width:100%;padding-bottom:56.25%;height:0}
     #bg-image{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;transition:opacity .5s}
     #overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
     #datum-overlay{position:absolute;pointer-events:none;white-space:nowrap}
@@ -34,8 +34,8 @@
     #fs-btn.hidden{opacity:0;pointer-events:none}
 
     /* ── Editor ── */
-    #ep{display:none;position:fixed;top:0;right:0;width:300px;height:100vh;background:rgba(13,11,9,.97);border-left:2px solid #d4853a;overflow-y:auto;z-index:100;padding:12px;font-family:'Lato',sans-serif;color:#f0ece4;pointer-events:all}
-    #ep.open{display:block} body.editor-open #screen{max-width:calc((100vh - 0px) * 16/9);margin-right:300px;}
+    #ep{display:none;width:300px;min-width:300px;height:100vh;background:rgba(13,11,9,.97);border-left:2px solid #d4853a;overflow-y:auto;z-index:100;padding:12px;font-family:'Lato',sans-serif;color:#f0ece4;flex-shrink:0}
+    #ep.open{display:flex;flex-direction:column}
     .ep-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #2e2a24}
     .ep-ttl{font-size:11px;font-weight:700;color:#d4853a;text-transform:uppercase;letter-spacing:.6px}
     .ep-x{background:none;border:none;color:#666;font-size:16px;cursor:pointer;padding:2px 6px}
@@ -90,6 +90,7 @@
 <button id="fs-btn" onclick="goFullscreen()">&#x26F6;&nbsp; Vollbild</button>
 <a id="back-btn" href="../../modules/display/index.html">&#8592; Display Manager</a>
 
+<div id="screen-wrap" style="flex:1;display:flex;align-items:center;justify-content:center;background:#000;height:100vh;overflow:hidden;min-width:0">
 <div id="screen">
   <img id="bg-image" src="" alt="">
   <div id="overlay">
@@ -100,6 +101,7 @@
     <h1>Metzgerei Sorg &amp; Seitz</h1>
     <p>Heute kein Mittagstisch</p>
   </div>
+</div>
 </div>
 
 <div id="ep">
@@ -232,7 +234,7 @@ function renderDisplay(content){
     var m=arr&&arr[0]?arr[0]:null;
     if(!m||!m.name)continue;
     var cfg=lCfg[day];
-    var ec=(IS_EDITOR&&day===activeSlot)?' drag-handle':'';
+    var ec=IS_EDITOR?' drag-handle':'';
     var sz=(cfg.img.r/100)*document.getElementById('screen').offsetWidth*2;
     var tf=FONTS[cfg.text.font]||FONTS['Georgia'];
     var pf=FONTS[cfg.preis.font]||FONTS['Georgia'];
@@ -242,7 +244,7 @@ function renderDisplay(content){
     imgEl.setAttribute('data-layout',todayKey);imgEl.setAttribute('data-day',day);imgEl.setAttribute('data-type','img');
     imgEl.style.cssText='left:'+cfg.img.x+'%;top:'+cfg.img.y+'%;width:'+sz+'px;height:'+sz+'px;';
     imgEl.innerHTML=m.bild?'<img src="../../'+m.bild+'" onerror="this.parentNode.innerHTML=\'<div class=ph>\uD83C\uDF7D\uFE0F</div>\'">':'<div class="ph">\uD83C\uDF7D\uFE0F</div>';
-    if(IS_EDITOR&&(day===activeSlot))attachDrag(imgEl,day,'img');
+    if(IS_EDITOR)attachDrag(imgEl,day,'img');
     overlay.appendChild(imgEl);
 
     var txtEl=document.createElement('div');
@@ -250,7 +252,7 @@ function renderDisplay(content){
     txtEl.setAttribute('data-layout',todayKey);txtEl.setAttribute('data-day',day);txtEl.setAttribute('data-type','text');
     txtEl.style.cssText='left:'+cfg.text.x+'%;top:'+cfg.text.y+'%;width:'+cfg.text.w+'%;font-size:'+cfg.text.size+'vw;font-weight:600;color:'+cfg.text.color+';font-family:'+tf+';';
     txtEl.textContent=m.name;
-    if(IS_EDITOR&&(day===activeSlot))attachDrag(txtEl,day,'text');
+    if(IS_EDITOR)attachDrag(txtEl,day,'text');
     overlay.appendChild(txtEl);
 
     if(m.preis){
@@ -259,7 +261,7 @@ function renderDisplay(content){
       prEl.setAttribute('data-layout',todayKey);prEl.setAttribute('data-day',day);prEl.setAttribute('data-type','preis');
       prEl.style.cssText='left:'+cfg.preis.x+'%;top:'+cfg.preis.y+'%;font-size:'+cfg.preis.size+'vw;color:'+cfg.preis.color+';font-family:'+pf+';';
       prEl.textContent=m.preis;
-      if(IS_EDITOR&&(day===activeSlot))attachDrag(prEl,day,'preis');
+      if(IS_EDITOR)attachDrag(prEl,day,'preis');
       overlay.appendChild(prEl);
     }
   }
@@ -290,6 +292,15 @@ function startDrag(e){
   var r=document.getElementById('screen').getBoundingClientRect();
   el.classList.add('dragging');
   dragState={el:el,day:el._dragDay,type:el._dragType,rect:r,layout:activeLayout};
+  if(el._dragDay && el._dragDay!==activeSlot){
+    activeSlot=el._dragDay;
+    var tabs=document.querySelectorAll('#slot-tabs .ep-tab');
+    var days=['dienstag','mittwoch','donnerstag','freitag','datum'];
+    for(var i=0;i<tabs.length;i++)tabs[i].className='ep-tab';
+    var idx=days.indexOf(el._dragDay);
+    if(idx>=0&&tabs[idx])tabs[idx].className='ep-tab active';
+    buildEditorFields();
+  }
   document.addEventListener('mousemove',onDrag);
   document.addEventListener('touchmove',onDrag,{passive:false});
   document.addEventListener('mouseup',stopDrag);
@@ -334,11 +345,11 @@ function toggleEditor(){
   var bb=document.getElementById('back-btn');
   if(p.className==='open'){
     p.className='';fs.className='';
-    document.body.classList.remove('editor-open');
+    
     if(bb)bb.className='';
   } else {
     p.className='open';fs.className='hidden';
-    document.body.classList.add('editor-open');
+    
     if(bb)bb.className='show';
     buildEditorFields();
   }
@@ -499,7 +510,7 @@ window.addEventListener('DOMContentLoaded',function(){
     if(IS_EDITOR){
     document.getElementById('ep').className='open';
     document.getElementById('fs-btn').className='hidden';
-    document.body.classList.add('editor-open');
+    
     var bb=document.getElementById('back-btn');
     if(bb)bb.className='show';
     buildEditorFields();
@@ -514,7 +525,7 @@ window.addEventListener('DOMContentLoaded',function(){
     if(IS_EDITOR){
     document.getElementById('ep').className='open';
     document.getElementById('fs-btn').className='hidden';
-    document.body.classList.add('editor-open');
+    
     var bb=document.getElementById('back-btn');
     if(bb)bb.className='show';
     buildEditorFields();

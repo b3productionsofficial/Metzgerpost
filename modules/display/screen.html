@@ -183,6 +183,7 @@ var DEFAULT_CONFIG={
 var CONFIG=JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 
 function getTodayKey(){
+  if(IS_EDITOR&&overrideLayout)return overrideLayout;
   var t=getParam('testday');
   if(t)return DAY_MAP[parseInt(t,10)]||null;
   return DAY_MAP[new Date().getDay()]||null;
@@ -324,8 +325,10 @@ function onDrag(e){
 
   dragState.el.style.left=xp+'%';
   dragState.el.style.top=yp+'%';
-
-  var xi=document.getElementById('f_x'),yi=document.getElementById('f_y');
+  var xid='f_x',yid='f_y';
+  if(t==='text'){xid='ft_x';yid='ft_y';}
+  if(t==='preis'){xid='fp_x';yid='fp_y';}
+  var xi=document.getElementById(xid),yi=document.getElementById(yid);
   if(xi)xi.value=xp;if(yi)yi.value=yp;
 }
 function stopDrag(){
@@ -357,13 +360,10 @@ function toggleEditor(){
 
 function switchLayout(lay,btn){
   activeLayout=lay;
-  // Alle Layout-Tabs deaktivieren
+  overrideLayout=lay;
   var lt=document.querySelectorAll('.layout-tab');
   for(var i=0;i<lt.length;i++)lt[i].className='ep-tab layout-tab';
   btn.className='ep-tab layout-tab active';
-  // testday auf Layout setzen damit das richtige PNG gezeigt wird
-  // Wir manipulieren getTodayKey via overrideLayout
-  overrideLayout=lay;
   buildEditorFields();
   if(currentContent)renderDisplay(currentContent);else showDemo();
 }

@@ -164,8 +164,8 @@ var DEFAULT_CONFIG={
 var CONFIG=JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 
 function getTodayKey(){
-  var t=getParam('testday');
-  if(t)return DAY_MAP[parseInt(t,10)]||null;
+  if(IS_EDITOR&&overrideLayout)return overrideLayout;
+  if(IS_EDITOR){var t=getParam('testday');if(t)return DAY_MAP[parseInt(t,10)]||null;}
   return DAY_MAP[new Date().getDay()]||null;
 }
 function getKW(d){if(!d)d=new Date();var dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));dt.setUTCDate(dt.getUTCDate()+4-(dt.getUTCDay()||7));var y1=new Date(Date.UTC(dt.getUTCFullYear(),0,1));return Math.ceil((((dt-y1)/86400000)+1)/7)}

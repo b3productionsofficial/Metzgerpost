@@ -215,7 +215,23 @@ input[readonly] {
   background: #f7f7f7;
   color: #333;
 }
-  </style>
+  
+  /* Wochen-Kalender-Picker */
+  .woche-picker-wrap { margin-bottom: 12px; }
+  .woche-picker-wrap label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; }
+  .woche-picker-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .woche-picker-row input[type=week] {
+    padding: 8px 12px; border: 1.5px solid #d1d5db; border-radius: 8px;
+    font-size: 14px; cursor: pointer; background: #fff;
+  }
+  .woche-picker-row input[type=week]:focus { border-color: #2d6a4f; outline: none; }
+  .woche-label-preview {
+    font-size: 14px; font-weight: 600; color: #2d6a4f;
+    background: #f0fdf4; border: 1px solid #86efac;
+    border-radius: 6px; padding: 6px 12px;
+  }
+
+</style>
 </head>
 
 <body>
@@ -250,7 +266,14 @@ input[readonly] {
   <h2 id="bereich2-title">2. Kalenderwoche</h2>
 
   <div id="instagram-woche-block" class="druck-box">
-  <label for="woche">Kalenderwoche</label>
+  <div class="woche-picker-wrap">
+    <label>&#128197; Woche auswählen</label>
+    <div class="woche-picker-row">
+      <input type="week" id="woche-kalender" onchange="onWocheKalenderChange()" />
+      <span class="woche-label-preview" id="woche-label-preview">—</span>
+    </div>
+  </div>
+  <label for="woche">Oder manuell eingeben</label>
   <input id="woche" value="18.02. - 20.02.2026" oninput="updatePreviews()" />
 </div>
 
@@ -621,6 +644,36 @@ input[readonly] {
 
 <script>
 // ── Woche in Supabase speichern ──
+
+// ── Wochen-Kalender-Picker ──
+function onWocheKalenderChange() {
+  var val = document.getElementById('woche-kalender').value;
+  if (!val) return;
+  var parts = val.split('-W');
+  var jahr = parseInt(parts[0]);
+  var kw = parseInt(parts[1]);
+  var simple = new Date(jahr, 0, 1 + (kw - 1) * 7);
+  var dow = simple.getDay();
+  var monday = new Date(simple);
+  monday.setDate(simple.getDate() - (dow <= 4 ? dow - 1 : dow - 8));
+  var friday = new Date(monday);
+  friday.setDate(monday.getDate() + 4);
+  function fmt(d) {
+    var dd = String(d.getDate()).padStart(2,'0');
+    var mm = String(d.getMonth()+1).padStart(2,'0');
+    var yy = d.getFullYear();
+    return dd+'.'+mm+'.'+yy;
+  }
+  var label = fmt(monday) + ' - ' + fmt(friday);
+  var felder = ['woche','druck-front-datum','druck-woche-links'];
+  for (var i = 0; i < felder.length; i++) {
+    var el = document.getElementById(felder[i]);
+    if (el) el.value = label;
+  }
+  document.getElementById('woche-label-preview').textContent = 'KW ' + kw + ': ' + label;
+  updatePreviews();
+}
+
 async function saveWocheToSupabase() {
   const btn = document.getElementById('btn-save-woche');
   const statusEl = document.getElementById('save-woche-status');

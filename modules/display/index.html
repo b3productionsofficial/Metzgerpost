@@ -8,18 +8,22 @@
   <link rel="stylesheet" href="../../shared/style.css" />
   <style>
     .screen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;margin-bottom:32px}
-    .screen-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all .2s}
+    .screen-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all .2s;cursor:pointer}
     .screen-card:hover{border-color:var(--border2);transform:translateY(-2px)}
-    .screen-preview{width:100%;aspect-ratio:16/9;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:40px;border-bottom:1px solid var(--border);position:relative;cursor:pointer}
-    .screen-preview:hover .prev-ov{opacity:1}
-    .prev-ov{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:.2s;color:#fff;font-size:14px;font-weight:600}
+    .screen-card.selected{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+    .screen-preview{width:100%;aspect-ratio:16/9;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:40px;border-bottom:1px solid var(--border);position:relative}
     .live-dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 6px var(--success)}
     .live-dot.offline{background:var(--muted2);box-shadow:none}
     .screen-body{padding:16px 18px}
     .screen-name{font-size:15px;font-weight:600;margin-bottom:4px}
     .screen-meta{font-size:12px;color:var(--muted);margin-bottom:14px}
     .screen-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+    /* Senden Panel */
     .send-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px}
+    .send-content{display:none}.send-content.show{display:block}
+
+    /* Wochen Liste */
     .week-list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;max-height:260px;overflow-y:auto}
     .week-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:.15s}
     .week-item:hover{border-color:var(--border2)}
@@ -28,44 +32,61 @@
     .week-item.selected .week-dot{background:var(--accent)}
     .week-info{flex:1;min-width:0}
     .week-name{font-size:13px;font-weight:600}
-    .week-gerichte{font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .week-del{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;flex-shrink:0}
+    .week-gerichte{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .week-del{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px}
     .week-del:hover{color:#e05555;background:rgba(224,85,85,.1)}
     .kw-badge{font-size:10px;background:var(--accent-dim);color:var(--accent);border-radius:4px;padding:2px 6px;font-weight:700;flex-shrink:0}
     .empty-hint{color:var(--muted);font-size:13px;padding:16px;text-align:center;border:1px dashed var(--border);border-radius:var(--radius-sm)}
+
     /* Generator */
-    .gen-tabs{display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:12px;flex-wrap:wrap}
-    .gen-tab{padding:8px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
-    .gen-tab.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
-    .gen-content{display:none}.gen-content.show{display:block}
-    .slide-block{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px}
-    .slide-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-    .slide-title{font-size:14px;font-weight:600;flex:1}
-    .sektion-block{background:var(--surface);border:1px dashed var(--border);border-radius:6px;padding:12px;margin-bottom:8px}
-    .sektion-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-    .sektion-name-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--text);font-size:13px;outline:none}
-    .item-row{display:flex;gap:6px;margin-bottom:5px;align-items:center}
+    .gen-section{margin-bottom:20px}
+    .gen-section-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px}
+    .slide-block{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px}
+    .slide-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .slide-label{font-size:13px;font-weight:600;flex:1}
+    .sektion-block{background:var(--surface);border:1px dashed var(--border);border-radius:6px;padding:10px;margin-bottom:6px}
+    .sektion-header{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+    .sektion-name-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--text);font-size:12px;outline:none}
+    .sektion-name-input:focus{border-color:var(--accent)}
+    .item-row{display:flex;gap:5px;margin-bottom:4px;align-items:center}
     .item-row input{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:4px 7px;color:var(--text);font-size:12px;outline:none}
-    .item-name-inp{flex:2}
-    .item-preis-inp{flex:1}
-    .btn-mini{background:none;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--muted);transition:.15s}
+    .item-row input:focus{border-color:var(--accent)}
+    .item-row input:first-child{flex:2}
+    .item-row input:nth-child(2){flex:1}
+    .btn-mini{background:none;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--muted);white-space:nowrap}
     .btn-mini:hover{border-color:var(--border2);color:var(--text)}
-    .btn-del{color:#e05555;border-color:rgba(224,85,85,.3)}
-    .btn-del:hover{background:rgba(224,85,85,.1);color:#e05555}
-    .timer-row{display:flex;align-items:center;gap:10px;margin-top:14px}
+    .btn-del{color:#e05555;border-color:rgba(224,85,85,.2)}
+    .btn-del:hover{background:rgba(224,85,85,.08)}
+    .timer-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--border);margin-top:8px}
     .timer-row label{font-size:12px;color:var(--muted);white-space:nowrap}
     .timer-row input[type=range]{flex:1}
-    .timer-val{font-size:13px;font-weight:600;color:var(--accent);min-width:40px}
-    .layout-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:16px}
+    .timer-val{font-size:13px;font-weight:700;color:var(--accent);min-width:36px;text-align:right}
+
+    /* Upload */
+    .upload-area{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;cursor:pointer;transition:.15s;margin-bottom:8px;position:relative}
+    .upload-area:hover{border-color:var(--accent);background:var(--accent-dim)}
+    .upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+    .upload-area p{font-size:12px;color:var(--muted);margin-top:4px;pointer-events:none}
+    .upload-area strong{font-size:13px;pointer-events:none}
+    .upload-preview{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:4px;margin-bottom:6px;display:none}
+    .upload-progress{height:3px;background:var(--accent);border-radius:2px;display:none;margin-top:4px}
+
+    /* Screen 3 Layouts */
+    .layout-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:12px}
     .layout-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;cursor:pointer;transition:.15s;position:relative}
     .layout-card:hover{border-color:var(--border2)}
     .layout-card.selected{border-color:var(--accent)}
-    .layout-card-img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:var(--surface)}
-    .layout-card-name{font-size:12px;font-weight:600;padding:6px 10px;color:var(--text)}
-    .layout-check{position:absolute;top:6px;right:6px;background:var(--accent);color:#fff;border-radius:50%;width:22px;height:22px;display:none;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+    .layout-card img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+    .layout-card-body{padding:6px 8px;display:flex;align-items:center;gap:6px}
+    .layout-card-name{font-size:11px;font-weight:600;flex:1}
+    .layout-check{width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;display:none;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
     .layout-card.selected .layout-check{display:flex}
-    .url-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:10px}
-    .url-text{font-size:11px;color:var(--accent);word-break:break-all;font-family:monospace;margin:6px 0 10px}
+    .layout-del{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:11px;padding:1px 4px}
+    .layout-del:hover{color:#e05555}
+
+    /* URL Box */
+    .url-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px}
+    .url-text{font-size:11px;color:var(--accent);word-break:break-all;font-family:monospace;margin:4px 0 8px}
   </style>
 </head>
 <body class="mp-bg-glow">
@@ -79,114 +100,98 @@
     </div>
   </div>
 
-  <!-- Bildschirm-Karten -->
-  <div class="mp-label" style="margin-bottom:14px">Deine Bildschirme</div>
+  <!-- Bildschirme -->
+  <div class="mp-label" style="margin-bottom:14px">Deine Bildschirme — klicken zum Auswählen</div>
   <div class="screen-grid">
-    <div class="screen-card mp-animate mp-animate-d1">
-      <div class="screen-preview" onclick="openScreen('screen1')">
-        <span>📺</span>
-        <div class="live-dot offline" id="dot-screen1"></div>
-        <div class="prev-ov">🔗 Vollbild öffnen</div>
-      </div>
+    <div class="screen-card selected" id="card-screen1" onclick="selectScreen('screen1')">
+      <div class="screen-preview"><span>📺</span><div class="live-dot offline" id="dot-screen1"></div></div>
       <div class="screen-body">
         <div class="screen-name">Bildschirm 1 — Mittagstisch</div>
         <div class="screen-meta" id="meta-screen1">Wird geladen…</div>
         <div class="screen-actions">
-          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openEditor('screen1')">⚙️ Editor</button>
-          <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('screen1')">🔗 URL</button>
-          <button class="mp-btn mp-btn-primary mp-btn-sm" onclick="setTargetScreen('screen1')">Senden auf →</button>
+          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openEditor('screen1');event.stopPropagation()">⚙️ Editor</button>
+          <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('screen1');event.stopPropagation()">🔗 URL</button>
         </div>
       </div>
     </div>
-    <div class="screen-card mp-animate mp-animate-d2">
-      <div class="screen-preview" onclick="openScreen('screen2')">
-        <span>🍽️</span>
-        <div class="live-dot offline" id="dot-screen2"></div>
-        <div class="prev-ov">🔗 Vollbild öffnen</div>
-      </div>
+    <div class="screen-card" id="card-screen2" onclick="selectScreen('screen2')">
+      <div class="screen-preview"><span>📋</span><div class="live-dot offline" id="dot-screen2"></div></div>
       <div class="screen-body">
         <div class="screen-name">Bildschirm 2 — Tagesgerichte</div>
-        <div class="screen-meta" id="meta-screen2">Generator unten</div>
+        <div class="screen-meta" id="meta-screen2">Noch nicht konfiguriert</div>
         <div class="screen-actions">
-          <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('screen2')">🔗 URL</button>
-          <button class="mp-btn mp-btn-primary mp-btn-sm" onclick="switchGenTab('screen2')">✏️ Bearbeiten</button>
+          <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('screen2');event.stopPropagation()">🔗 URL</button>
+          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openScreen('screen2');event.stopPropagation()">Öffnen</button>
         </div>
       </div>
     </div>
-    <div class="screen-card mp-animate mp-animate-d3">
-      <div class="screen-preview" onclick="openScreen('screen3')">
-        <span>🏷️</span>
-        <div class="live-dot offline" id="dot-screen3"></div>
-        <div class="prev-ov">🔗 Vollbild öffnen</div>
-      </div>
+    <div class="screen-card" id="card-screen3" onclick="selectScreen('screen3')">
+      <div class="screen-preview"><span>🏷️</span><div class="live-dot offline" id="dot-screen3"></div></div>
       <div class="screen-body">
-        <div class="screen-name">Bildschirm 3 — Saisonales</div>
-        <div class="screen-meta" id="meta-screen3">Layouts unten auswählen</div>
+        <div class="screen-name">Bildschirm 3 — Angebote</div>
+        <div class="screen-meta" id="meta-screen3">Noch nicht konfiguriert</div>
         <div class="screen-actions">
-          <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('screen3')">🔗 URL</button>
-          <button class="mp-btn mp-btn-primary mp-btn-sm" onclick="switchGenTab('screen3')">✏️ Bearbeiten</button>
+          <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('screen3');event.stopPropagation()">🔗 URL</button>
+          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openScreen('screen3');event.stopPropagation()">Öffnen</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Inhalt senden (Screen 1) -->
-  <div class="send-panel mp-animate" id="screen1-panel">
-    <div class="mp-section-title" style="font-size:18px;margin-bottom:4px">📡 Inhalt senden — Screen 1</div>
-    <div class="mp-section-sub" style="margin-bottom:16px">Wähle eine Woche und sende sie auf Bildschirm 1</div>
-    <div class="mp-field" style="margin-bottom:14px">
-      <label class="mp-label">Ziel-Bildschirm</label>
-      <select class="mp-select" id="target-screen">
-        <option value="screen1">Bildschirm 1 — Mittagstisch</option>
-        <option value="screen2">Bildschirm 2 — Tagesgerichte</option>
-        <option value="screen3">Bildschirm 3 — Angebote</option>
-        <option value="all">Alle Bildschirme</option>
-      </select>
-    </div>
-    <div class="mp-label" style="margin-bottom:8px">Gespeicherte Wochen</div>
-    <div class="week-list" id="week-list">
-      <div class="empty-hint">⏳ Wochen werden geladen…</div>
-    </div>
-    <button class="mp-btn mp-btn-primary mp-btn-full" onclick="sendToScreen()">📡 Jetzt auf Bildschirm senden</button>
-  </div>
-
-  <!-- Generator Panel -->
+  <!-- Dynamisches Senden Panel -->
   <div class="send-panel mp-animate">
-    <div class="mp-section-title" style="font-size:18px;margin-bottom:4px">🎛️ Inhalte bearbeiten</div>
-    <div class="mp-section-sub" style="margin-bottom:16px">Generator für Bildschirm 2 &amp; 3</div>
-    <div class="gen-tabs">
-      <div class="gen-tab active" id="tab-screen1" onclick="switchGenTab('screen1')">📺 Screen 1 — URLs</div>
-      <div class="gen-tab" id="tab-screen2" onclick="switchGenTab('screen2')">🍽️ Screen 2 — Tagesgerichte</div>
-      <div class="gen-tab" id="tab-screen3" onclick="switchGenTab('screen3')">🏷️ Screen 3 — Saisonales</div>
+    <div class="mp-section-title" style="font-size:18px;margin-bottom:4px" id="send-title">📡 Inhalt senden — Bildschirm 1</div>
+    <div class="mp-section-sub" id="send-sub" style="margin-bottom:16px">Wähle eine Woche und sende sie auf den Bildschirm</div>
+
+    <!-- Screen 1: Wochen -->
+    <div class="send-content show" id="send-screen1">
+      <div class="mp-label" style="margin-bottom:8px">Gespeicherte Wochen</div>
+      <div class="week-list" id="week-list">
+        <div class="empty-hint">⏳ Wird geladen…</div>
+      </div>
+      <button class="mp-btn mp-btn-primary mp-btn-full" onclick="sendScreen1()">📡 Auf Bildschirm 1 senden</button>
     </div>
 
-    <!-- Screen 1 URLs -->
-    <div class="gen-content show" id="gen-screen1">
-      <div id="url-list"></div>
-    </div>
-
-    <!-- Screen 2 Generator -->
-    <div class="gen-content" id="gen-screen2">
-      <div id="screen2-slides"></div>
+    <!-- Screen 2: Generator -->
+    <div class="send-content" id="send-screen2">
+      <div class="gen-section">
+        <div class="gen-section-title">Hintergrundbilder (Folien)</div>
+        <div id="sc2-slides-ui"></div>
+      </div>
       <div class="timer-row">
-        <label>Wechsel-Timer:</label>
+        <label>Wechsel alle</label>
         <input type="range" min="3" max="30" value="8" id="sc2-timer" oninput="document.getElementById('sc2-timer-val').textContent=this.value+'s'">
         <span class="timer-val" id="sc2-timer-val">8s</span>
       </div>
-      <button class="mp-btn mp-btn-primary mp-btn-full" style="margin-top:14px" onclick="sendScreen2()">📡 Auf Screen 2 senden</button>
+      <button class="mp-btn mp-btn-primary mp-btn-full" style="margin-top:12px" onclick="sendScreen2()">📡 Auf Bildschirm 2 senden</button>
     </div>
 
-    <!-- Screen 3 Layouts -->
-    <div class="gen-content" id="gen-screen3">
-      <div class="mp-section-sub" style="margin-bottom:12px">Layouts auswählen — mehrere möglich, rotieren automatisch</div>
-      <div class="layout-grid" id="sc3-layout-grid"></div>
+    <!-- Screen 3: Layouts -->
+    <div class="send-content" id="send-screen3">
+      <div class="gen-section">
+        <div class="gen-section-title">Layouts auswählen (mehrere möglich)</div>
+        <div class="layout-grid" id="sc3-layout-grid"></div>
+        <div class="upload-area" style="margin-top:8px">
+          <input type="file" accept="image/*" multiple onchange="uploadScreen3Layouts(this.files)">
+          <strong>📁 Neue Layouts hochladen</strong>
+          <p>JPG/PNG, 16:9 empfohlen — mehrere gleichzeitig möglich</p>
+        </div>
+        <div class="upload-progress" id="sc3-progress"></div>
+      </div>
       <div class="timer-row">
-        <label>Wechsel-Timer:</label>
+        <label>Wechsel alle</label>
         <input type="range" min="5" max="60" value="10" id="sc3-timer" oninput="document.getElementById('sc3-timer-val').textContent=this.value+'s'">
         <span class="timer-val" id="sc3-timer-val">10s</span>
       </div>
-      <button class="mp-btn mp-btn-primary mp-btn-full" style="margin-top:14px" onclick="sendScreen3()">📡 Auf Screen 3 senden</button>
+      <button class="mp-btn mp-btn-primary mp-btn-full" style="margin-top:12px" onclick="sendScreen3()">📡 Auf Bildschirm 3 senden</button>
     </div>
+  </div>
+
+  <!-- URL Panel -->
+  <div class="send-panel mp-animate">
+    <div class="mp-section-title" style="font-size:18px;margin-bottom:4px">🔗 Bildschirm-URLs</div>
+    <div class="mp-section-sub" style="margin-bottom:16px">Diese URLs auf dem TV-Browser öffnen</div>
+    <div id="url-list"></div>
   </div>
 
 </div>
@@ -197,6 +202,14 @@
 const SCREENS = ['screen1','screen2','screen3']
 let selectedWeek = null
 let kundeId = ''
+let activeScreen = 'screen1'
+
+// Screen 2 Daten
+let screen2Data = { slides: [] }
+
+// Screen 3 Layouts (aus Supabase Storage + gespeicherte Config)
+let screen3Layouts = []    // alle verfügbaren
+let selectedLayouts = []   // ausgewählte IDs
 
 window.addEventListener('DOMContentLoaded', async () => {
   const user = await mpInit({ nav:{ backUrl:'../../dashboard.html', backLabel:'Dashboard' }})
@@ -205,16 +218,33 @@ window.addEventListener('DOMContentLoaded', async () => {
   await loadWeeks()
   buildUrls()
   checkStatus()
-  buildScreen2UI()
-  buildScreen3UI()
+  await loadScreen2Config()
+  await loadScreen3Layouts()
 })
 
-// ── Wochen ──
+// ── Screen Auswahl ──
+function selectScreen(id) {
+  activeScreen = id
+  document.querySelectorAll('.screen-card').forEach(c => c.classList.remove('selected'))
+  document.getElementById('card-' + id).classList.add('selected')
+  document.querySelectorAll('.send-content').forEach(c => c.classList.remove('show'))
+  document.getElementById('send-' + id).classList.add('show')
+  const titles = {
+    screen1: ['📡 Inhalt senden — Bildschirm 1', 'Woche auswählen und auf den Mittagstisch-Screen senden'],
+    screen2: ['🍽️ Bildschirm 2 — Tagesgerichte', 'Preislisten bearbeiten und auf Screen 2 senden'],
+    screen3: ['🏷️ Bildschirm 3 — Angebote/Saisonales', 'Layouts auswählen die auf Screen 3 rotieren sollen']
+  }
+  document.getElementById('send-title').textContent = titles[id][0]
+  document.getElementById('send-sub').textContent = titles[id][1]
+}
+
+// ── Screen 1: Wochen ──
 async function loadWeeks() {
   const list = document.getElementById('week-list')
   try {
-    const { data } = await getSB().from('wochen').select('*').eq('kunde_id', kundeId).order('erstellt_am', { ascending: false }).limit(20)
-    if (!data || !data.length) { list.innerHTML = '<div class="empty-hint">Noch keine gespeicherten Wochen.</div>'; return }
+    const { data, error } = await getSB().from('wochen').select('*').eq('kunde_id', kundeId).order('gueltig_ab', { ascending: false }).limit(20)
+    if (error) throw error
+    if (!data || !data.length) { list.innerHTML = '<div class="empty-hint">Noch keine gespeicherten Wochen.<br>Im Mittagstisch-Generator auf "💾 Woche speichern" klicken.</div>'; return }
     list.innerHTML = data.map(w => {
       const g = w.gerichte || {}
       const names = ['dienstag','mittwoch','donnerstag','freitag'].map(d => g[d]&&g[d][0]?g[d][0].name:null).filter(Boolean).join(' · ')
@@ -235,42 +265,200 @@ function selectWeek(el, w) {
   document.querySelectorAll('.week-item').forEach(i => i.classList.remove('selected'))
   el.classList.add('selected')
   selectedWeek = w
-  showToast('Woche ausgewählt: ' + (w.woche_label || ''))
 }
 
 async function deleteWeek(e, id) {
   e.stopPropagation()
-  if (!confirm('Woche wirklich löschen?')) return
+  if (!confirm('Woche löschen?')) return
   await getSB().from('wochen').delete().eq('id', id)
   if (selectedWeek && selectedWeek.id === id) selectedWeek = null
   loadWeeks()
 }
 
-function setTargetScreen(id) {
-  document.getElementById('target-screen').value = id
-  document.getElementById('screen1-panel').scrollIntoView({ behavior:'smooth' })
-}
-
-async function sendToScreen() {
+async function sendScreen1() {
   if (!selectedWeek) { showToast('Bitte zuerst eine Woche auswählen', 'error'); return }
-  const target = document.getElementById('target-screen').value
-  const screens = target === 'all' ? SCREENS : [target]
-  const content = { type:'mittagstisch', woche:selectedWeek.woche_label||'', gerichte:selectedWeek.gerichte||{}, updatedAt:new Date().toISOString() }
-  for (const s of screens) await MP.publishDisplay(kundeId, s, content)
-  showToast('✅ Gesendet auf ' + (target==='all'?'alle Bildschirme':target))
+  const content = { type:'mittagstisch', woche: selectedWeek.woche_label||'', gerichte: selectedWeek.gerichte||{}, updatedAt: new Date().toISOString() }
+  await MP.publishDisplay(kundeId, 'screen1', content)
+  showToast('✅ Woche auf Bildschirm 1 gesendet!')
   checkStatus()
 }
 
-// ── URLs ──
+// ── Screen 2: Generator ──
+async function loadScreen2Config() {
+  try {
+    const { data } = await getSB().from('screen2_config').select('*').eq('kunde_id', kundeId).limit(1)
+    if (data && data[0] && data[0].slides && data[0].slides.length) {
+      screen2Data.slides = data[0].slides
+      const t = data[0].timer_sekunden || 8
+      document.getElementById('sc2-timer').value = t
+      document.getElementById('sc2-timer-val').textContent = t + 's'
+    } else {
+      // Default: 2 leere Folien
+      screen2Data.slides = [
+        { label: 'Sortiment', bild: '', sektionen: [{ titel: 'Duroc Schwein', items: [{name:'Rücken',preis:'14,00 €/kg'}] }] },
+        { label: 'Fertiggerichte', bild: '', sektionen: [{ titel: 'Ofengerichte', items: [{name:'Lasagne 650g',preis:'5,50 €'}] }] }
+      ]
+    }
+    buildScreen2UI()
+  } catch(e) { buildScreen2UI() }
+}
+
+async function uploadScreen2Bg(slideIdx, file) {
+  if (!file) return
+  showToast('⏳ Bild wird hochgeladen…')
+  const ext = file.name.split('.').pop()
+  const path = `${kundeId}/screen2/slide${slideIdx}_${Date.now()}.${ext}`
+  const { error } = await getSB().storage.from('screen-assets').upload(path, file, { upsert: true })
+  if (error) { showToast('Upload-Fehler: ' + error.message, 'error'); return }
+  const { data: { publicUrl } } = getSB().storage.from('screen-assets').getPublicUrl(path)
+  screen2Data.slides[slideIdx].bild = publicUrl
+  // Preview updaten
+  const prev = document.getElementById('sc2-prev-' + slideIdx)
+  if (prev) { prev.src = publicUrl; prev.style.display = 'block' }
+  showToast('✅ Bild hochgeladen!')
+}
+
+function buildScreen2UI() {
+  const c = document.getElementById('sc2-slides-ui')
+  c.innerHTML = screen2Data.slides.map((slide, si) => `
+    <div class="slide-block">
+      <div class="slide-header">
+        <span class="slide-label">📋 ${slide.label || 'Folie ' + (si+1)}</span>
+      </div>
+      ${slide.bild ? `<img id="sc2-prev-${si}" src="${slide.bild}" class="upload-preview" style="display:block">` : `<img id="sc2-prev-${si}" class="upload-preview">`}
+      <div class="upload-area">
+        <input type="file" accept="image/*" onchange="uploadScreen2Bg(${si},this.files[0])">
+        <strong>${slide.bild ? '🔄 Hintergrundbild ändern' : '📁 Hintergrundbild hochladen'}</strong>
+        <p>JPG/PNG, 16:9 — wird als Hintergrund dieser Folie genutzt</p>
+      </div>
+      ${slide.sektionen.map((sek, ki) => `
+        <div class="sektion-block">
+          <div class="sektion-header">
+            <input class="sektion-name-input" value="${sek.titel}" onchange="screen2Data.slides[${si}].sektionen[${ki}].titel=this.value" placeholder="Sektion">
+            <button class="btn-mini btn-del" onclick="removeSektion(${si},${ki})">✕</button>
+          </div>
+          ${sek.items.map((item, ii) => `
+            <div class="item-row">
+              <input value="${item.name}" onchange="screen2Data.slides[${si}].sektionen[${ki}].items[${ii}].name=this.value" placeholder="Gericht">
+              <input value="${item.preis}" onchange="screen2Data.slides[${si}].sektionen[${ki}].items[${ii}].preis=this.value" placeholder="Preis">
+              <button class="btn-mini btn-del" onclick="removeItem(${si},${ki},${ii})">✕</button>
+            </div>`).join('')}
+          <button class="btn-mini" style="margin-top:4px" onclick="addItem(${si},${ki})">+ Zeile</button>
+        </div>`).join('')}
+      <button class="btn-mini" style="margin-top:6px" onclick="addSektion(${si})">+ Sektion hinzufügen</button>
+    </div>`).join('')
+}
+
+function addSektion(si) { screen2Data.slides[si].sektionen.push({titel:'Neue Sektion',items:[{name:'',preis:''}]}); buildScreen2UI() }
+function removeSektion(si,ki) { screen2Data.slides[si].sektionen.splice(ki,1); buildScreen2UI() }
+function addItem(si,ki) { screen2Data.slides[si].sektionen[ki].items.push({name:'',preis:''}); buildScreen2UI() }
+function removeItem(si,ki,ii) { screen2Data.slides[si].sektionen[ki].items.splice(ii,1); buildScreen2UI() }
+
+async function sendScreen2() {
+  const timer = parseInt(document.getElementById('sc2-timer').value)
+  const { error } = await getSB().from('screen2_config').upsert({ kunde_id: kundeId, slides: screen2Data.slides, timer_sekunden: timer, updated_at: new Date().toISOString() }, { onConflict: 'kunde_id' })
+  if (error) showToast('Fehler: ' + error.message, 'error')
+  else showToast('✅ Screen 2 aktualisiert!')
+}
+
+// ── Screen 3: Layouts ──
+async function loadScreen3Layouts() {
+  // Vorhandene Config laden
+  try {
+    const { data: cfg } = await getSB().from('screen3_config').select('*').eq('kunde_id', kundeId).limit(1)
+    if (cfg && cfg[0]) {
+      screen3Layouts = cfg[0].aktive_layouts || []
+      selectedLayouts = screen3Layouts.map(l => l.id || l.bild)
+      const t = cfg[0].timer_sekunden || 10
+      document.getElementById('sc3-timer').value = t
+      document.getElementById('sc3-timer-val').textContent = t + 's'
+    }
+    // Storage durchsuchen
+    const { data: files } = await getSB().storage.from('screen-assets').list(kundeId + '/screen3/')
+    if (files) {
+      files.forEach(f => {
+        const { data: { publicUrl } } = getSB().storage.from('screen-assets').getPublicUrl(kundeId + '/screen3/' + f.name)
+        const id = f.name
+        if (!screen3Layouts.find(l => l.id === id)) {
+          screen3Layouts.push({ id, label: f.name.replace(/\.[^.]+$/,'').replace(/_/g,' '), bild: publicUrl })
+        }
+      })
+    }
+  } catch(e) {}
+  buildScreen3UI()
+}
+
+async function uploadScreen3Layouts(files) {
+  if (!files || !files.length) return
+  const prog = document.getElementById('sc3-progress')
+  prog.style.display = 'block'
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]
+    const ext = file.name.split('.').pop()
+    const name = file.name.replace(/[^a-zA-Z0-9._-]/g,'_')
+    const path = `${kundeId}/screen3/${name}`
+    const { error } = await getSB().storage.from('screen-assets').upload(path, file, { upsert: true })
+    if (!error) {
+      const { data: { publicUrl } } = getSB().storage.from('screen-assets').getPublicUrl(path)
+      const id = name
+      const label = name.replace(/\.[^.]+$/,'').replace(/_/g,' ')
+      if (!screen3Layouts.find(l => l.id === id)) screen3Layouts.push({ id, label, bild: publicUrl })
+      if (!selectedLayouts.includes(id)) selectedLayouts.push(id)
+    }
+    prog.style.width = ((i+1)/files.length*100) + '%'
+  }
+  prog.style.display = 'none'
+  buildScreen3UI()
+  showToast('✅ ' + files.length + ' Layout(s) hochgeladen!')
+}
+
+function buildScreen3UI() {
+  const grid = document.getElementById('sc3-layout-grid')
+  if (!screen3Layouts.length) {
+    grid.innerHTML = '<div class="empty-hint" style="grid-column:1/-1">Noch keine Layouts.<br>Oben hochladen oder in Canva erstellen und hier hinzufügen.</div>'
+    return
+  }
+  grid.innerHTML = screen3Layouts.map(lay => {
+    const sel = selectedLayouts.includes(lay.id)
+    return `<div class="layout-card ${sel?'selected':''}" onclick="toggleLayout('${lay.id}',this)">
+      <img src="${lay.bild}" onerror="this.style.background='var(--surface2)'">
+      <div class="layout-card-body">
+        <span class="layout-card-name">${lay.label}</span>
+        <div class="layout-check">✓</div>
+        <button class="layout-del" onclick="deleteLayout(event,'${lay.id}')">✕</button>
+      </div>
+    </div>`
+  }).join('')
+}
+
+function toggleLayout(id, card) {
+  const idx = selectedLayouts.indexOf(id)
+  if (idx >= 0) { selectedLayouts.splice(idx,1); card.classList.remove('selected') }
+  else { selectedLayouts.push(id); card.classList.add('selected') }
+}
+
+async function deleteLayout(e, id) {
+  e.stopPropagation()
+  screen3Layouts = screen3Layouts.filter(l => l.id !== id)
+  selectedLayouts = selectedLayouts.filter(i => i !== id)
+  buildScreen3UI()
+}
+
+async function sendScreen3() {
+  if (!selectedLayouts.length) { showToast('Bitte mindestens ein Layout auswählen', 'error'); return }
+  const timer = parseInt(document.getElementById('sc3-timer').value)
+  const aktive = screen3Layouts.filter(l => selectedLayouts.includes(l.id))
+  const { error } = await getSB().from('screen3_config').upsert({ kunde_id: kundeId, aktive_layouts: aktive, timer_sekunden: timer, updated_at: new Date().toISOString() }, { onConflict: 'kunde_id' })
+  if (error) showToast('Fehler: ' + error.message, 'error')
+  else showToast('✅ ' + aktive.length + ' Layout(s) auf Screen 3 gesendet!')
+}
+
+// ── Hilfsfunktionen ──
 function buildUrls() {
   const base = window.location.origin
-  const urls = {
-    screen1: `${base}/modules/display/screen.html?kunde=${kundeId}&screen=screen1`,
-    screen2: `${base}/modules/display/screen2.html?kunde=${kundeId}`,
-    screen3: `${base}/modules/display/screen3.html?kunde=${kundeId}`
-  }
-  document.getElementById('url-list').innerHTML = Object.entries(urls).map(([s,url],i) => `
-    <div class="url-box">
+  document.getElementById('url-list').innerHTML = SCREENS.map((s, i) => {
+    const url = `${base}/modules/display/screen${i>0?i+1:''}.html?kunde=${kundeId}&screen=${s}`
+    return `<div class="url-box">
       <div style="font-size:13px;font-weight:600">Bildschirm ${i+1}</div>
       <div class="url-text" id="url-${s}">${url}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -278,12 +466,13 @@ function buildUrls() {
         <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openScreen('${s}')">Öffnen</button>
         ${s==='screen1'?`<button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openEditor('${s}')">⚙️ Editor</button>`:''}
       </div>
-    </div>`).join('')
+    </div>`
+  }).join('')
 }
 
-function copyUrl(s) { const el=document.getElementById('url-'+s); if(el) navigator.clipboard.writeText(el.textContent).then(()=>showToast('URL kopiert ✓')) }
-function openScreen(s) { const el=document.getElementById('url-'+s); if(el) window.open(el.textContent,'_blank') }
-function openEditor(s) { const el=document.getElementById('url-'+s); if(el) window.open(el.textContent+'&editor=true','_blank') }
+function copyUrl(s) { const el = document.getElementById('url-'+s); if(el) navigator.clipboard.writeText(el.textContent).then(()=>showToast('URL kopiert ✓')) }
+function openScreen(s) { const el = document.getElementById('url-'+s); if(el) window.open(el.textContent,'_blank') }
+function openEditor(s) { const el = document.getElementById('url-'+s); if(el) window.open(el.textContent+'&editor=true','_blank') }
 
 async function checkStatus() {
   for (const s of SCREENS) {
@@ -294,158 +483,11 @@ async function checkStatus() {
       const meta = document.getElementById('meta-'+s)
       if (d && d.content) {
         if (dot) dot.classList.remove('offline')
-        if (meta && d.content.updatedAt) meta.textContent = 'Zuletzt: ' + formatRelative(d.content.updatedAt) + (d.content.woche ? ' · ' + d.content.woche : '')
+        if (meta) meta.textContent = 'Zuletzt: ' + formatRelative(d.updated_at||new Date().toISOString()) + (d.content.woche?' · '+d.content.woche:'')
       }
     } catch(e) {}
   }
 }
-
-// ── Tab Switch ──
-function switchGenTab(id) {
-  document.querySelectorAll('.gen-tab').forEach(t => t.classList.remove('active'))
-  document.querySelectorAll('.gen-content').forEach(c => c.classList.remove('show'))
-  const tab = document.getElementById('tab-'+id)
-  if (tab) tab.classList.add('active')
-  const content = document.getElementById('gen-'+id)
-  if (content) content.classList.add('show')
-  if (id !== 'screen1') {
-    document.querySelector('.gen-tabs').scrollIntoView({ behavior:'smooth' })
-  }
-}
-
-// ── Screen 2 Generator ──
-var screen2Data = {
-  slides: [
-    {
-      bild: '/modules/display/assets/Bildschirm_2_Sortiment.jpg',
-      label: 'Sortiment',
-      sektionen: [
-        { titel: 'Duroc Schwein', items: [{name:'Rücken',preis:'14,00 €/kg'},{name:'Bauch',preis:'10,00 €/kg'},{name:'Schäufele',preis:'10,20 €/kg'},{name:'Rippchen',preis:'9,50 €/kg'}] },
-        { titel: 'Rind', items: [{name:'Blattschulter',preis:'15,40 €/kg'},{name:'Hohe Rippe',preis:'15,73 €/kg'},{name:'Roulade Oberschale',preis:'23,70 €/kg'},{name:'Roastbeef',preis:'26,29 €/kg'}] },
-        { titel: 'Schwein', items: [{name:'Kotlett mit Knochen',preis:'11,00 €/kg'},{name:'Schulter',preis:'10,80 €/kg'},{name:'Schäufele',preis:'7,70 €/kg'},{name:'Gulasch',preis:'12,10 €/kg'}] }
-      ]
-    },
-    {
-      bild: '/modules/display/assets/Bildschirm_2_Fertiggerichte.jpg',
-      label: 'Fertiggerichte',
-      sektionen: [
-        { titel: 'Ofengerichte', items: [{name:'Lasagne 650g',preis:'5,50 €'},{name:'gefüllte Roulade',preis:'6,00 €'},{name:'Knöchle',preis:'9,00 €'}] },
-        { titel: 'Pfannengerichte', items: [{name:'Schnitzel',preis:'5,50 €'},{name:'Cordon bleu',preis:'6,00 €'},{name:'Schaschlik',preis:'9,00 €'}] },
-        { titel: 'Geschnetzeltes', items: [{name:'Gyros Schwein',preis:'11,00 €/kg'},{name:'Gyros Duroc',preis:'10,80 €/kg'},{name:'Bombay',preis:'7,70 €/kg'}] }
-      ]
-    }
-  ]
-}
-
-function buildScreen2UI() {
-  const container = document.getElementById('screen2-slides')
-  container.innerHTML = screen2Data.slides.map((slide, si) => `
-    <div class="slide-block">
-      <div class="slide-header">
-        <div class="slide-title">📋 ${slide.label || 'Folie '+(si+1)}</div>
-        <button class="btn-mini" onclick="sc2AddSektion(${si})">+ Sektion</button>
-      </div>
-      ${slide.sektionen.map((sek, ki) => `
-        <div class="sektion-block">
-          <div class="sektion-header">
-            <input class="sektion-name-input" value="${sek.titel}" onchange="screen2Data.slides[${si}].sektionen[${ki}].titel=this.value" placeholder="Sektions-Titel">
-            <button class="btn-mini btn-del" onclick="sc2RemoveSektion(${si},${ki})">✕</button>
-          </div>
-          ${sek.items.map((item, ii) => `
-            <div class="item-row">
-              <input class="item-name-inp" value="${item.name}" onchange="screen2Data.slides[${si}].sektionen[${ki}].items[${ii}].name=this.value" placeholder="Gericht">
-              <input class="item-preis-inp" value="${item.preis}" onchange="screen2Data.slides[${si}].sektionen[${ki}].items[${ii}].preis=this.value" placeholder="Preis">
-              <button class="btn-mini btn-del" onclick="sc2RemoveItem(${si},${ki},${ii})">✕</button>
-            </div>`).join('')}
-          <button class="btn-mini" style="width:100%;margin-top:4px" onclick="sc2AddItem(${si},${ki})">+ Zeile hinzufügen</button>
-        </div>`).join('')}
-    </div>`).join('')
-}
-
-function sc2AddSektion(si){screen2Data.slides[si].sektionen.push({titel:'Neue Sektion',items:[{name:'',preis:''}]});buildScreen2UI()}
-function sc2RemoveSektion(si,ki){screen2Data.slides[si].sektionen.splice(ki,1);buildScreen2UI()}
-function sc2AddItem(si,ki){screen2Data.slides[si].sektionen[ki].items.push({name:'',preis:''});buildScreen2UI()}
-function sc2RemoveItem(si,ki,ii){screen2Data.slides[si].sektionen[ki].items.splice(ii,1);buildScreen2UI()}
-
-async function sendScreen2() {
-  const timer = parseInt(document.getElementById('sc2-timer').value)
-  const { error } = await getSB().from('screen2_config').upsert({ kunde_id:kundeId, slides:screen2Data.slides, timer_sekunden:timer, updated_at:new Date().toISOString() }, { onConflict:'kunde_id' })
-  if (error) showToast('Fehler: '+error.message,'error')
-  else showToast('✅ Screen 2 aktualisiert!')
-}
-
-// Beim Laden: Screen 2 Config aus Supabase holen
-async function loadScreen2Config() {
-  try {
-    const { data } = await getSB().from('screen2_config').select('*').eq('kunde_id', kundeId).limit(1)
-    if (data && data[0] && data[0].slides && data[0].slides.length) {
-      screen2Data.slides = data[0].slides
-      document.getElementById('sc2-timer').value = data[0].timer_sekunden || 8
-      document.getElementById('sc2-timer-val').textContent = (data[0].timer_sekunden || 8) + 's'
-      buildScreen2UI()
-    }
-  } catch(e) {}
-}
-
-// ── Screen 3 Layouts ──
-const SCREEN3_LAYOUTS = [
-  { id:'sortiment',      label:'Unser Sortiment',    bild:'/modules/display/assets/screen3/sortiment.jpg' },
-  { id:'fertiggerichte', label:'Fertiggerichte',      bild:'/modules/display/assets/screen3/fertiggerichte.jpg' },
-  { id:'grillsaison',    label:'Grill Saison',        bild:'/modules/display/assets/screen3/grillsaison.jpg' },
-  { id:'ostern',         label:'Ostern',              bild:'/modules/display/assets/screen3/ostern.jpg' },
-  { id:'weihnachten',    label:'Weihnachten',         bild:'/modules/display/assets/screen3/weihnachten.jpg' },
-  { id:'wiesnzeit',      label:'Wiesnzeit',           bild:'/modules/display/assets/screen3/wiesnzeit.jpg' },
-  { id:'willkommen',     label:'Herzlich Willkommen', bild:'/modules/display/assets/screen3/willkommen.jpg' }
-]
-let selectedLayouts = []
-
-function buildScreen3UI() {
-  document.getElementById('sc3-layout-grid').innerHTML = SCREEN3_LAYOUTS.map(lay => `
-    <div class="layout-card ${selectedLayouts.includes(lay.id)?'selected':''}" onclick="toggleLayout('${lay.id}',this)">
-      <img class="layout-card-img" src="${lay.bild}" onerror="this.style.background='var(--surface2)'">
-      <div class="layout-card-name">${lay.label}</div>
-      <div class="layout-check">✓</div>
-    </div>`).join('')
-}
-
-function toggleLayout(id, card) {
-  const idx = selectedLayouts.indexOf(id)
-  if (idx >= 0) { selectedLayouts.splice(idx,1); card.classList.remove('selected') }
-  else { selectedLayouts.push(id); card.classList.add('selected') }
-}
-
-async function sendScreen3() {
-  if (!selectedLayouts.length) { showToast('Bitte mindestens ein Layout auswählen','error'); return }
-  const timer = parseInt(document.getElementById('sc3-timer').value)
-  const aktive = SCREEN3_LAYOUTS.filter(l => selectedLayouts.includes(l.id))
-  const { error } = await getSB().from('screen3_config').upsert({ kunde_id:kundeId, aktive_layouts:aktive, timer_sekunden:timer, updated_at:new Date().toISOString() }, { onConflict:'kunde_id' })
-  if (error) showToast('Fehler: '+error.message,'error')
-  else showToast('✅ Screen 3 aktualisiert! '+aktive.length+' Layout(s) aktiv')
-}
-
-async function loadScreen3Config() {
-  try {
-    const { data } = await getSB().from('screen3_config').select('*').eq('kunde_id', kundeId).limit(1)
-    if (data && data[0] && data[0].aktive_layouts) {
-      selectedLayouts = data[0].aktive_layouts.map(l => l.id)
-      document.getElementById('sc3-timer').value = data[0].timer_sekunden || 10
-      document.getElementById('sc3-timer-val').textContent = (data[0].timer_sekunden || 10) + 's'
-      buildScreen3UI()
-    }
-  } catch(e) {}
-}
-
-// Erweiterte Init
-const _origDOMLoaded = window.onload
-window.addEventListener('DOMContentLoaded', async () => {
-  // Configs nachladen sobald kundeId bekannt (wird durch mpInit gesetzt)
-  setTimeout(async () => {
-    if (kundeId) {
-      await loadScreen2Config()
-      await loadScreen3Config()
-    }
-  }, 1000)
-})
 </script>
 </body>
 </html>

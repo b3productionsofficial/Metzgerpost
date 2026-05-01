@@ -85,8 +85,43 @@
     .layout-del:hover{color:#e05555}
 
     /* URL Box */
+
+    .url-text{font-size:11px;color:var(--accent);word-break:break-all;font-family:monospace}
+    .preview-slide{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;position:relative}
+    .preview-slide img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+    .preview-slide-label{padding:6px 10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+    .preview-active-badge{font-size:10px;background:var(--success);color:#fff;border-radius:3px;padding:1px 5px}
+
     .url-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px}
     .url-text{font-size:11px;color:var(--accent);word-break:break-all;font-family:monospace;margin:4px 0 8px}
+
+    /* Vorschau Panel */
+    .preview-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px}
+    .preview-screens{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
+    .preview-screen{cursor:pointer;border-radius:var(--radius-sm);overflow:hidden;border:2px solid var(--border);transition:.15s;position:relative}
+    .preview-screen:hover{border-color:var(--border2)}
+    .preview-screen.active{border-color:var(--accent)}
+    .preview-screen-label{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:600;padding:4px 6px;text-align:center}
+    /* Screen 1 Vorschau: Mini-Canvas */
+    .sc1-preview-wrap{position:relative;aspect-ratio:16/9;background:#111;overflow:hidden}
+    .sc1-preview-bg{width:100%;height:100%;object-fit:fill;opacity:.9}
+    .sc1-preview-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+    .sc1-preview-slots{width:100%;height:100%;position:relative}
+    .sc1-slot{position:absolute;transform:translate(-50%,-50%);text-align:center}
+    .sc1-slot-name{font-size:.55vw;font-weight:600;color:#1a1a1a;font-family:Georgia,serif;line-height:1.2;max-width:8vw}
+    .sc1-slot-preis{font-size:.45vw;color:#1a1a1a;font-family:Georgia,serif;margin-top:.1vw}
+    .sc1-slot-big .sc1-slot-name{font-size:.75vw;font-weight:800;max-width:11vw}
+    /* Screen 2+3: Slideshow Thumbnails */
+    .thumb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+    .thumb-item{border-radius:6px;overflow:hidden;border:1.5px solid var(--border);cursor:pointer;transition:.15s;position:relative}
+    .thumb-item:hover{border-color:var(--border2)}
+    .thumb-item.active-thumb{border-color:var(--accent)}
+    .thumb-item img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+    .thumb-label{font-size:10px;font-weight:600;padding:4px 6px;background:var(--surface2);color:var(--text)}
+    .thumb-dot{position:absolute;top:4px;left:4px;width:6px;height:6px;border-radius:50%;background:var(--success)}
+    /* Keine Vorschau */
+    .preview-empty{aspect-ratio:16/9;background:var(--surface2);display:flex;align-items:center;justify-content:center;border-radius:6px;color:var(--muted);font-size:12px;flex-direction:column;gap:6px}
+
   </style>
 </head>
 <body class="mp-bg-glow">
@@ -187,11 +222,73 @@
     </div>
   </div>
 
-  <!-- URL Panel -->
-  <div class="send-panel mp-animate">
-    <div class="mp-section-title" style="font-size:18px;margin-bottom:4px">🔗 Bildschirm-URLs</div>
-    <div class="mp-section-sub" style="margin-bottom:16px">Diese URLs auf dem TV-Browser öffnen</div>
-    <div id="url-list"></div>
+  <!-- Vorschau Panel -->
+  <div class="preview-panel mp-animate">
+    <div class="mp-section-title" style="font-size:18px;margin-bottom:4px">🖼️ Vorschau</div>
+    <div class="mp-section-sub" style="margin-bottom:16px">Aktuelle Inhalte aller Bildschirme auf einen Blick</div>
+
+    <!-- 3 Mini-Screen Karten oben -->
+    <div class="preview-screens">
+      <div class="preview-screen active" id="prev-tab-screen1" onclick="switchPreview('screen1')">
+        <div class="sc1-preview-wrap">
+          <div id="prev-sc1-mini" class="preview-empty">
+            <span style="font-size:24px">📺</span>
+            <span>Woche auswählen</span>
+          </div>
+        </div>
+        <div class="preview-screen-label">Screen 1 — Mittagstisch</div>
+      </div>
+      <div class="preview-screen" id="prev-tab-screen2" onclick="switchPreview('screen2')">
+        <div class="sc1-preview-wrap">
+          <div id="prev-sc2-mini" class="preview-empty">
+            <span style="font-size:24px">📋</span>
+            <span>Screen 2</span>
+          </div>
+        </div>
+        <div class="preview-screen-label">Screen 2 — Tagesgerichte</div>
+      </div>
+      <div class="preview-screen" id="prev-tab-screen3" onclick="switchPreview('screen3')">
+        <div class="sc1-preview-wrap">
+          <div id="prev-sc3-mini" class="preview-empty">
+            <span style="font-size:24px">🏷️</span>
+            <span>Screen 3</span>
+          </div>
+        </div>
+        <div class="preview-screen-label">Screen 3 — Angebote</div>
+      </div>
+    </div>
+
+    <!-- Detail-Vorschau -->
+    <div id="preview-detail-sc1" class="preview-detail">
+      <div class="gen-section-title">Screen 1 — Woche auswählen für Vorschau</div>
+      <div id="prev-sc1-detail" class="preview-empty" style="aspect-ratio:16/9">
+        <span style="font-size:32px">📅</span>
+        <span>Klick auf eine gespeicherte Woche oben für Vorschau</span>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openScreen('screen1')">🔗 Vollbild öffnen</button>
+        <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openEditor('screen1')">⚙️ Editor öffnen</button>
+        <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('screen1')">URL kopieren</button>
+      </div>
+    </div>
+
+    <div id="preview-detail-sc2" class="preview-detail" style="display:none">
+      <div class="gen-section-title">Screen 2 — Folien</div>
+      <div id="prev-sc2-thumbs" class="thumb-grid"></div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openScreen('screen2')">🔗 Vollbild öffnen</button>
+        <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('screen2')">URL kopieren</button>
+      </div>
+    </div>
+
+    <div id="preview-detail-sc3" class="preview-detail" style="display:none">
+      <div class="gen-section-title">Screen 3 — Aktive Layouts</div>
+      <div id="prev-sc3-thumbs" class="thumb-grid"></div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openScreen('screen3')">🔗 Vollbild öffnen</button>
+        <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('screen3')">URL kopieren</button>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -220,6 +317,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   checkStatus()
   await loadScreen2Config()
   await loadScreen3Layouts()
+  updateScreen2Preview()
+  updateScreen3Preview()
 })
 
 // ── Screen Auswahl ──
@@ -234,8 +333,20 @@ function selectScreen(id) {
     screen2: ['🍽️ Bildschirm 2 — Tagesgerichte', 'Preislisten bearbeiten und auf Screen 2 senden'],
     screen3: ['🏷️ Bildschirm 3 — Angebote/Saisonales', 'Layouts auswählen die auf Screen 3 rotieren sollen']
   }
+  const previewTitles = {
+    screen1: ['👁️ Vorschau — Bildschirm 1', 'Vorschau der ausgewählten Woche'],
+    screen2: ['👁️ Vorschau — Bildschirm 2', 'Hintergrundbilder der Tagesgerichte-Folien'],
+    screen3: ['👁️ Vorschau — Bildschirm 3', 'Aktive Layouts auf Screen 3']
+  }
   document.getElementById('send-title').textContent = titles[id][0]
   document.getElementById('send-sub').textContent = titles[id][1]
+  document.getElementById('preview-title').textContent = previewTitles[id][0]
+  document.getElementById('preview-sub').textContent = previewTitles[id][1]
+  // Vorschau-Panel umschalten
+  document.querySelectorAll('#preview-panel .send-content').forEach(c => c.classList.remove('show'))
+  document.getElementById('preview-' + id).classList.add('show')
+  if (id === 'screen2') buildScreen2Preview()
+  if (id === 'screen3') buildScreen3Preview()
 }
 
 // ── Screen 1: Wochen ──
@@ -265,6 +376,7 @@ function selectWeek(el, w) {
   document.querySelectorAll('.week-item').forEach(i => i.classList.remove('selected'))
   el.classList.add('selected')
   selectedWeek = w
+  updateScreen1Preview(w)
 }
 
 async function deleteWeek(e, id) {
@@ -358,7 +470,7 @@ async function sendScreen2() {
   const timer = parseInt(document.getElementById('sc2-timer').value)
   const { error } = await getSB().from('screen2_config').upsert({ kunde_id: kundeId, slides: screen2Data.slides, timer_sekunden: timer, updated_at: new Date().toISOString() }, { onConflict: 'kunde_id' })
   if (error) showToast('Fehler: ' + error.message, 'error')
-  else showToast('✅ Screen 2 aktualisiert!')
+  else { showToast('✅ Screen 2 aktualisiert!'); updateScreen2Preview(); }
 }
 
 // ── Screen 3: Layouts ──
@@ -409,6 +521,7 @@ async function uploadScreen3Layouts(files) {
   }
   prog.style.display = 'none'
   buildScreen3UI()
+  updateScreen3Preview()
   showToast('✅ ' + files.length + ' Layout(s) hochgeladen!')
 }
 
@@ -450,29 +563,128 @@ async function sendScreen3() {
   const aktive = screen3Layouts.filter(l => selectedLayouts.includes(l.id))
   const { error } = await getSB().from('screen3_config').upsert({ kunde_id: kundeId, aktive_layouts: aktive, timer_sekunden: timer, updated_at: new Date().toISOString() }, { onConflict: 'kunde_id' })
   if (error) showToast('Fehler: ' + error.message, 'error')
-  else showToast('✅ ' + aktive.length + ' Layout(s) auf Screen 3 gesendet!')
+  else { showToast('✅ ' + aktive.length + ' Layout(s) auf Screen 3 gesendet!'); updateScreen3Preview(); }
 }
 
 // ── Hilfsfunktionen ──
+// Unsichtbare URL-Spans für copyUrl/openScreen
 function buildUrls() {
   const base = window.location.origin
-  document.getElementById('url-list').innerHTML = SCREENS.map((s, i) => {
+  let html = ''
+  SCREENS.forEach((s, i) => {
     const url = `${base}/modules/display/screen${i>0?i+1:''}.html?kunde=${kundeId}&screen=${s}`
-    return `<div class="url-box">
-      <div style="font-size:13px;font-weight:600">Bildschirm ${i+1}</div>
-      <div class="url-text" id="url-${s}">${url}</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('${s}')">URL kopieren</button>
-        <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openScreen('${s}')">Öffnen</button>
-        ${s==='screen1'?`<button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openEditor('${s}')">⚙️ Editor</button>`:''}
-      </div>
+    html += `<span id="url-${s}" style="display:none">${url}</span>`
+  })
+  document.getElementById('url-list').innerHTML = html
+}
+
+// ── Vorschau ──
+function switchPreview(id) {
+  document.querySelectorAll('.preview-screen').forEach(c => c.classList.remove('active'))
+  document.querySelectorAll('.preview-detail').forEach(d => d.style.display = 'none')
+  document.getElementById('prev-tab-' + id).classList.add('active')
+  document.getElementById('preview-detail-' + id.replace('screen','sc')).style.display = 'block'
+}
+
+function updateScreen1Preview(week) {
+  if (!week) return
+  const LAYOUTS = {
+    dienstag:   'assets/Bildschirm_1_Dienstag.png',
+    mittwoch:   'assets/Bildschirm_1_Mittwoch.png',
+    donnerstag: 'assets/Bildschirm_1_Donnerstag.png',
+    freitag:    'assets/Bildschirm_1_Freitag.png'
+  }
+  const today = new Date().getDay()
+  const DAY_MAP = {2:'dienstag',3:'mittwoch',4:'donnerstag',5:'freitag'}
+  const dayKey = DAY_MAP[today] || 'dienstag'
+  const bgSrc = LAYOUTS[dayKey]
+
+  // Mini-Karte
+  document.getElementById('prev-sc1-mini').innerHTML =
+    `<img src="${bgSrc}" class="sc1-preview-bg" style="width:100%;height:100%;object-fit:fill">`
+
+  // Detail-Vorschau: iframe mit screen.html
+  const el = document.getElementById('url-screen1')
+  if (el) {
+    const baseUrl = el.textContent
+    document.getElementById('prev-sc1-detail').innerHTML =
+      `<iframe src="${baseUrl}&demo=false" style="width:100%;aspect-ratio:16/9;border:none;border-radius:6px;pointer-events:none" title="Vorschau"></iframe>`
+  }
+}
+
+function updateScreen2Preview() {
+  const thumbs = document.getElementById('prev-sc2-thumbs')
+  if (!screen2Data.slides || !screen2Data.slides.length) {
+    thumbs.innerHTML = '<div class="preview-empty" style="grid-column:1/-1"><span>Keine Folien</span></div>'
+    return
+  }
+  thumbs.innerHTML = screen2Data.slides.map((s, i) => s.bild ?
+    `<div class="thumb-item ${i===0?'active-thumb':''}">
+      <img src="${s.bild}">
+      <div class="thumb-label">${s.label||'Folie '+(i+1)}</div>
+      ${i===0?'<div class="thumb-dot"></div>':''}
+    </div>` :
+    `<div class="thumb-item"><div class="preview-empty" style="aspect-ratio:16/9;font-size:11px">Kein Bild</div><div class="thumb-label">${s.label||'Folie '+(i+1)}</div></div>`
+  ).join('')
+  // Mini-Karte
+  const firstImg = screen2Data.slides.find(s => s.bild)
+  if (firstImg) document.getElementById('prev-sc2-mini').innerHTML = `<img src="${firstImg.bild}" style="width:100%;height:100%;object-fit:fill">`
+}
+
+function updateScreen3Preview() {
+  const thumbs = document.getElementById('prev-sc3-thumbs')
+  const aktive = screen3Layouts.filter(l => selectedLayouts.includes(l.id))
+  if (!aktive.length) {
+    thumbs.innerHTML = '<div class="preview-empty" style="grid-column:1/-1"><span>Keine Layouts ausgewählt</span></div>'
+    return
+  }
+  thumbs.innerHTML = aktive.map((l,i) =>
+    `<div class="thumb-item active-thumb">
+      <img src="${l.bild}">
+      <div class="thumb-label">${l.label}</div>
+      <div class="thumb-dot"></div>
     </div>`
-  }).join('')
+  ).join('')
+  if (aktive[0]) document.getElementById('prev-sc3-mini').innerHTML = `<img src="${aktive[0].bild}" style="width:100%;height:100%;object-fit:fill">`
 }
 
 function copyUrl(s) { const el = document.getElementById('url-'+s); if(el) navigator.clipboard.writeText(el.textContent).then(()=>showToast('URL kopiert ✓')) }
 function openScreen(s) { const el = document.getElementById('url-'+s); if(el) window.open(el.textContent,'_blank') }
 function openEditor(s) { const el = document.getElementById('url-'+s); if(el) window.open(el.textContent+'&editor=true','_blank') }
+
+
+function buildScreen2Preview() {
+  const grid = document.getElementById('sc2-preview-grid')
+  if (!screen2Data.slides || !screen2Data.slides.length) {
+    grid.innerHTML = '<div class="empty-hint">Noch keine Hintergrundbilder hochgeladen</div>'
+    return
+  }
+  grid.innerHTML = screen2Data.slides.map((slide, i) => `
+    <div class="preview-slide">
+      ${slide.bild ? `<img src="${slide.bild}">` : '<div style="aspect-ratio:16/9;background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Kein Bild</div>'}
+      <div class="preview-slide-label">
+        ${slide.label || 'Folie '+(i+1)}
+        <span class="preview-active-badge">aktiv</span>
+      </div>
+    </div>`).join('')
+}
+
+function buildScreen3Preview() {
+  const grid = document.getElementById('sc3-preview-grid')
+  const active = screen3Layouts.filter(l => selectedLayouts.includes(l.id))
+  if (!active.length) {
+    grid.innerHTML = '<div class="empty-hint">Noch keine Layouts ausgewählt</div>'
+    return
+  }
+  grid.innerHTML = active.map(lay => `
+    <div class="preview-slide">
+      <img src="${lay.bild}" onerror="this.style.display='none'">
+      <div class="preview-slide-label">
+        ${lay.label}
+        <span class="preview-active-badge">aktiv</span>
+      </div>
+    </div>`).join('')
+}
 
 async function checkStatus() {
   for (const s of SCREENS) {

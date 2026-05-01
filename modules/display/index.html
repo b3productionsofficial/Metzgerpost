@@ -338,10 +338,10 @@ function selectScreen(id) {
     screen2: ['👁️ Vorschau — Bildschirm 2', 'Hintergrundbilder der Tagesgerichte-Folien'],
     screen3: ['👁️ Vorschau — Bildschirm 3', 'Aktive Layouts auf Screen 3']
   }
-  document.getElementById('send-title').textContent = titles[id][0]
-  document.getElementById('send-sub').textContent = titles[id][1]
-  document.getElementById('preview-title').textContent = previewTitles[id][0]
-  document.getElementById('preview-sub').textContent = previewTitles[id][1]
+  const st=document.getElementById('send-title');if(st)st.textContent=titles[id][0]
+  const ss=document.getElementById('send-sub');if(ss)ss.textContent=titles[id][1]
+  const pt=document.getElementById('preview-title');if(pt)pt.textContent=previewTitles[id][0]
+  const ps=document.getElementById('preview-sub');if(ps)ps.textContent=previewTitles[id][1]
   // Vorschau-Panel umschalten
   document.querySelectorAll('#preview-panel .send-content').forEach(c => c.classList.remove('show'))
   document.getElementById('preview-' + id).classList.add('show')
@@ -701,5 +701,6 @@ async function checkStatus() {
   }
 }
 </script>
+<div id="url-list" style="display:none"></div>
 </body>
 </html>

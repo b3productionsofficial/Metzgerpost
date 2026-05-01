@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MetzgerPost — Screen 3</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#000;width:100vw;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center}
+    #screen{position:relative;width:100vw;height:calc(100vw * 9/16);max-height:100vh;max-width:calc(100vh * 16/9);overflow:hidden}
+    .slide{position:absolute;inset:0;opacity:0;transition:opacity 1.2s ease}
+    .slide.active{opacity:1}
+    .slide img{width:100%;height:100%;object-fit:fill}
+    #timer-bar{position:absolute;bottom:0;left:0;height:3px;background:#2d6a4f;transition:none}
+    #fs-btn{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.75);color:#fff;border:2px solid rgba(255,255,255,.8);padding:24px 52px;font-size:3vw;font-family:Georgia,serif;border-radius:16px;cursor:pointer;z-index:9999;transition:opacity .6s}
+    #fs-btn.hidden{opacity:0;pointer-events:none}
+    #back-btn{display:none;position:fixed;top:12px;left:12px;background:rgba(0,0,0,.7);color:#fff;border:1px solid rgba(255,255,255,.3);padding:8px 14px;font-size:13px;font-family:Georgia,serif;border-radius:8px;cursor:pointer;z-index:9998;text-decoration:none}
+    #back-btn.show{display:block}
+    #no-content{display:none;position:absolute;inset:0;background:#e8e4de;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+    #no-content.show{display:flex}
+    #no-content h1{font-size:4vw;color:#2d4a2d;font-family:Georgia,serif}
+  </style>
+</head>
+<body>
+
+<button id="fs-btn" onclick="goFullscreen()">&#x26F6;&nbsp; Vollbild</button>
+<a id="back-btn" href="../display/index.html">&#8592; Display Manager</a>
+
+<div id="screen">
+  <div id="slides-container"></div>
+  <div id="timer-bar"></div>
+  <div id="no-content" class="show">
+    <h1>Metzgerei Sorg &amp; Seitz</h1>
+    <p style="font-size:2vw;color:#666">Kein aktives Layout</p>
+  </div>
+</div>
+
+<script>
+var SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co';
+var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10';
+
+function getParam(n){var s=window.location.search;if(!s)return null;var p=s.substring(1).split('&');for(var i=0;i<p.length;i++){var kv=p[i].split('=');if(decodeURIComponent(kv[0])===n)return kv.length>1?decodeURIComponent(kv[1]):''}return null}
+
+var KUNDE_ID=getParam('kunde')||'demo';
+var sb=null;
+var layouts=[];
+var currentSlide=0;
+var timerSek=10;
+var slideInterval=null;
+
+function goFullscreen(){var el=document.documentElement;if(el.requestFullscreen)el.requestFullscreen();else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();document.getElementById('fs-btn').className='hidden'}
+document.addEventListener('fullscreenchange',function(){if(!document.fullscreenElement&&!document.webkitFullscreenElement)document.getElementById('fs-btn').className=''});
+document.addEventListener('webkitfullscreenchange',function(){if(!document.fullscreenElement&&!document.webkitFullscreenElement)document.getElementById('fs-btn').className=''});
+
+function renderLayouts(data){
+  layouts=data.aktive_layouts||[];
+  timerSek=data.timer_sekunden||10;
+  var container=document.getElementById('slides-container');
+  container.innerHTML='';
+  if(!layouts.length){document.getElementById('no-content').className='show';return}
+  document.getElementById('no-content').className='';
+  for(var i=0;i<layouts.length;i++){
+    var div=document.createElement('div');
+    div.className='slide'+(i===0?' active':'');
+    div.id='slide-'+i;
+    var img=document.createElement('img');
+    img.src=layouts[i].bild;
+    img.onerror=function(){this.src='assets/placeholder.jpg'};
+    div.appendChild(img);
+    container.appendChild(div);
+  }
+  if(layouts.length>1)startSlideshow();
+  else{showSlide(0);document.getElementById('timer-bar').style.display='none';}
+}
+
+function startSlideshow(){
+  if(slideInterval)clearInterval(slideInterval);
+  currentSlide=0;showSlide(0);
+  slideInterval=setInterval(function(){
+    currentSlide=(currentSlide+1)%layouts.length;
+    showSlide(currentSlide);
+  },timerSek*1000);
+}
+
+function showSlide(idx){
+  var all=document.querySelectorAll('.slide');
+  for(var i=0;i<all.length;i++)all[i].className='slide';
+  var el=document.getElementById('slide-'+idx);
+  if(el)el.className='slide active';
+  var bar=document.getElementById('timer-bar');
+  bar.style.transition='none';bar.style.width='0%';
+  setTimeout(function(){bar.style.transition='width '+timerSek+'s linear';bar.style.width='100%'},50);
+}
+
+function loadConfig(){
+  if(!sb){document.getElementById('no-content').className='show';return}
+  sb.from('screen3_config').select('*').eq('kunde_id',KUNDE_ID).limit(1)
+    .then(function(r){
+      var d=r&&r.data&&r.data[0];
+      if(d)renderLayouts(d);
+      else document.getElementById('no-content').className='show';
+    }).catch(function(){document.getElementById('no-content').className='show'});
+}
+
+function subscribeRealtime(){
+  if(!sb)return;
+  try{
+    sb.channel('sc3-'+KUNDE_ID)
+      .on('postgres_changes',{event:'*',schema:'public',table:'screen3_config',filter:'kunde_id=eq.'+KUNDE_ID},
+        function(){loadConfig()})
+      .subscribe(function(){});
+  }catch(e){setInterval(loadConfig,60000)}
+}
+
+window.addEventListener('DOMContentLoaded',function(){
+  if(!window.supabase){document.getElementById('no-content').className='show';return}
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
+  loadConfig();subscribeRealtime();
+});
+</script>
+</body>
+</html>

@@ -343,8 +343,8 @@ function selectScreen(id) {
   const pt=document.getElementById('preview-title');if(pt)pt.textContent=previewTitles[id][0]
   const ps=document.getElementById('preview-sub');if(ps)ps.textContent=previewTitles[id][1]
   // Vorschau-Panel umschalten
-  document.querySelectorAll('#preview-panel .send-content').forEach(c => c.classList.remove('show'))
-  document.getElementById('preview-' + id).classList.add('show')
+  const pp=document.querySelectorAll('#preview-panel .send-content');if(pp)pp.forEach(c=>c.classList.remove('show'))
+  const pv=document.getElementById('preview-'+id);if(pv)pv.classList.add('show')
   if (id === 'screen2') buildScreen2Preview()
   if (id === 'screen3') buildScreen3Preview()
 }

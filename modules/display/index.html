@@ -322,7 +322,7 @@ function selWeek(el, w) {
   document.getElementById('s1-prev').style.display = 'block'
   document.getElementById('s1-prev-label').textContent = w.woche_label || ''
   const frame = document.getElementById('s1-frame')
-  frame.src = BASE + '/modules/display/screen.html?kunde=' + kundeId + '&demo=true&testday=2'
+  frame.src = BASE + '/modules/display/screen.html?kunde=' + kundeId + '&screen=screen1'
 }
 
 async function delWeek(e, id) {

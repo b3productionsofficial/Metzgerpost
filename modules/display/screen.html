@@ -175,7 +175,7 @@ var DEFAULT_CONFIG={
 var CONFIG=JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 
 function getTodayKey(){
-  if(IS_EDITOR&&overrideLayout)return overrideLayout;
+  if(overrideLayout)return overrideLayout; // immer - auch im normalen Modus
   if(IS_EDITOR){var t=getParam('testday');if(t)return DAY_MAP[parseInt(t,10)]||null;}
   return DAY_MAP[new Date().getDay()]||null;
 }

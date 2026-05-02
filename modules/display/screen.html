@@ -32,7 +32,8 @@
     #fs-btn{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.75);color:#fff;border:2px solid rgba(255,255,255,.8);padding:24px 52px;font-size:3vw;font-family:Georgia,serif;border-radius:16px;cursor:pointer;z-index:9999;transition:opacity .6s}
     #fs-btn:hover{background:rgba(0,0,0,.9)}
     #fs-btn.hidden{opacity:0;pointer-events:none}
-    #editor-open-btn {
+    #editor-open-btn { display:none !important; /* nur per JS einblenden */
+    
       position:fixed; bottom:16px; right:16px;
       background:rgba(212,133,58,.9); color:#fff;
       border:none; border-radius:50%; width:48px; height:48px;

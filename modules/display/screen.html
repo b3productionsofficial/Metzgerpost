@@ -554,6 +554,7 @@ function saveConfig(){
 }
 
 window.addEventListener('DOMContentLoaded',function(){
+  if(!IS_EDITOR){var eb=document.getElementById('editor-open-btn');if(eb)eb.style.display='none';}
   if(IS_EDITOR)overrideLayout='dienstag';
   if(IS_DEMO&&!IS_EDITOR){
     if(window.supabase){

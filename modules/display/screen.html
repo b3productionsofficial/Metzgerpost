@@ -554,9 +554,16 @@ function saveConfig(){
 
 window.addEventListener('DOMContentLoaded',function(){
   if(IS_EDITOR)overrideLayout='dienstag';
-  if(IS_DEMO){
+  if(IS_DEMO&&!IS_EDITOR){
+    if(window.supabase){
+      sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
+      loadContent();
+    } else { showDemo(); }
+    return;
+  }
+  if(IS_DEMO&&IS_EDITOR){
     showDemo();
-    if(IS_EDITOR){document.getElementById('ep').className='open';document.getElementById('fs-btn').className='hidden';buildEditorFields()}
+    document.getElementById('ep').className='open';document.getElementById('fs-btn').className='hidden';buildEditorFields();
     return;
   }
   if(!window.supabase){showDemo();return}

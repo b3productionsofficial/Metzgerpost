@@ -525,7 +525,7 @@ let manualDay = 2
 let manualWeekData = null
 let allWeeks = []
 
-function toggleAutoMode(isAuto) {
+async function toggleAutoMode(isAuto) {
   const lbl = document.getElementById('toggle-label')
   const status = document.getElementById('toggle-status')
   const manual = document.getElementById('manual-controls')
@@ -533,6 +533,10 @@ function toggleAutoMode(isAuto) {
     lbl.textContent = '🟢 Automatik aktiv'
     status.textContent = 'Wochentag & KW werden automatisch erkannt'
     manual.classList.remove('show')
+    // manualDay aus displays entfernen → Automatik greift wieder
+    const content = { type:'mittagstisch', woche:'', gerichte:{}, updatedAt: new Date().toISOString() }
+    await MP.publishDisplay(kundeId, 'screen1', content)
+    showToast('✅ Automatik aktiviert')
   } else {
     lbl.textContent = '🔴 Manueller Modus'
     status.textContent = 'Du bestimmst welche Woche & welcher Tag angezeigt wird'

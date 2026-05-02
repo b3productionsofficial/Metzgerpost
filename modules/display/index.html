@@ -90,6 +90,22 @@
     .prev-card img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
     .prev-card-label{padding:6px 10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
     .badge-active{font-size:10px;background:#2d6a4f;color:#fff;border-radius:3px;padding:1px 5px}
+
+    .auto-toggle{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:12px}
+    .toggle-wrap{position:relative;width:44px;height:24px;flex-shrink:0}
+    .toggle-wrap input{opacity:0;width:0;height:0;position:absolute}
+    .toggle-slider{position:absolute;inset:0;background:#3a3530;border-radius:24px;cursor:pointer;transition:.3s}
+    .toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
+    .toggle-wrap input:checked + .toggle-slider{background:var(--accent)}
+    .toggle-wrap input:checked + .toggle-slider:before{transform:translateX(20px)}
+    .toggle-label{flex:1;font-size:13px;font-weight:600}
+    .toggle-status{font-size:11px;color:var(--muted)}
+    .manual-controls{display:none;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:12px}
+    .manual-controls.show{display:block}
+    .day-btns{display:flex;gap:4px;margin-top:8px}
+    .day-btn{flex:1;padding:7px 4px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:.15s}
+    .day-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+
     .url-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px}
     .url-txt{font-size:11px;color:var(--accent);word-break:break-all;font-family:monospace;margin:4px 0 8px}
   </style>
@@ -152,6 +168,33 @@
     <!-- S1: Wochen -->
     <div class="tab-content show" id="tc-s1">
       <div class="mp-section-sub" style="margin-bottom:12px">Woche auswählen → senden → Vorschau</div>
+
+      <!-- Auto/Manuell Toggle -->
+      <div class="auto-toggle">
+        <label class="toggle-wrap">
+          <input type="checkbox" id="auto-toggle" checked onchange="toggleAutoMode(this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="toggle-label" id="toggle-label">🟢 Automatik aktiv</span>
+        <span class="toggle-status" id="toggle-status">Wochentag & KW werden automatisch erkannt</span>
+      </div>
+
+      <!-- Manuelle Steuerung -->
+      <div class="manual-controls" id="manual-controls">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Woche auswählen:</div>
+        <select id="manual-week-sel" class="mp-select" style="margin-bottom:8px" onchange="onManualWeekChange(this.value)">
+          <option value="">— Woche wählen —</option>
+        </select>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Tag auswählen:</div>
+        <div class="day-btns">
+          <div class="day-btn active" onclick="setManualDay(2,this)">Di</div>
+          <div class="day-btn" onclick="setManualDay(3,this)">Mi</div>
+          <div class="day-btn" onclick="setManualDay(4,this)">Do</div>
+          <div class="day-btn" onclick="setManualDay(5,this)">Fr</div>
+        </div>
+        <button class="mp-btn mp-btn-primary mp-btn-full" style="margin-top:10px" onclick="sendManual()">📡 Manuell auf Screen 1 senden</button>
+      </div>
+
       <div class="week-list" id="week-list"><div class="empty-hint">⏳ Laden…</div></div>
       <button class="mp-btn mp-btn-primary mp-btn-full" onclick="sendS1()">📡 Auf Bildschirm 1 senden</button>
       <!-- Vorschau S1 -->
@@ -253,6 +296,7 @@ async function loadWeeks() {
   const el = document.getElementById('week-list')
   try {
     const { data } = await getSB().from('wochen').select('*').eq('kunde_id', kundeId).order('gueltig_ab', {ascending:false}).limit(20)
+    allWeeks = data || []
     if (!data || !data.length) { el.innerHTML = '<div class="empty-hint">Noch keine Wochen gespeichert.<br>Im Generator auf "💾 Woche speichern" klicken.</div>'; return }
     el.innerHTML = data.map(w => {
       const g = w.gerichte || {}
@@ -474,6 +518,61 @@ function buildUrls() {
 function copyUrl(k){const el=document.getElementById('url-'+k);if(el)navigator.clipboard.writeText(el.textContent).then(()=>showToast('URL kopiert ✓'))}
 function openScreen(k){const el=document.getElementById('url-'+k);if(el)window.open(el.textContent,'_blank')}
 function openEditor(){window.open(BASE+'/modules/display/screen.html?kunde='+kundeId+'&screen=screen1&editor=true','_blank')}
+
+
+// ── Auto/Manuell Toggle ──
+let manualDay = 2
+let manualWeekData = null
+let allWeeks = []
+
+function toggleAutoMode(isAuto) {
+  const lbl = document.getElementById('toggle-label')
+  const status = document.getElementById('toggle-status')
+  const manual = document.getElementById('manual-controls')
+  if (isAuto) {
+    lbl.textContent = '🟢 Automatik aktiv'
+    status.textContent = 'Wochentag & KW werden automatisch erkannt'
+    manual.classList.remove('show')
+  } else {
+    lbl.textContent = '🔴 Manueller Modus'
+    status.textContent = 'Du bestimmst welche Woche & welcher Tag angezeigt wird'
+    manual.classList.add('show')
+    buildManualWeekDropdown()
+  }
+}
+
+function buildManualWeekDropdown() {
+  const sel = document.getElementById('manual-week-sel')
+  sel.innerHTML = '<option value="">— Woche wählen —</option>' +
+    allWeeks.map((w,i) => `<option value="${i}">${w.woche_label||'Woche '+(i+1)} ${w.kw?'(KW '+w.kw+')':''}</option>`).join('')
+  if (allWeeks.length) { sel.value = '0'; onManualWeekChange('0') }
+}
+
+function onManualWeekChange(idx) {
+  if (idx === '') { manualWeekData = null; return }
+  manualWeekData = allWeeks[parseInt(idx)]
+}
+
+function setManualDay(day, btn) {
+  manualDay = day
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+}
+
+async function sendManual() {
+  if (!manualWeekData) { showToast('Woche auswählen!', 'error'); return }
+  const dayNames = {2:'dienstag',3:'mittwoch',4:'donnerstag',5:'freitag'}
+  const content = {
+    type: 'mittagstisch',
+    woche: manualWeekData.woche_label || '',
+    gerichte: manualWeekData.gerichte || {},
+    manualDay: manualDay,
+    updatedAt: new Date().toISOString()
+  }
+  await MP.publishDisplay(kundeId, 'screen1', content)
+  showToast('✅ Manuell gesendet — ' + (dayNames[manualDay]||'') + ', ' + (manualWeekData.woche_label||''))
+  checkStatus()
+}
 
 async function checkStatus(){
   const map = {s1:'screen1',s2:'screen2',s3:'screen3'}

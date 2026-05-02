@@ -128,7 +128,7 @@
         <div class="screen-name">Bildschirm 1 — Mittagstisch</div>
         <div class="screen-meta" id="meta-s1">Wird geladen…</div>
         <div class="screen-actions">
-          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openEditor();event.stopPropagation()">⚙️ Editor</button>
+          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="goToScreen('screen.html','screen1','editor=true');event.stopPropagation()">⚙️ Editor</button>
           <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('s1');event.stopPropagation()">🔗 URL</button>
         </div>
       </div>
@@ -139,7 +139,7 @@
         <div class="screen-name">Bildschirm 2 — Tagesgerichte</div>
         <div class="screen-meta" id="meta-s2">Noch nicht konfiguriert</div>
         <div class="screen-actions">
-          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="window.location.href=BASE+'/modules/display/screen2.html?kunde='+kundeId+'&screen=screen2';event.stopPropagation()">Öffnen</button>
+          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="goToScreen('screen2.html','screen2');event.stopPropagation()">Öffnen</button>
           <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('s2');event.stopPropagation()">🔗 URL</button>
         </div>
       </div>
@@ -150,7 +150,7 @@
         <div class="screen-name">Bildschirm 3 — Angebote</div>
         <div class="screen-meta" id="meta-s3">Noch nicht konfiguriert</div>
         <div class="screen-actions">
-          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="window.location.href=BASE+'/modules/display/screen3.html?kunde='+kundeId+'&screen=screen3';event.stopPropagation()">Öffnen</button>
+          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="goToScreen('screen3.html','screen3');event.stopPropagation()">Öffnen</button>
           <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('s3');event.stopPropagation()">🔗 URL</button>
         </div>
       </div>
@@ -574,6 +574,12 @@ async function sendManual() {
   checkStatus()
 }
 
+
+function goToScreen(file, screenId, extra) {
+  var url = '/modules/display/' + file + '?kunde=' + kundeId + '&screen=' + screenId;
+  if (extra) url += '&' + extra;
+  window.location.href = url;
+}
 async function checkStatus(){
   const map = {s1:'screen1',s2:'screen2',s3:'screen3'}
   for(const [k,sid] of Object.entries(map)){

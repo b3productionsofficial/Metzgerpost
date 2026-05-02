@@ -508,48 +508,29 @@ function findAktiveWoche(wochen){
 
 function loadContent(){
   if(!sb){showDemo();return Promise.resolve()}
-  // Pruefen ob manueller Override in displays gesetzt
+  // Pruefen ob manueller Override
   return sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1)
     .then(function(r){
       var d=r&&r.data&&r.data[0];
       if(d&&d.content&&d.content.manualDay){
-        // Manueller Modus: Tag aus content.manualDay
         overrideLayout=DAY_MAP[d.content.manualDay]||null;
         renderDisplay(d.content);
-        return;
+        return Promise.resolve();
       }
       overrideLayout=null;
-    })
-    .then(function(){
-      if(currentContent)return; // bereits gerendert
-      return sb.from('wochen')
-    .select('*')
-    .eq('kunde_id',KUNDE_ID)
-    .order('gueltig_ab',{ascending:false})
-    .limit(20)
-    .then(function(r){
-      var wochen=r&&r.data?r.data:[];
-      var aktiv=findAktiveWoche(wochen);
-      if(aktiv){
-        renderDisplay({
-          woche: aktiv.woche_label||'',
-          gerichte: aktiv.gerichte||{}
-        });
-        return;
-      }
-      // Fallback: displays Tabelle (manuell gesendeter Inhalt)
-      return sb.from('displays').select('content')
-        .eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID)
-        .limit(1)
+      // Automatische Wochenerkennung
+      return sb.from('wochen').select('*').eq('kunde_id',KUNDE_ID).order('gueltig_ab',{ascending:false}).limit(20)
         .then(function(r2){
-          var d=r2&&r2.data&&r2.data[0];
-          if(d&&d.content)renderDisplay(d.content);
-          else showDemo();
+          var wochen=r2&&r2.data?r2.data:[];
+          var aktiv=findAktiveWoche(wochen);
+          if(aktiv){renderDisplay({woche:aktiv.woche_label||'',gerichte:aktiv.gerichte||{}});return}
+          showDemo();
         });
     })
     .catch(function(){showDemo()});
 }
-function subscribeRealtime(){
+
+function subscribeRealtimefunction subscribeRealtime(){
   if(!sb)return;
   try{
     // Auf neue Wochen horchen

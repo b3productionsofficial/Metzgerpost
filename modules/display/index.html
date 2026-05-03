@@ -388,9 +388,22 @@ async function uploadS2Bg(si, file) {
 }
 
 function buildS2UI() {
-  document.getElementById('s2-ui').innerHTML = s2Data.slides.map((slide, si) => `
-    <div class="slide-block">
-      <div class="slide-lbl">📋 ${slide.label}</div>
+  const grid = document.getElementById('s2-grid')
+  if (!grid) return
+  grid.innerHTML = s2Layouts.length ? s2Layouts.map(lay =>
+    '<div class="lay-card ' + (s2Selected.includes(lay.id)?'sel':'') + '" onclick="toggleS2('' + lay.id + '',this)">' +
+    '<img src="' + lay.bild + '" onerror="this.style.background='var(--surface)'">' +
+    '<div class="lay-card-body"><span class="lay-name">' + lay.label + '</span>' +
+    '<div class="lay-check">✓</div>' +
+    '<button class="lay-del" onclick="delS2Layout(event,'' + lay.id + '')">✕</button>' +
+    '</div></div>'
+  ).join('') : '<div class="empty-hint" style="grid-column:1/-1">Noch keine Layouts hochgeladen</div>'
+  const active = s2Layouts.filter(l => s2Selected.includes(l.id))
+  const prev = document.getElementById('s2-prev-grid')
+  if (prev) prev.innerHTML = active.length ? active.map(l =>
+    '<div class="prev-card"><img src="' + l.bild + '"><div class="prev-card-label">' + l.label + '<span class="badge-active">aktiv</span></div></div>'
+  ).join('') : '<div class="empty-hint">Keine Layouts ausgewählt</div>'
+}</div>
       ${slide.bild ? `<img src="${slide.bild}" class="prev-img">` : ''}
       <div class="upload-area">
         <input type="file" accept="image/*" onchange="uploadS2Bg(${si},this.files[0])">

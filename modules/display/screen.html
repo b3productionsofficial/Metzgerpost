@@ -193,7 +193,7 @@ function renderDisplay(content){
   if(!content)return;
   currentContent=content;
   var todayKey=getTodayKey();
-  if(!todayKey){document.getElementById('no-content').className='show';document.getElementById('bg-image').style.opacity='0';return}
+  if(!todayKey){var tod=new Date().getDay();if(tod===1||tod===5||tod===6){loadWarmeThekeBild();}else{document.getElementById('no-content').className='show';document.getElementById('bg-image').style.opacity='0';}return}
   document.getElementById('no-content').className='';
 
   // Layout-Config für heute
@@ -531,6 +531,17 @@ function loadContent(){
     .catch(function(){showDemo()});
 }
 
+
+function loadWarmeThekeBild(){
+  if(!sb)return;
+  sb.from('display_configs').select('warme_theke_bild').eq('kunde_id',KUNDE_ID).eq('screen_id','screen1').limit(1)
+    .then(function(r){
+      var d=r&&r.data&&r.data[0];
+      var url=d&&d.warme_theke_bild;
+      if(url){var bg=document.getElementById('bg-image');bg.src=url;bg.style.opacity='1';document.getElementById('no-content').className='';document.getElementById('datum-overlay').textContent='';document.getElementById('gerichte-overlay').innerHTML='';}
+      else{document.getElementById('no-content').className='show';}
+    }).catch(function(){document.getElementById('no-content').className='show';});
+}
 function subscribeRealtime(){
   if(!sb)return;
   try{

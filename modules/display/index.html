@@ -128,7 +128,8 @@
         <div class="screen-name">Bildschirm 1 — Mittagstisch</div>
         <div class="screen-meta" id="meta-s1">Wird geladen…</div>
         <div class="screen-actions">
-          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="goToScreen('screen.html','screen1','editor=true');event.stopPropagation()">⚙️ Editor</button>
+          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openEditor();event.stopPropagation()">⚙️ Editor</button>
+          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="goToScreen('screen.html','screen1');event.stopPropagation()">Öffnen</button>
           <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('s1');event.stopPropagation()">🔗 URL</button>
         </div>
       </div>
@@ -139,7 +140,7 @@
         <div class="screen-name">Bildschirm 2 — Tagesgerichte</div>
         <div class="screen-meta" id="meta-s2">Noch nicht konfiguriert</div>
         <div class="screen-actions">
-          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="goToScreen('screen2.html','screen2');event.stopPropagation()">Öffnen</button>
+          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openScreen('s2');event.stopPropagation()">Öffnen</button>
           <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('s2');event.stopPropagation()">🔗 URL</button>
         </div>
       </div>
@@ -150,7 +151,7 @@
         <div class="screen-name">Bildschirm 3 — Angebote</div>
         <div class="screen-meta" id="meta-s3">Noch nicht konfiguriert</div>
         <div class="screen-actions">
-          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="goToScreen('screen3.html','screen3');event.stopPropagation()">Öffnen</button>
+          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openScreen('s3');event.stopPropagation()">Öffnen</button>
           <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('s3');event.stopPropagation()">🔗 URL</button>
         </div>
       </div>
@@ -197,6 +198,21 @@
 
       <div class="week-list" id="week-list"><div class="empty-hint">⏳ Laden…</div></div>
       <button class="mp-btn mp-btn-primary mp-btn-full" onclick="sendS1()">📡 Auf Bildschirm 1 senden</button>
+
+      <!-- Warme Theke Bild -->
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+        <div class="mp-label" style="margin-bottom:4px">🔥 Warme Theke — Mo, Fr, Sa</div>
+        <div class="mp-section-sub" style="margin-bottom:10px">Wird automatisch an Montag, Freitag und Samstag angezeigt statt "Heute kein Mittagstisch"</div>
+        <div id="wt-preview-wrap" style="display:none;margin-bottom:8px">
+          <img id="wt-preview-img" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:6px;border:1px solid var(--border)">
+        </div>
+        <div class="upload-area">
+          <input type="file" accept="image/*" onchange="uploadWarmeTheke(this.files[0])">
+          <strong id="wt-upload-label">📁 Warme Theke Bild hochladen</strong>
+          <p>16:9 JPG/PNG — gleicher Stil wie Mittagstisch-Layouts</p>
+        </div>
+        <div id="wt-status" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
+      </div>
       <!-- Vorschau S1 -->
       <div id="s1-prev" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
         <div class="mp-label" style="margin-bottom:8px">Vorschau</div>
@@ -252,9 +268,6 @@
     </div>
   </div>
 
-  <!-- URL Panel -->
-  <div class="panel mp-animate">
-    <div class="mp-section-title" style="font-size:16px;margin-bottom:4px">🔗 TV-URLs</div>
     <div class="mp-section-sub" style="margin-bottom:14px">Diese URLs auf dem TV-Browser öffnen</div>
     <div id="url-panel"></div>
   </div>
@@ -525,7 +538,7 @@ let manualDay = 2
 let manualWeekData = null
 let allWeeks = []
 
-async function toggleAutoMode(isAuto) {
+function toggleAutoMode(isAuto) {
   const lbl = document.getElementById('toggle-label')
   const status = document.getElementById('toggle-status')
   const manual = document.getElementById('manual-controls')
@@ -533,10 +546,6 @@ async function toggleAutoMode(isAuto) {
     lbl.textContent = '🟢 Automatik aktiv'
     status.textContent = 'Wochentag & KW werden automatisch erkannt'
     manual.classList.remove('show')
-    // manualDay aus displays entfernen → Automatik greift wieder
-    const content = { type:'mittagstisch', woche:'', gerichte:{}, updatedAt: new Date().toISOString() }
-    await MP.publishDisplay(kundeId, 'screen1', content)
-    showToast('✅ Automatik aktiviert')
   } else {
     lbl.textContent = '🔴 Manueller Modus'
     status.textContent = 'Du bestimmst welche Woche & welcher Tag angezeigt wird'
@@ -579,11 +588,48 @@ async function sendManual() {
 }
 
 
-function goToScreen(file, screenId, extra) {
-  var url = '/modules/display/' + file + '?kunde=' + kundeId + '&screen=' + screenId;
-  if (extra) url += '&' + extra;
-  window.location.href = url;
+// ── Warme Theke ──
+async function loadWarmeTheke() {
+  try {
+    const { data } = await getSB().from('screen2_config').select('warme_theke_bild').eq('kunde_id', kundeId).limit(1)
+    if (data && data[0] && data[0].warme_theke_bild) {
+      showWTPreview(data[0].warme_theke_bild)
+    }
+  } catch(e) {}
 }
+
+function showWTPreview(url) {
+  const img = document.getElementById('wt-preview-img')
+  const wrap = document.getElementById('wt-preview-wrap')
+  const lbl = document.getElementById('wt-upload-label')
+  if (img) img.src = url
+  if (wrap) wrap.style.display = 'block'
+  if (lbl) lbl.textContent = '🔄 Bild ändern'
+}
+
+async function uploadWarmeTheke(file) {
+  if (!file) return
+  const status = document.getElementById('wt-status')
+  if (status) status.textContent = '⏳ Wird hochgeladen…'
+  const path = kundeId + '/warme_theke.' + file.name.split('.').pop()
+  const { error } = await getSB().storage.from('screen-assets').upload(path, file, { upsert: true })
+  if (error) { if(status) status.textContent = '❌ Fehler: ' + error.message; return }
+  const { data: { publicUrl } } = getSB().storage.from('screen-assets').getPublicUrl(path)
+  // In screen2_config speichern (warme_theke_bild Spalte)
+  await getSB().from('screen2_config').upsert(
+    { kunde_id: kundeId, warme_theke_bild: publicUrl },
+    { onConflict: 'kunde_id' }
+  )
+  // Auch in display_configs für screen1 speichern
+  await getSB().from('display_configs').upsert(
+    { kunde_id: kundeId, screen_id: 'screen1', warme_theke_bild: publicUrl },
+    { onConflict: 'kunde_id,screen_id' }
+  )
+  showWTPreview(publicUrl)
+  if (status) status.textContent = '✅ Gespeichert — wird automatisch Mo/Fr/Sa angezeigt'
+  showToast('✅ Warme Theke Bild gespeichert!')
+}
+
 async function checkStatus(){
   const map = {s1:'screen1',s2:'screen2',s3:'screen3'}
   for(const [k,sid] of Object.entries(map)){

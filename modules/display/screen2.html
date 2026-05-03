@@ -119,6 +119,30 @@ document.addEventListener('fullscreenchange',function(){if(!document.fullscreenE
 document.addEventListener('webkitfullscreenchange',function(){if(!document.fullscreenElement&&!document.webkitFullscreenElement)document.getElementById('fs-btn').className=''});
 
 function renderSlides(data){
+  // Neue Logik: aktive_layouts wie screen3
+  var layouts = data.aktive_layouts || data.slides || DEMO_SLIDES;
+  if (layouts.length && layouts[0].bild !== undefined && !layouts[0].sektionen) {
+    // Nur Bilder - wie screen3
+    var container = document.getElementById('slides-container');
+    container.innerHTML = '';
+    slides = layouts;
+    timerSek = data.timer_sekunden || 8;
+    for (var i=0;i<slides.length;i++) {
+      var div=document.createElement('div');
+      div.className='slide'+(i===0?' active':'');
+      div.id='slide-'+i;
+      var img=document.createElement('img');
+      img.src=slides[i].bild;
+      div.appendChild(img);
+      container.appendChild(div);
+    }
+    startSlideshow();
+    return;
+  }
+  // Alte Logik mit Sektionen
+  _renderSlidesOld(data);
+}
+function _renderSlidesOld(data){
   slides = data.slides || DEMO_SLIDES;
   timerSek = data.timer_sekunden || 8;
   var container = document.getElementById('slides-container');

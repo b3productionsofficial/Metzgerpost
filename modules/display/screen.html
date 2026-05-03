@@ -193,7 +193,7 @@ function renderDisplay(content){
   if(!content)return;
   currentContent=content;
   var todayKey=getTodayKey();
-  if(!todayKey){var tod=new Date().getDay();if(tod===1||tod===5||tod===6){loadWarmeThekeBild();}else{document.getElementById('no-content').className='show';document.getElementById('bg-image').style.opacity='0';}return}
+  if(!todayKey){var tod=new Date().getDay();if(tod===1||tod===6){loadWarmeThekeBild();}else{document.getElementById('no-content').className='show';document.getElementById('bg-image').style.opacity='0';}return}
   document.getElementById('no-content').className='';
 
   // Layout-Config für heute

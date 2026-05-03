@@ -228,20 +228,24 @@
       </div>
     </div>
 
-    <!-- S2: Generator -->
+    <!-- S2: Layouts -->
     <div class="tab-content" id="tc-s2">
-      <div class="mp-section-sub" style="margin-bottom:12px">Preislisten bearbeiten und auf Screen 2 senden</div>
-      <div id="s2-ui"></div>
+      <div class="mp-section-sub" style="margin-bottom:12px">Layouts auswählen die auf Screen 2 rotieren sollen</div>
+      <div class="layout-grid" id="s2-grid"><div class="empty-hint" style="grid-column:1/-1">Noch keine Layouts hochgeladen</div></div>
+      <div class="upload-area">
+        <input type="file" accept="image/*" multiple onchange="uploadS2(this.files)">
+        <strong>📁 Layouts hochladen</strong>
+        <p>JPG/PNG — Sortiment, Fertiggerichte etc.</p>
+      </div>
       <div class="timer-row">
         <label>Wechsel alle</label>
         <input type="range" min="3" max="30" value="8" id="s2-timer" oninput="document.getElementById('s2-tval').textContent=this.value+'s'">
         <span class="timer-val" id="s2-tval">8s</span>
       </div>
       <button class="mp-btn mp-btn-primary mp-btn-full" style="margin-top:10px" onclick="sendS2()">📡 Auf Bildschirm 2 senden</button>
-      <!-- Vorschau S2 -->
       <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-        <div class="mp-label" style="margin-bottom:8px">Vorschau Hintergrundbilder</div>
-        <div class="prev-grid" id="s2-prev-grid"><div class="empty-hint">Noch keine Bilder hochgeladen</div></div>
+        <div class="mp-label" style="margin-bottom:8px">Aktive Layouts</div>
+        <div class="prev-grid" id="s2-prev-grid"><div class="empty-hint">Keine Layouts ausgewählt</div></div>
       </div>
     </div>
 

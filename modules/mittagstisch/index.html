@@ -656,15 +656,15 @@ function onWocheKalenderChange() {
   var dow = simple.getDay();
   var monday = new Date(simple);
   monday.setDate(simple.getDate() - (dow <= 4 ? dow - 1 : dow - 8));
-  var friday = new Date(monday);
-  friday.setDate(monday.getDate() + 4);
+  var tuesday = new Date(monday); tuesday.setDate(monday.getDate() + 1);
+  var thursday = new Date(monday); thursday.setDate(monday.getDate() + 3);
   function fmt(d) {
     var dd = String(d.getDate()).padStart(2,'0');
     var mm = String(d.getMonth()+1).padStart(2,'0');
     var yy = d.getFullYear();
     return dd+'.'+mm+'.'+yy;
   }
-  var label = fmt(monday) + ' - ' + fmt(friday);
+  var label = fmt(tuesday) + ' - ' + fmt(thursday);
   var felder = ['woche','druck-front-datum','druck-woche-links'];
   for (var i = 0; i < felder.length; i++) {
     var el = document.getElementById(felder[i]);

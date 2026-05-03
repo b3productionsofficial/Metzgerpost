@@ -518,7 +518,7 @@ function buildUrls() {
     s2: BASE+'/modules/display/screen2.html?kunde='+kundeId+'&screen=screen2',
     s3: BASE+'/modules/display/screen3.html?kunde='+kundeId+'&screen=screen3'
   }
-  document.getElementById('url-panel').innerHTML = Object.entries(urls).map(([k,url],i) => `
+  const up=document.getElementById('url-panel');if(!up)return;up.innerHTML = Object.entries(urls).map(([k,url],i) => `
     <div class="url-box">
       <div style="font-size:12px;font-weight:600;margin-bottom:4px">Bildschirm ${i+1}</div>
       <div class="url-txt" id="url-${k}">${url}</div>

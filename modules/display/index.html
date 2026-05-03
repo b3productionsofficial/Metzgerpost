@@ -589,7 +589,7 @@ async function sendManual() {
 // ── Warme Theke ──
 async function loadWarmeTheke() {
   try {
-    const { data } = await getSB().from('screen2_config').select('warme_theke_bild').eq('kunde_id', kundeId).limit(1)
+    const { data } = await getSB().from('display_configs').select('warme_theke_bild').eq('kunde_id', kundeId).eq('screen_id','screen1').limit(1)
     if (data && data[0] && data[0].warme_theke_bild) {
       showWTPreview(data[0].warme_theke_bild)
     }

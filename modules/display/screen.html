@@ -589,56 +589,39 @@ function findAktiveWoche(wochen){
 }
 
 function loadContent(){
-  if(!sb){showDemo();return Promise.resolve()}
+  if(!sb){showDemo();return}
   // 1. Sonderlayouts zuerst prüfen (höchste Priorität)
-  return new Promise(function(resolve){
-    checkSonderLayouts(function(found){
-      if(found){resolve();return}
-      // 2. Manueller Override oder automatische Woche
-      sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1)
-    .then(function(r){
-      var d=r&&r.data&&r.data[0];
-      // Manueller Override: manualDay gesetzt = Automatik komplett überspringen
-      if(d&&d.content&&d.content.type==='sonderlayout'&&d.content.bild){
-        var bg=document.getElementById('bg-image');
-        bg.src=d.content.bild+'?t='+Date.now();bg.style.opacity='1';
-        document.getElementById('gerichte-overlay').innerHTML='';
-        document.getElementById('datum-overlay').textContent='';
-        document.getElementById('no-content').className='';
-        return;
-      }
-      if(d&&d.content&&d.content.manualDay){
-        overrideLayout=DAY_MAP[d.content.manualDay]||null;
-        renderDisplay(d.content);
-        return; // STOPP - keine Automatik
-      }
-      // Automatische Wochenerkennung
-      overrideLayout=null;
-      return sb.from('wochen').select('*').eq('kunde_id',KUNDE_ID).order('gueltig_ab',{ascending:false}).limit(20)
-        .then(function(r2){
-          var wochen=r2&&r2.data?r2.data:[];
-          var aktiv=findAktiveWoche(wochen);
-          if(aktiv){renderDisplay({woche:aktiv.woche_label||'',gerichte:aktiv.gerichte||{}});return}
-          showDemo();
-        });
-    })
-    .catch(function(){showDemo()});
-}
-
-
-function loadWarmeThekeBild(){
-  if(!sb)return;
-  sb.from('display_configs').select('warme_theke_bild').eq('kunde_id',KUNDE_ID).eq('screen_id','screen1').limit(1)
-    .then(function(r){
-      var d=r&&r.data&&r.data[0];
-      var url=d&&d.warme_theke_bild;
-      if(url){var bg=document.getElementById('bg-image');bg.src=url;bg.style.opacity='1';document.getElementById('no-content').className='';document.getElementById('datum-overlay').textContent='';document.getElementById('gerichte-overlay').innerHTML='';}
-      else{document.getElementById('no-content').className='show';}
-    }).catch(function(){document.getElementById('no-content').className='show';resolve();});
-      resolve();
-    });
+  checkSonderLayouts(function(found){
+    if(found)return;
+    // 2. Manueller Override oder Automatik
+    sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1)
+      .then(function(r){
+        var d=r&&r.data&&r.data[0];
+        if(d&&d.content&&d.content.type==='sonderlayout'&&d.content.bild){
+          var bg=document.getElementById('bg-image');
+          bg.src=d.content.bild+'?t='+Date.now();bg.style.opacity='1';
+          document.getElementById('gerichte-overlay').innerHTML='';
+          document.getElementById('datum-overlay').textContent='';
+          document.getElementById('no-content').className='';
+          return;
+        }
+        if(d&&d.content&&d.content.manualDay){
+          overrideLayout=DAY_MAP[d.content.manualDay]||null;
+          renderDisplay(d.content);
+          return;
+        }
+        overrideLayout=null;
+        return sb.from('wochen').select('*').eq('kunde_id',KUNDE_ID).order('gueltig_ab',{ascending:false}).limit(20)
+          .then(function(r2){
+            var wochen=r2&&r2.data?r2.data:[];
+            var aktiv=findAktiveWoche(wochen);
+            if(aktiv){renderDisplay({woche:aktiv.woche_label||'',gerichte:aktiv.gerichte||{}});return}
+            showDemo();
+          });
+      }).catch(function(){showDemo()});
   });
 }
+
 function subscribeRealtime(){
   if(!sb)return;
   try{

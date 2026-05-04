@@ -312,10 +312,11 @@ function checkSonderLayouts(callback){
       // Mehrere: rotieren
       if(matches.length>1){
         sonderSlideIdx=0;
+        var sonderTimer=(d.content&&d.content.sonder_timer)||8;
         sonderSlideTimer=setInterval(function(){
           sonderSlideIdx=(sonderSlideIdx+1)%matches.length;
           showSonderSlide(matches,sonderSlideIdx);
-        },8000);
+        },sonderTimer*1000);
       }
       callback(true);
     }).catch(function(){callback(false)});
@@ -324,11 +325,16 @@ function checkSonderLayouts(callback){
 function showSonderSlide(layouts,idx){
   var lay=layouts[idx];
   var bg=document.getElementById('bg-image');
-  bg.style.opacity='0';
-  setTimeout(function(){
-    bg.src=lay.bild+'?t='+Date.now();
-    bg.style.opacity='1';
-  },300);
+  // Bild vorladen dann einblenden
+  var tmp=new Image();
+  tmp.onload=function(){
+    bg.style.opacity='0';
+    setTimeout(function(){
+      bg.src=lay.bild;
+      bg.style.opacity='1';
+    },200);
+  };
+  tmp.src=lay.bild;
   document.getElementById('gerichte-overlay').innerHTML='';
   document.getElementById('datum-overlay').textContent='';
   document.getElementById('no-content').className='';

@@ -634,7 +634,10 @@ function loadWarmeThekeBild(){
       var url=d&&d.warme_theke_bild;
       if(url){var bg=document.getElementById('bg-image');bg.src=url;bg.style.opacity='1';document.getElementById('no-content').className='';document.getElementById('datum-overlay').textContent='';document.getElementById('gerichte-overlay').innerHTML='';}
       else{document.getElementById('no-content').className='show';}
-    }).catch(function(){document.getElementById('no-content').className='show';});
+    }).catch(function(){document.getElementById('no-content').className='show';resolve();});
+      resolve();
+    });
+  });
 }
 function subscribeRealtime(){
   if(!sb)return;

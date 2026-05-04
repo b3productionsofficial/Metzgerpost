@@ -265,7 +265,27 @@ function renderDisplay(content){
   }
 }
 
+
+function loadWarmeTheke(){
+  if(!sb)return;
+  sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','warme_theke').limit(1)
+    .then(function(r){
+      var d=r&&r.data&&r.data[0];
+      if(d&&d.content&&d.content.bild){
+        var bg=document.getElementById('bg-image');
+        bg.src=d.content.bild+'?t='+Date.now();bg.style.opacity='1';
+        document.getElementById('gerichte-overlay').innerHTML='';
+        document.getElementById('datum-overlay').textContent='';
+        document.getElementById('no-content').className='';
+      } else {
+        document.getElementById('no-content').className='show';
+      }
+    }).catch(function(){document.getElementById('no-content').className='show'});
+}
+
 function showDemo(){
+  var _d=new Date().getDay();
+  if(_d===1||_d===5||_d===6){loadWarmeTheke();return;}
   renderDisplay({
     woche:'28.04. - 02.05.2026',
     gerichte:{
@@ -518,6 +538,14 @@ function loadContent(){
     .then(function(r){
       var d=r&&r.data&&r.data[0];
       // Manueller Override: manualDay gesetzt = Automatik komplett überspringen
+      if(d&&d.content&&d.content.type==='sonderlayout'&&d.content.bild){
+        var bg=document.getElementById('bg-image');
+        bg.src=d.content.bild+'?t='+Date.now();bg.style.opacity='1';
+        document.getElementById('gerichte-overlay').innerHTML='';
+        document.getElementById('datum-overlay').textContent='';
+        document.getElementById('no-content').className='';
+        return;
+      }
       if(d&&d.content&&d.content.manualDay){
         overrideLayout=DAY_MAP[d.content.manualDay]||null;
         renderDisplay(d.content);

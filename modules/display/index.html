@@ -128,6 +128,7 @@
         <div class="screen-name">Bildschirm 1 — Mittagstisch</div>
         <div class="screen-meta" id="meta-s1">Wird geladen…</div>
         <div class="screen-actions">
+          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="goToScreen('screen.html','screen1');event.stopPropagation()">Öffnen</button>
           <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openEditor();event.stopPropagation()">⚙️ Editor</button>
           <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('s1');event.stopPropagation()">🔗 URL</button>
         </div>
@@ -301,13 +302,6 @@
       <div class="mp-label" style="margin-bottom:8px">Aktive Layouts</div>
       <div class="prev-grid" id="s3-prev-grid"><div class="empty-hint">Keine Layouts ausgewählt</div></div>
     </div>
-  </div>
-
-  <!-- URL Panel — nur einmal -->
-  <div class="panel mp-animate">
-    <div class="mp-section-title" style="font-size:16px;margin-bottom:4px">🔗 TV-URLs</div>
-    <div class="mp-section-sub" style="margin-bottom:14px">Diese URLs auf dem TV-Browser öffnen</div>
-    <div id="url-panel"></div>
   </div>
 
 </div>

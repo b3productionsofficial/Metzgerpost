@@ -590,7 +590,12 @@ function findAktiveWoche(wochen){
 
 function loadContent(){
   if(!sb){showDemo();return Promise.resolve()}
-  return sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1)
+  // 1. Sonderlayouts zuerst prüfen (höchste Priorität)
+  return new Promise(function(resolve){
+    checkSonderLayouts(function(found){
+      if(found){resolve();return}
+      // 2. Manueller Override oder automatische Woche
+      sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1)
     .then(function(r){
       var d=r&&r.data&&r.data[0];
       // Manueller Override: manualDay gesetzt = Automatik komplett überspringen

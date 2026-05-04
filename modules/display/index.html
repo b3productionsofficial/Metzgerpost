@@ -438,7 +438,19 @@ function toggleS2(id,card) {
   if(idx>=0){s2Selected.splice(idx,1);card.classList.remove('sel')} else {s2Selected.push(id);card.classList.add('sel')}
   buildS2UI()
 }
-function delS2(e,id) { e.stopPropagation(); s2Layouts=s2Layouts.filter(l=>l.id!==id); s2Selected=s2Selected.filter(i=>i!==id); buildS2UI() }
+async function delS2(e,id) {
+  e.stopPropagation()
+  if (!confirm('Bild loeschen?')) return
+  var lay=s2Layouts.find(function(l){return l.id===id})
+  if (lay && lay.bild) {
+    var parts=lay.bild.split('/'); var fn=parts[parts.length-1]
+    try { await getSB().storage.from('screen-assets').remove([kundeId+'/screen2/'+fn]) } catch(err) { console.log(err) }
+  }
+  s2Layouts=s2Layouts.filter(function(l){return l.id!==id})
+  s2Selected=s2Selected.filter(function(i){return i!==id})
+  buildS2UI()
+  showToast('Bild geloescht')
+}
 
 async function sendS2() {
   if (!s2Selected.length) { showToast('Mindestens ein Layout wählen','error'); return }

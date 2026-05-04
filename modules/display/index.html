@@ -503,7 +503,15 @@ function toggleS3(id,card) {
   if(idx>=0){s3Selected.splice(idx,1);card.classList.remove('sel')} else {s3Selected.push(id);card.classList.add('sel')}
   buildS3UI()
 }
-function delS3(e,id) { e.stopPropagation(); s3Layouts=s3Layouts.filter(l=>l.id!==id); s3Selected=s3Selected.filter(i=>i!==id); buildS3UI() }
+async function delS3(e,id) {
+  e.stopPropagation()
+  if (!confirm('Layout wirklich löschen?')) return
+  await getSB().storage.from('screen-assets').remove([kundeId + '/screen3/' + id])
+  s3Layouts=s3Layouts.filter(l=>l.id!==id)
+  s3Selected=s3Selected.filter(i=>i!==id)
+  buildS3UI()
+  showToast('Layout gelöscht')
+}
 
 async function sendS3() {
   if (!s3Selected.length) { showToast('Mindestens ein Layout wählen','error'); return }

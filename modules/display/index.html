@@ -304,6 +304,7 @@
     </div>
   </div>
 
+<div id="url-panel" style="display:none"></div>
 </div>
 <div class="mp-toast" id="mp-toast"></div>
 <script src="../../shared/supabase.js"></script>
@@ -684,7 +685,7 @@ async function sendS3() {
 // ── Hilfsfunktionen ──
 function buildUrls() {
   const urls = { s1: BASE+'/modules/display/screen.html?kunde='+kundeId+'&screen=screen1', s2: BASE+'/modules/display/screen2.html?kunde='+kundeId+'&screen=screen2', s3: BASE+'/modules/display/screen3.html?kunde='+kundeId+'&screen=screen3' }
-  document.getElementById('url-panel').innerHTML = Object.entries(urls).map(([k,url],i) => `
+  const _up=document.getElementById('url-panel');if(_up)_up.innerHTML = Object.entries(urls).map(([k,url],i) => `
     <div class="url-box">
       <div style="font-size:12px;font-weight:600;margin-bottom:4px">Bildschirm ${i+1}</div>
       <div class="url-txt" id="url-${k}">${url}</div>

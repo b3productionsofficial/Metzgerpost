@@ -12,6 +12,10 @@
     .slide{position:absolute;inset:0;opacity:0;transition:opacity 1.2s ease}
     .slide.active{opacity:1}
     .slide img{width:100%;height:100%;object-fit:fill;display:block}
+
+    #fs-btn{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.75);color:#fff;border:2px solid rgba(255,255,255,.8);padding:24px 52px;font-size:3vw;font-family:Georgia,serif;border-radius:16px;cursor:pointer;z-index:9999;transition:opacity .6s}
+    #fs-btn:hover{background:rgba(0,0,0,.9)}
+    #fs-btn.hidden{opacity:0;pointer-events:none}
     #timer-bar{position:absolute;bottom:0;left:0;height:6px;background:#2d6a4f;transition:none;z-index:10}
     #no-content{display:none;position:absolute;inset:0;background:#e8e4de;align-items:center;justify-content:center;flex-direction:column;gap:16px}
     #no-content.show{display:flex}
@@ -22,6 +26,7 @@
 <body>
 <a id="back-btn" href="../display/">&#8592; Display Manager</a>
 
+<button id="fs-btn" onclick="goFullscreen()">&#x26F6;&nbsp; Vollbild</button>
 <div id="screen">
   <div id="slides-container"></div>
   <div id="timer-bar"></div>
@@ -32,6 +37,18 @@
 </div>
 
 <script>
+
+function goFullscreen(){
+  var el=document.documentElement;
+  if(el.requestFullscreen)el.requestFullscreen();
+  else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();
+  else if(el.mozRequestFullScreen)el.mozRequestFullScreen();
+  document.getElementById('fs-btn').className='hidden';
+}
+function onFsChange(){if(!document.fullscreenElement&&!document.webkitFullscreenElement)document.getElementById('fs-btn').className=''}
+document.addEventListener('fullscreenchange',onFsChange);
+document.addEventListener('webkitfullscreenchange',onFsChange);
+
 var SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co';
 var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10';
 

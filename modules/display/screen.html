@@ -283,9 +283,45 @@ function loadWarmeTheke(){
     }).catch(function(){document.getElementById('no-content').className='show'});
 }
 
+
+function checkSonderLayouts(callback){
+  if(!sb){callback(false);return}
+  sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','sonder_configs').limit(1)
+    .then(function(r){
+      var d=r&&r.data&&r.data[0];
+      if(!d||!d.content||!d.content.layouts){callback(false);return}
+      var heute=new Date();
+      var heuteTag=heute.getDay();
+      var heuteDatum=heute.toISOString().split('T')[0];
+      var layouts=d.content.layouts;
+      var match=null;
+      for(var i=0;i<layouts.length;i++){
+        var lay=layouts[i];
+        if(lay.type==='datum'&&lay.datum===heuteDatum){match=lay;break}
+        if(lay.type==='wochentage'&&lay.wochentage&&lay.wochentage.indexOf(heuteTag)>=0){match=lay;}
+      }
+      if(match){
+        var bg=document.getElementById('bg-image');
+        bg.src=match.bild+'?t='+Date.now();bg.style.opacity='1';
+        document.getElementById('gerichte-overlay').innerHTML='';
+        document.getElementById('datum-overlay').textContent='';
+        document.getElementById('no-content').className='';
+        callback(true);
+      } else {
+        callback(false);
+      }
+    }).catch(function(){callback(false)});
+}
+
 function showDemo(){
-  var _d=new Date().getDay();
-  if(_d===1||_d===5||_d===6){loadWarmeTheke();return;}
+  // Sonderlayouts prüfen (ersetzt Warme Theke und andere Sonderfälle)
+  checkSonderLayouts(function(found){
+    if(!found){
+      document.getElementById('no-content').className='show';
+    }
+  });
+}
+function _showDemoOld(){
   renderDisplay({
     woche:'28.04. - 02.05.2026',
     gerichte:{

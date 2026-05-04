@@ -552,7 +552,7 @@ async function loadS2() {
 async function uploadS2Bg(si, file) {
   if (!file) return
   showToast('⏳ Hochladen…')
-  const path = `${kundeId}/screen2/slide${si}_${Date.now()}.${file.name.split('.').pop()}`
+  const ext=file.name.split('.').pop(); const path=kundeId+'/screen2/slide'+si+'_'+Date.now()+'.'+ext
   const { error } = await getSB().storage.from('screen-assets').upload(path, file, { upsert: true })
   if (error) { showToast('Fehler: ' + error.message, 'error'); return }
   const { data: { publicUrl } } = getSB().storage.from('screen-assets').getPublicUrl(path)
@@ -638,10 +638,10 @@ async function uploadS3(files) {
   if (!files?.length) return
   showToast('⏳ Hochladen…')
   for (const file of files) {
-    const name = file.name.replace(/[^a-zA-Z0-9._-]/g,'_')
-    const { error } = await getSB().storage.from('screen-assets').upload(`${kundeId}/screen3/${name}`, file, {upsert:true})
+    const ext2=file.name.split('.').pop(); const baseName=file.name.replace(/\.[^.]+$/,'').replace(/[^a-zA-Z0-9_-]/g,'_'); const name=baseName+'_'+Date.now()+'.'+ext2
+    const { error } = await getSB().storage.from('screen-assets').upload(kundeId+'/screen3/'+name, file, {upsert:true})
     if (!error) {
-      const { data:{publicUrl} } = getSB().storage.from('screen-assets').getPublicUrl(`${kundeId}/screen3/${name}`)
+      const { data:{publicUrl} } = getSB().storage.from('screen-assets').getPublicUrl(kundeId+'/screen3/'+name)
       if (!s3Layouts.find(l=>l.id===name)) s3Layouts.push({id:name,label:name.replace(/\.[^.]+$/,'').replace(/_/g,' '),bild:publicUrl})
       if (!s3Selected.includes(name)) s3Selected.push(name)
     }

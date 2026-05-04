@@ -5,16 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MetzgerPost — Screen 2</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+  // Cursor auto-hide
   var _ct;
-  function _rc() {
-    document.body.classList.remove('hide-cursor');
-    clearTimeout(_ct);
-    _ct = setTimeout(function(){ document.body.classList.add('hide-cursor'); }, 3000);
-  }
-  document.addEventListener('mousemove', _rc);
-  document.addEventListener('touchstart', _rc);
-  _rc();
-
+  function _rc(){document.body.classList.remove('hide-cursor');clearTimeout(_ct);_ct=setTimeout(function(){document.body.classList.add('hide-cursor');},3000);}
+  document.addEventListener('mousemove',_rc);
+  document.addEventListener('touchstart',_rc);
+  setTimeout(_rc, 500);
 </script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}

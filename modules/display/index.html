@@ -272,6 +272,7 @@
     <div class="tab-content" id="tc-s2">
       <div class="mp-section-sub" style="margin-bottom:12px">Preislisten bearbeiten und auf Screen 2 senden</div>
       <div id="s2-ui"></div>
+      <button class="mp-btn mp-btn-ghost" style="margin-bottom:8px;width:100%" onclick="addS2Slide()">+ Folie hinzufügen</button>
       <div class="timer-row">
         <label>Wechsel alle</label>
         <input type="range" min="3" max="30" value="8" id="s2-timer" oninput="document.getElementById('s2-tval').textContent=this.value+'s'">
@@ -590,6 +591,14 @@ function buildS2UI() {
   document.getElementById('s2-prev-grid').innerHTML = s2Data.slides.filter(s=>s.bild).map(s=>
     `<div class="prev-card"><img src="${s.bild}?t=${Date.now()}"><div class="prev-card-label">${s.label}<span class="badge-active">aktiv</span></div></div>`
   ).join('') || '<div class="empty-hint">Noch keine Bilder</div>'
+}
+
+
+function addS2Slide() {
+  var label = prompt('Name der neuen Folie (z.B. Grillsaison):')
+  if (!label) return
+  s2Data.slides.push({ label: label, bild: '', sektionen: [{ titel: 'Kategorie', items: [{ name: '', preis: '' }] }] })
+  buildS2UI()
 }
 
 function addSek(si){s2Data.slides[si].sektionen.push({titel:'Neue Sektion',items:[{name:'',preis:''}]});buildS2UI()}

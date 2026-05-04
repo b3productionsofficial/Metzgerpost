@@ -18,15 +18,12 @@
     .screen-name{font-size:14px;font-weight:600;margin-bottom:3px}
     .screen-meta{font-size:11px;color:var(--muted);margin-bottom:10px}
     .screen-actions{display:flex;gap:6px;flex-wrap:wrap}
-
     .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:20px}
     .panel-tabs{display:flex;gap:3px;margin-bottom:18px}
     .panel-tab{flex:1;padding:8px 6px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:.15s}
     .panel-tab.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
     .tab-content{display:none}.tab-content.show{display:block}
-
-    /* Wochen */
-    .week-list{display:flex;flex-direction:column;gap:5px;max-height:240px;overflow-y:auto;margin-bottom:14px}
+    .week-list{display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;margin-bottom:12px}
     .week-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:.15s}
     .week-item:hover{border-color:var(--border2)}
     .week-item.sel{border-color:var(--accent);background:var(--accent-dim)}
@@ -35,37 +32,61 @@
     .week-info{flex:1;min-width:0}
     .week-name{font-size:13px;font-weight:600}
     .week-sub{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .week-del{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:13px;padding:2px 5px;border-radius:3px}
+    .week-del{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:13px;padding:2px 5px}
     .week-del:hover{color:#e05555}
     .kw-badge{font-size:10px;background:var(--accent-dim);color:var(--accent);border-radius:3px;padding:1px 5px;font-weight:700;flex-shrink:0}
     .empty-hint{color:var(--muted);font-size:12px;padding:14px;text-align:center;border:1px dashed var(--border);border-radius:var(--radius-sm)}
-
-    /* Screen 2 Generator */
-    .slide-block{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px}
-    .slide-lbl{font-size:13px;font-weight:600;margin-bottom:8px}
-    .sektion-block{background:var(--surface);border:1px dashed var(--border);border-radius:5px;padding:9px;margin-bottom:6px}
-    .sek-head{display:flex;gap:6px;margin-bottom:6px;align-items:center}
-    .sek-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:4px 7px;color:var(--text);font-size:12px;outline:none}
-    .sek-input:focus{border-color:var(--accent)}
-    .item-row{display:flex;gap:4px;margin-bottom:4px}
-    .item-row input{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:4px 6px;color:var(--text);font-size:11px;outline:none}
-    .item-row input:focus{border-color:var(--accent)}
-    .item-row input:first-child{flex:2}
-    .item-row input:nth-child(2){flex:1}
-    .btn-xs{background:none;border:1px solid var(--border);border-radius:3px;padding:2px 7px;font-size:10px;cursor:pointer;color:var(--muted)}
-    .btn-xs:hover{color:var(--text);border-color:var(--border2)}
-    .btn-del{color:#e05555;border-color:rgba(224,85,85,.2)}
-    .btn-del:hover{background:rgba(224,85,85,.07)}
-
-    /* Upload */
-    .upload-area{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:14px;text-align:center;cursor:pointer;transition:.15s;margin:8px 0;position:relative}
+    .divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+    .upload-area{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:14px;text-align:center;cursor:pointer;transition:.15s;position:relative}
     .upload-area:hover{border-color:var(--accent);background:var(--accent-dim)}
     .upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
     .upload-area strong{font-size:12px;pointer-events:none}
     .upload-area p{font-size:11px;color:var(--muted);margin-top:3px;pointer-events:none}
     .prev-img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:4px;margin-bottom:6px}
-
-    /* Screen 3 Layouts */
+    .auto-toggle{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px}
+    .toggle-wrap{position:relative;width:44px;height:24px;flex-shrink:0}
+    .toggle-wrap input{opacity:0;width:0;height:0;position:absolute}
+    .toggle-slider{position:absolute;inset:0;background:#3a3530;border-radius:24px;cursor:pointer;transition:.3s}
+    .toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
+    .toggle-wrap input:checked + .toggle-slider{background:var(--accent)}
+    .toggle-wrap input:checked + .toggle-slider:before{transform:translateX(20px)}
+    .toggle-label{flex:1;font-size:13px;font-weight:600}
+    .toggle-status{font-size:11px;color:var(--muted)}
+    .manual-controls{display:none;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px}
+    .manual-controls.show{display:block}
+    .day-btns{display:flex;gap:4px;margin-top:8px}
+    .day-btn{flex:1;padding:7px 4px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:.15s}
+    .day-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+    /* Sonderlayouts */
+    .sonder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:10px}
+    .sonder-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;position:relative}
+    .sonder-card img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+    .sonder-card-body{padding:8px 10px}
+    .sonder-label{font-size:12px;font-weight:600;margin-bottom:4px}
+    .sonder-tag{font-size:10px;color:var(--accent);background:var(--accent-dim);border-radius:3px;padding:1px 5px;display:inline-block;margin-bottom:4px}
+    .sonder-del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:12px}
+    .sonder-add{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:14px;text-align:center;cursor:pointer;transition:.15s;position:relative;background:var(--surface2)}
+    .sonder-add:hover{border-color:var(--accent);background:var(--accent-dim)}
+    .sonder-add input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+    .sonder-form{background:var(--surface2);border:1px solid var(--accent);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px}
+    /* S2 Generator */
+    .slide-block{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px}
+    .slide-lbl{font-size:13px;font-weight:600;margin-bottom:8px}
+    .sektion-block{background:var(--surface);border:1px dashed var(--border);border-radius:5px;padding:9px;margin-bottom:6px}
+    .sek-head{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+    .sek-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:4px 7px;color:var(--text);font-size:12px;outline:none}
+    .item-row{display:flex;gap:4px;margin-bottom:4px}
+    .item-row input{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:4px 6px;color:var(--text);font-size:11px;outline:none}
+    .item-row input:first-child{flex:2}
+    .item-row input:nth-child(2){flex:1}
+    .btn-xs{background:none;border:1px solid var(--border);border-radius:3px;padding:2px 7px;font-size:10px;cursor:pointer;color:var(--muted)}
+    .btn-xs:hover{color:var(--text);border-color:var(--border2)}
+    .btn-del{color:#e05555;border-color:rgba(224,85,85,.2)}
+    .timer-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);margin-top:6px}
+    .timer-row label{font-size:11px;color:var(--muted);white-space:nowrap}
+    .timer-row input[type=range]{flex:1}
+    .timer-val{font-size:12px;font-weight:700;color:var(--accent);min-width:32px;text-align:right}
+    /* S3 */
     .layout-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:10px}
     .lay-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;cursor:pointer;transition:.15s;position:relative}
     .lay-card:hover{border-color:var(--border2)}
@@ -77,37 +98,16 @@
     .lay-card.sel .lay-check{display:flex}
     .lay-del{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:10px;padding:1px 3px}
     .lay-del:hover{color:#e05555}
-
-    /* Timer */
-    .timer-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);margin-top:6px}
-    .timer-row label{font-size:11px;color:var(--muted);white-space:nowrap}
-    .timer-row input[type=range]{flex:1}
-    .timer-val{font-size:12px;font-weight:700;color:var(--accent);min-width:32px;text-align:right}
-
-    /* Vorschau */
     .prev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:10px}
     .prev-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
     .prev-card img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
     .prev-card-label{padding:6px 10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
     .badge-active{font-size:10px;background:#2d6a4f;color:#fff;border-radius:3px;padding:1px 5px}
-
-    .auto-toggle{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:12px}
-    .toggle-wrap{position:relative;width:44px;height:24px;flex-shrink:0}
-    .toggle-wrap input{opacity:0;width:0;height:0;position:absolute}
-    .toggle-slider{position:absolute;inset:0;background:#3a3530;border-radius:24px;cursor:pointer;transition:.3s}
-    .toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
-    .toggle-wrap input:checked + .toggle-slider{background:var(--accent)}
-    .toggle-wrap input:checked + .toggle-slider:before{transform:translateX(20px)}
-    .toggle-label{flex:1;font-size:13px;font-weight:600}
-    .toggle-status{font-size:11px;color:var(--muted)}
-    .manual-controls{display:none;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:12px}
-    .manual-controls.show{display:block}
-    .day-btns{display:flex;gap:4px;margin-top:8px}
-    .day-btn{flex:1;padding:7px 4px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:.15s}
-    .day-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
-
-    .url-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px}
     .url-txt{font-size:11px;color:var(--accent);word-break:break-all;font-family:monospace;margin:4px 0 8px}
+    .url-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px}
+    .wt-day-btns{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+    .wt-day{padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer}
+    .wt-day.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
   </style>
 </head>
 <body class="mp-bg-glow">
@@ -129,7 +129,6 @@
         <div class="screen-meta" id="meta-s1">Wird geladen…</div>
         <div class="screen-actions">
           <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openEditor();event.stopPropagation()">⚙️ Editor</button>
-          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="goToScreen('screen.html','screen1');event.stopPropagation()">Öffnen</button>
           <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('s1');event.stopPropagation()">🔗 URL</button>
         </div>
       </div>
@@ -140,7 +139,7 @@
         <div class="screen-name">Bildschirm 2 — Tagesgerichte</div>
         <div class="screen-meta" id="meta-s2">Noch nicht konfiguriert</div>
         <div class="screen-actions">
-          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openScreen('s2');event.stopPropagation()">Öffnen</button>
+          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="goToScreen('screen2.html','screen2');event.stopPropagation()">Öffnen</button>
           <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('s2');event.stopPropagation()">🔗 URL</button>
         </div>
       </div>
@@ -151,14 +150,14 @@
         <div class="screen-name">Bildschirm 3 — Angebote</div>
         <div class="screen-meta" id="meta-s3">Noch nicht konfiguriert</div>
         <div class="screen-actions">
-          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openScreen('s3');event.stopPropagation()">Öffnen</button>
+          <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="goToScreen('screen3.html','screen3');event.stopPropagation()">Öffnen</button>
           <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('s3');event.stopPropagation()">🔗 URL</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Inhalt senden + Vorschau -->
+  <!-- Haupt-Panel -->
   <div class="panel mp-animate">
     <div class="panel-tabs">
       <div class="panel-tab active" id="tab-s1" onclick="switchScreen('s1')">📺 Bildschirm 1</div>
@@ -166,9 +165,8 @@
       <div class="panel-tab" id="tab-s3" onclick="switchScreen('s3')">🏷️ Bildschirm 3</div>
     </div>
 
-    <!-- S1: Wochen -->
+    <!-- ══ S1 ══ -->
     <div class="tab-content show" id="tc-s1">
-      <div class="mp-section-sub" style="margin-bottom:12px">Woche auswählen → senden → Vorschau</div>
 
       <!-- Auto/Manuell Toggle -->
       <div class="auto-toggle">
@@ -177,10 +175,10 @@
           <span class="toggle-slider"></span>
         </label>
         <span class="toggle-label" id="toggle-label">🟢 Automatik aktiv</span>
-        <span class="toggle-status" id="toggle-status">Wochentag & KW werden automatisch erkannt</span>
+        <span class="toggle-status" id="toggle-status">Wochentag &amp; KW werden automatisch erkannt</span>
       </div>
 
-      <!-- Manuelle Steuerung -->
+      <!-- Manuell -->
       <div class="manual-controls" id="manual-controls">
         <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Woche auswählen:</div>
         <select id="manual-week-sel" class="mp-select" style="margin-bottom:8px" onchange="onManualWeekChange(this.value)">
@@ -193,61 +191,73 @@
           <div class="day-btn" onclick="setManualDay(4,this)">Do</div>
           <div class="day-btn" onclick="setManualDay(5,this)">Fr</div>
         </div>
-        <button class="mp-btn mp-btn-primary mp-btn-full" style="margin-top:10px" onclick="sendManual()">📡 Manuell auf Screen 1 senden</button>
+        <button class="mp-btn mp-btn-primary mp-btn-full" style="margin-top:10px" onclick="sendManual()">📡 Manuell senden</button>
       </div>
 
+      <!-- Wochen -->
+      <div class="mp-label" style="margin-bottom:8px">Gespeicherte Wochen</div>
       <div class="week-list" id="week-list"><div class="empty-hint">⏳ Laden…</div></div>
       <button class="mp-btn mp-btn-primary mp-btn-full" onclick="sendS1()">📡 Auf Bildschirm 1 senden</button>
 
-      <!-- Warme Theke Bild -->
-      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-        <div class="mp-label" style="margin-bottom:4px">🔥 Warme Theke — Mo, Fr, Sa</div>
-        <div class="mp-section-sub" style="margin-bottom:10px">Wird automatisch an Montag, Freitag und Samstag angezeigt statt "Heute kein Mittagstisch"</div>
-        <div id="wt-preview-wrap" style="display:none;margin-bottom:8px">
-          <img id="wt-preview-img" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:6px;border:1px solid var(--border)">
+      <hr class="divider">
+
+      <!-- Sonderlayouts -->
+      <div class="mp-label" style="margin-bottom:4px">📸 Sonderlayouts</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Überschreiben den Mittagstisch an bestimmten Tagen oder Daten — z.B. Warme Theke, Eröffnung, Feiertag</div>
+
+      <!-- Formular für neues Sonderlayout -->
+      <div id="sonder-form" class="sonder-form" style="display:none">
+        <div style="font-size:12px;font-weight:600;margin-bottom:8px">Neues Sonderlayout konfigurieren:</div>
+        <div style="margin-bottom:6px">
+          <label style="font-size:11px;color:var(--muted)">Bezeichnung</label>
+          <input type="text" id="sonder-label-input" placeholder="z.B. Warme Theke" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--text);font-size:12px;outline:none;margin-top:2px">
         </div>
-        <div class="upload-area">
-          <input type="file" accept="image/*" onchange="uploadWarmeTheke(this.files[0])">
-          <strong id="wt-upload-label">📁 Warme Theke Bild hochladen</strong>
-          <p>16:9 JPG/PNG — gleicher Stil wie Mittagstisch-Layouts</p>
+        <div style="margin-bottom:6px">
+          <label style="font-size:11px;color:var(--muted)">Wann anzeigen?</label>
+          <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+            <label style="font-size:11px;display:flex;align-items:center;gap:4px">
+              <input type="radio" name="sonder-type" value="wochentage" checked onchange="sonderTypeChange(this.value)"> Wochentage
+            </label>
+            <label style="font-size:11px;display:flex;align-items:center;gap:4px">
+              <input type="radio" name="sonder-type" value="datum" onchange="sonderTypeChange(this.value)"> Bestimmtes Datum
+            </label>
+          </div>
         </div>
-        <div id="wt-status" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
-      </div>
-      <!-- Sonderlayout für heute -->
-      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-        <div class="mp-label" style="margin-bottom:6px">📸 Sonderlayout für heute</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Überschreibt den Mittagstisch für heute — z.B. Eröffnung, Feiertag</div>
-        <div id="sonder-preview" style="display:none;margin-bottom:8px;position:relative">
-          <img id="sonder-img" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:6px">
-          <button onclick="clearSonderlayout()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:14px">✕</button>
+        <div id="sonder-wochentage" style="margin-bottom:8px">
+          <div class="wt-day-btns">
+            <div class="wt-day" onclick="toggleSonderDay(0,this)">So</div>
+            <div class="wt-day active" onclick="toggleSonderDay(1,this)">Mo</div>
+            <div class="wt-day" onclick="toggleSonderDay(2,this)">Di</div>
+            <div class="wt-day" onclick="toggleSonderDay(3,this)">Mi</div>
+            <div class="wt-day" onclick="toggleSonderDay(4,this)">Do</div>
+            <div class="wt-day active" onclick="toggleSonderDay(5,this)">Fr</div>
+            <div class="wt-day active" onclick="toggleSonderDay(6,this)">Sa</div>
+          </div>
         </div>
-        <div class="upload-area" id="sonder-upload">
-          <input type="file" accept="image/*" onchange="uploadSonderlayout(this.files[0])">
-          <strong>📁 Sonderlayout hochladen & senden</strong>
-          <p>Sofort auf Screen 1 — ersetzt den Mittagstisch für heute</p>
+        <div id="sonder-datum-input" style="display:none;margin-bottom:8px">
+          <input type="date" id="sonder-datum" style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--text);font-size:12px;outline:none">
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="mp-btn mp-btn-primary" style="flex:1" onclick="saveSonderlayout()">💾 Speichern</button>
+          <button class="mp-btn" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border)" onclick="document.getElementById('sonder-form').style.display='none'">Abbrechen</button>
         </div>
       </div>
 
-      <!-- Warme Theke Upload -->
-      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-        <div class="mp-label" style="margin-bottom:6px">🌡️ Warme Theke (Mo/Fr/Sa)</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Wird automatisch an Tagen ohne Mittagstisch gezeigt</div>
-        <div id="warme-theke-preview" style="display:none;margin-bottom:8px;position:relative">
-          <img id="warme-theke-img" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:6px">
-        </div>
-        <div class="upload-area">
-          <input type="file" accept="image/*" onchange="uploadWarmeTheke(this.files[0])">
-          <strong id="warme-theke-btn-label">📁 Warme Theke hochladen</strong>
-          <p>Ersetzt automatisch das bisherige Bild</p>
-        </div>
+      <div class="sonder-grid" id="sonder-grid"></div>
+
+      <div class="sonder-add" onclick="openSonderForm()">
+        <input type="file" accept="image/*" id="sonder-file-input" onchange="onSonderFileSelected(this.files[0])">
+        <strong>📁 + Sonderlayout hinzufügen</strong>
+        <p>Bild hochladen → Tage oder Datum zuweisen</p>
       </div>
 
       <!-- Vorschau S1 -->
-      <div id="s1-prev" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+      <hr class="divider">
+      <div id="s1-prev" style="display:none">
         <div class="mp-label" style="margin-bottom:8px">Vorschau</div>
         <div class="prev-card">
           <div style="aspect-ratio:16/9;overflow:hidden">
-            <iframe id="s1-frame" style="width:100%;height:100%;border:none;pointer-events:none;transform-origin:top left" scrolling="no"></iframe>
+            <iframe id="s1-frame" style="width:100%;height:100%;border:none;pointer-events:none" scrolling="no"></iframe>
           </div>
           <div class="prev-card-label">
             <span id="s1-prev-label" style="flex:1"></span>
@@ -257,7 +267,7 @@
       </div>
     </div>
 
-    <!-- S2: Generator -->
+    <!-- ══ S2 ══ -->
     <div class="tab-content" id="tc-s2">
       <div class="mp-section-sub" style="margin-bottom:12px">Preislisten bearbeiten und auf Screen 2 senden</div>
       <div id="s2-ui"></div>
@@ -267,14 +277,12 @@
         <span class="timer-val" id="s2-tval">8s</span>
       </div>
       <button class="mp-btn mp-btn-primary mp-btn-full" style="margin-top:10px" onclick="sendS2()">📡 Auf Bildschirm 2 senden</button>
-      <!-- Vorschau S2 -->
-      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-        <div class="mp-label" style="margin-bottom:8px">Vorschau Hintergrundbilder</div>
-        <div class="prev-grid" id="s2-prev-grid"><div class="empty-hint">Noch keine Bilder hochgeladen</div></div>
-      </div>
+      <hr class="divider">
+      <div class="mp-label" style="margin-bottom:8px">Vorschau Hintergrundbilder</div>
+      <div class="prev-grid" id="s2-prev-grid"><div class="empty-hint">Noch keine Bilder hochgeladen</div></div>
     </div>
 
-    <!-- S3: Layouts -->
+    <!-- ══ S3 ══ -->
     <div class="tab-content" id="tc-s3">
       <div class="mp-section-sub" style="margin-bottom:12px">Layouts auswählen die auf Screen 3 rotieren sollen</div>
       <div class="layout-grid" id="s3-grid"><div class="empty-hint" style="grid-column:1/-1">Noch keine Layouts</div></div>
@@ -289,14 +297,15 @@
         <span class="timer-val" id="s3-tval">10s</span>
       </div>
       <button class="mp-btn mp-btn-primary mp-btn-full" style="margin-top:10px" onclick="sendS3()">📡 Auf Bildschirm 3 senden</button>
-      <!-- Vorschau S3 -->
-      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-        <div class="mp-label" style="margin-bottom:8px">Aktive Layouts</div>
-        <div class="prev-grid" id="s3-prev-grid"><div class="empty-hint">Keine Layouts ausgewählt</div></div>
-      </div>
+      <hr class="divider">
+      <div class="mp-label" style="margin-bottom:8px">Aktive Layouts</div>
+      <div class="prev-grid" id="s3-prev-grid"><div class="empty-hint">Keine Layouts ausgewählt</div></div>
     </div>
   </div>
 
+  <!-- URL Panel — nur einmal -->
+  <div class="panel mp-animate">
+    <div class="mp-section-title" style="font-size:16px;margin-bottom:4px">🔗 TV-URLs</div>
     <div class="mp-section-sub" style="margin-bottom:14px">Diese URLs auf dem TV-Browser öffnen</div>
     <div id="url-panel"></div>
   </div>
@@ -309,8 +318,13 @@
 let kundeId = ''
 let selectedWeek = null
 let s2Data = { slides: [] }
-let s3Layouts = []
-let s3Selected = []
+let s3Layouts = [], s3Selected = []
+let allWeeks = []
+let manualDay = 2
+let manualWeekData = null
+let sonderLayouts = []  // [{id, label, bild, type:'wochentage'|'datum', wochentage:[], datum:''}]
+let pendingSonderFile = null
+let pendingSonderDays = [1,5,6]  // Mo, Fr, Sa default
 const BASE = window.location.origin
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -322,8 +336,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   checkStatus()
   loadS2()
   loadS3()
+  loadSonderLayouts()
   loadToggleStatus()
-  loadWarmeTheke()
 })
 
 // ── Tab Switch ──
@@ -335,22 +349,74 @@ function switchScreen(id) {
   })
 }
 
-// ── Screen 1 ──
+// ── Toggle ──
+async function loadToggleStatus() {
+  try {
+    const { data } = await getSB().from('displays').select('content').eq('kunde_id',kundeId).eq('screen_id','screen1').limit(1)
+    const content = data && data[0] && data[0].content
+    const isManual = content && (content.manualDay || content.type === 'sonderlayout')
+    const toggle = document.getElementById('auto-toggle')
+    if (toggle) { toggle.checked = !isManual; toggleAutoMode(!isManual, true) }
+  } catch(e) {}
+}
+
+async function toggleAutoMode(isAuto, silent) {
+  const lbl = document.getElementById('toggle-label')
+  const status = document.getElementById('toggle-status')
+  const manual = document.getElementById('manual-controls')
+  if (isAuto) {
+    if(lbl) lbl.textContent = '🟢 Automatik aktiv'
+    if(status) status.textContent = 'Wochentag & KW werden automatisch erkannt'
+    if(manual) manual.classList.remove('show')
+    if (!silent) {
+      const content = { type:'mittagstisch', woche:'', gerichte:{}, updatedAt: new Date().toISOString() }
+      await MP.publishDisplay(kundeId, 'screen1', content)
+      showToast('✅ Automatik aktiviert')
+    }
+  } else {
+    if(lbl) lbl.textContent = '🔴 Manueller Modus'
+    if(status) status.textContent = 'Du bestimmst welche Woche & welcher Tag angezeigt wird'
+    if(manual) manual.classList.add('show')
+    buildManualWeekDropdown()
+  }
+}
+
+function buildManualWeekDropdown() {
+  const sel = document.getElementById('manual-week-sel')
+  if (!sel) return
+  sel.innerHTML = '<option value="">— Woche wählen —</option>' +
+    allWeeks.map((w,i) => `<option value="${i}">${w.woche_label||'Woche '+(i+1)} ${w.kw?'(KW '+w.kw+')':''}</option>`).join('')
+  if (allWeeks.length) { sel.value = '0'; onManualWeekChange('0') }
+}
+
+function onManualWeekChange(idx) { if (idx !== '') manualWeekData = allWeeks[parseInt(idx)] }
+function setManualDay(day, btn) {
+  manualDay = day
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+}
+async function sendManual() {
+  if (!manualWeekData) { showToast('Woche auswählen!', 'error'); return }
+  const dayNames = {2:'dienstag',3:'mittwoch',4:'donnerstag',5:'freitag'}
+  const content = { type:'mittagstisch', woche: manualWeekData.woche_label||'', gerichte: manualWeekData.gerichte||{}, manualDay, updatedAt: new Date().toISOString() }
+  await MP.publishDisplay(kundeId, 'screen1', content)
+  showToast('✅ Manuell gesendet — ' + (dayNames[manualDay]||''))
+  checkStatus()
+}
+
+// ── Wochen ──
 async function loadWeeks() {
   const el = document.getElementById('week-list')
   try {
-    const { data } = await getSB().from('wochen').select('*').eq('kunde_id', kundeId).order('gueltig_ab', {ascending:false}).limit(20)
+    const { data } = await getSB().from('wochen').select('*').eq('kunde_id',kundeId).order('gueltig_ab',{ascending:false}).limit(20)
     allWeeks = data || []
-    if (!data || !data.length) { el.innerHTML = '<div class="empty-hint">Noch keine Wochen gespeichert.<br>Im Generator auf "💾 Woche speichern" klicken.</div>'; return }
-    el.innerHTML = data.map(w => {
+    if (!allWeeks.length) { el.innerHTML = '<div class="empty-hint">Noch keine Wochen. Im Generator speichern.</div>'; return }
+    el.innerHTML = allWeeks.map((w,i) => {
       const g = w.gerichte || {}
       const names = ['dienstag','mittwoch','donnerstag','freitag'].map(d => g[d]&&g[d][0]?g[d][0].name:null).filter(Boolean).join(' · ')
-      return `<div class="week-item" onclick="selWeek(this,${JSON.stringify(w).replace(/"/g,'&quot;')})">
+      return `<div class="week-item" onclick="selWeek(this,${i})">
         <div class="week-dot"></div>
-        <div class="week-info">
-          <div class="week-name">${w.woche_label||'Unbenannte Woche'}</div>
-          <div class="week-sub">${names||'—'}</div>
-        </div>
+        <div class="week-info"><div class="week-name">${w.woche_label||'Unbenannte Woche'}</div><div class="week-sub">${names||'—'}</div></div>
         ${w.kw?`<span class="kw-badge">KW ${w.kw}</span>`:''}
         <button class="week-del" onclick="delWeek(event,'${w.id}')">✕</button>
       </div>`
@@ -358,15 +424,13 @@ async function loadWeeks() {
   } catch(e) { el.innerHTML = '<div class="empty-hint">Fehler beim Laden</div>' }
 }
 
-function selWeek(el, w) {
+function selWeek(el, idx) {
   document.querySelectorAll('.week-item').forEach(i => i.classList.remove('sel'))
   el.classList.add('sel')
-  selectedWeek = w
-  // Vorschau
+  selectedWeek = allWeeks[idx]
   document.getElementById('s1-prev').style.display = 'block'
-  document.getElementById('s1-prev-label').textContent = w.woche_label || ''
-  const frame = document.getElementById('s1-frame')
-  frame.src = BASE + '/modules/display/screen.html?kunde=' + kundeId + '&screen=screen1'
+  document.getElementById('s1-prev-label').textContent = selectedWeek.woche_label || ''
+  document.getElementById('s1-frame').src = BASE + '/modules/display/screen.html?kunde=' + kundeId + '&screen=screen1'
 }
 
 async function delWeek(e, id) {
@@ -385,10 +449,95 @@ async function sendS1() {
   checkStatus()
 }
 
+// ── Sonderlayouts ──
+async function loadSonderLayouts() {
+  try {
+    const { data } = await getSB().from('displays').select('content').eq('kunde_id',kundeId).eq('screen_id','sonder_configs').limit(1)
+    if (data && data[0] && data[0].content && data[0].content.layouts) {
+      sonderLayouts = data[0].content.layouts
+    }
+  } catch(e) {}
+  buildSonderGrid()
+}
+
+async function saveSonderConfigs() {
+  await getSB().from('displays').upsert({ kunde_id: kundeId, screen_id: 'sonder_configs', content: { layouts: sonderLayouts } }, { onConflict: 'kunde_id,screen_id' })
+}
+
+function buildSonderGrid() {
+  const grid = document.getElementById('sonder-grid')
+  const dayNames = ['So','Mo','Di','Mi','Do','Fr','Sa']
+  grid.innerHTML = sonderLayouts.map((sl,i) => {
+    const tag = sl.type === 'datum' ? sl.datum : sl.wochentage.map(d => dayNames[d]).join('/')
+    return `<div class="sonder-card">
+      <img src="${sl.bild}?t=${Date.now()}" onerror="this.style.background='var(--surface)'">
+      <div class="sonder-card-body">
+        <div class="sonder-label">${sl.label}</div>
+        <div class="sonder-tag">${tag}</div>
+      </div>
+      <button class="sonder-del" onclick="delSonder(${i})">✕</button>
+    </div>`
+  }).join('')
+}
+
+function openSonderForm() {
+  // File input handled separately, just show form
+}
+
+function onSonderFileSelected(file) {
+  if (!file) return
+  pendingSonderFile = file
+  document.getElementById('sonder-form').style.display = 'block'
+  document.getElementById('sonder-label-input').value = file.name.replace(/\.[^.]+$/,'').replace(/_/g,' ')
+}
+
+function sonderTypeChange(val) {
+  document.getElementById('sonder-wochentage').style.display = val === 'wochentage' ? 'block' : 'none'
+  document.getElementById('sonder-datum-input').style.display = val === 'datum' ? 'block' : 'none'
+}
+
+function toggleSonderDay(day, btn) {
+  btn.classList.toggle('active')
+  if (btn.classList.contains('active')) {
+    if (!pendingSonderDays.includes(day)) pendingSonderDays.push(day)
+  } else {
+    pendingSonderDays = pendingSonderDays.filter(d => d !== day)
+  }
+}
+
+async function saveSonderlayout() {
+  if (!pendingSonderFile) { showToast('Kein Bild ausgewählt','error'); return }
+  const label = document.getElementById('sonder-label-input').value || 'Sonderlayout'
+  const type = document.querySelector('input[name=sonder-type]:checked').value
+  showToast('⏳ Hochladen…')
+  const ext = pendingSonderFile.name.split('.').pop()
+  const filename = label.replace(/[^a-zA-Z0-9]/g,'_') + '_' + Date.now() + '.' + ext
+  const path = `${kundeId}/screen1/sonder/${filename}`
+  const { error } = await getSB().storage.from('screen-assets').upload(path, pendingSonderFile, { upsert: true })
+  if (error) { showToast('Fehler: ' + error.message, 'error'); return }
+  const { data: { publicUrl } } = getSB().storage.from('screen-assets').getPublicUrl(path)
+  const newLayout = { id: filename, label, bild: publicUrl, type }
+  if (type === 'wochentage') newLayout.wochentage = [...pendingSonderDays]
+  else newLayout.datum = document.getElementById('sonder-datum').value
+  sonderLayouts.push(newLayout)
+  await saveSonderConfigs()
+  document.getElementById('sonder-form').style.display = 'none'
+  pendingSonderFile = null
+  buildSonderGrid()
+  showToast('✅ Sonderlayout gespeichert!')
+}
+
+async function delSonder(idx) {
+  if (!confirm('Sonderlayout löschen?')) return
+  sonderLayouts.splice(idx, 1)
+  await saveSonderConfigs()
+  buildSonderGrid()
+}
+
 // ── Screen 2 ──
 async function loadS2() {
   try {
-    const { data } = await getSB().from('screen2_config').select('*').eq('kunde_id', kundeId).limit(1)
+    const { data } = await getSB().from('screen2_config').select('*').eq('kunde_id',kundeId).limit(1)
     if (data && data[0] && data[0].slides?.length) {
       s2Data.slides = data[0].slides
       const t = data[0].timer_sekunden || 8
@@ -416,11 +565,20 @@ async function uploadS2Bg(si, file) {
   showToast('✅ Bild hochgeladen!')
 }
 
+async function delS2Bg(si) {
+  if (!s2Data.slides[si].bild) return
+  const parts = s2Data.slides[si].bild.split('/')
+  const filename = parts[parts.length-1].split('?')[0]
+  try { await getSB().storage.from('screen-assets').remove([kundeId+'/screen2/'+filename]) } catch(e) {}
+  s2Data.slides[si].bild = ''
+  buildS2UI()
+}
+
 function buildS2UI() {
   document.getElementById('s2-ui').innerHTML = s2Data.slides.map((slide, si) => `
     <div class="slide-block">
       <div class="slide-lbl">📋 ${slide.label}</div>
-      ${slide.bild ? `<img src="${slide.bild}" class="prev-img">` : ''}
+      ${slide.bild ? `<div style="position:relative"><img src="${slide.bild}?t=${Date.now()}" class="prev-img"><button onclick="delS2Bg(${si})" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer">✕</button></div>` : ''}
       <div class="upload-area">
         <input type="file" accept="image/*" onchange="uploadS2Bg(${si},this.files[0])">
         <strong>${slide.bild ? '🔄 Hintergrundbild ändern' : '📁 Hintergrundbild hochladen'}</strong>
@@ -428,23 +586,14 @@ function buildS2UI() {
       </div>
       ${slide.sektionen.map((sek,ki) => `
         <div class="sektion-block">
-          <div class="sek-head">
-            <input class="sek-input" value="${sek.titel}" onchange="s2Data.slides[${si}].sektionen[${ki}].titel=this.value" placeholder="Sektion">
-            <button class="btn-xs btn-del" onclick="rmSek(${si},${ki})">✕</button>
-          </div>
-          ${sek.items.map((item,ii) => `
-            <div class="item-row">
-              <input value="${item.name}" onchange="s2Data.slides[${si}].sektionen[${ki}].items[${ii}].name=this.value" placeholder="Gericht">
-              <input value="${item.preis}" onchange="s2Data.slides[${si}].sektionen[${ki}].items[${ii}].preis=this.value" placeholder="Preis">
-              <button class="btn-xs btn-del" onclick="rmItem(${si},${ki},${ii})">✕</button>
-            </div>`).join('')}
+          <div class="sek-head"><input class="sek-input" value="${sek.titel}" onchange="s2Data.slides[${si}].sektionen[${ki}].titel=this.value" placeholder="Sektion"><button class="btn-xs btn-del" onclick="rmSek(${si},${ki})">✕</button></div>
+          ${sek.items.map((item,ii) => `<div class="item-row"><input value="${item.name}" onchange="s2Data.slides[${si}].sektionen[${ki}].items[${ii}].name=this.value" placeholder="Gericht"><input value="${item.preis}" onchange="s2Data.slides[${si}].sektionen[${ki}].items[${ii}].preis=this.value" placeholder="Preis"><button class="btn-xs btn-del" onclick="rmItem(${si},${ki},${ii})">✕</button></div>`).join('')}
           <button class="btn-xs" style="margin-top:3px" onclick="addItem(${si},${ki})">+ Zeile</button>
         </div>`).join('')}
       <button class="btn-xs" style="margin-top:4px" onclick="addSek(${si})">+ Sektion</button>
     </div>`).join('')
-  // Vorschau updaten
-  document.getElementById('s2-prev-grid').innerHTML = s2Data.slides.map(slide =>
-    slide.bild ? `<div class="prev-card"><img src="${slide.bild}"><div class="prev-card-label">${slide.label}<span class="badge-active">aktiv</span></div></div>` : ''
+  document.getElementById('s2-prev-grid').innerHTML = s2Data.slides.filter(s=>s.bild).map(s=>
+    `<div class="prev-card"><img src="${s.bild}?t=${Date.now()}"><div class="prev-card-label">${s.label}<span class="badge-active">aktiv</span></div></div>`
   ).join('') || '<div class="empty-hint">Noch keine Bilder</div>'
 }
 
@@ -471,7 +620,6 @@ async function loadS3() {
       document.getElementById('s3-timer').value = t
       document.getElementById('s3-tval').textContent = t + 's'
     }
-    // Storage durchsuchen
     const { data: files } = await getSB().storage.from('screen-assets').list(kundeId+'/screen3/')
     if (files) files.forEach(f => {
       if (s3Layouts.find(l => l.id === f.name)) return
@@ -487,10 +635,9 @@ async function uploadS3(files) {
   showToast('⏳ Hochladen…')
   for (const file of files) {
     const name = file.name.replace(/[^a-zA-Z0-9._-]/g,'_')
-    const path = `${kundeId}/screen3/${name}`
-    const { error } = await getSB().storage.from('screen-assets').upload(path, file, {upsert:true})
+    const { error } = await getSB().storage.from('screen-assets').upload(`${kundeId}/screen3/${name}`, file, {upsert:true})
     if (!error) {
-      const { data:{publicUrl} } = getSB().storage.from('screen-assets').getPublicUrl(path)
+      const { data:{publicUrl} } = getSB().storage.from('screen-assets').getPublicUrl(`${kundeId}/screen3/${name}`)
       if (!s3Layouts.find(l=>l.id===name)) s3Layouts.push({id:name,label:name.replace(/\.[^.]+$/,'').replace(/_/g,' '),bild:publicUrl})
       if (!s3Selected.includes(name)) s3Selected.push(name)
     }
@@ -504,15 +651,10 @@ function buildS3UI() {
   grid.innerHTML = s3Layouts.length ? s3Layouts.map(lay => `
     <div class="lay-card ${s3Selected.includes(lay.id)?'sel':''}" onclick="toggleS3('${lay.id}',this)">
       <img src="${lay.bild}" onerror="this.style.background='var(--surface)'">
-      <div class="lay-card-body">
-        <span class="lay-name">${lay.label}</span>
-        <div class="lay-check">✓</div>
-        <button class="lay-del" onclick="delS3Layout(event,'${lay.id}')">✕</button>
-      </div>
+      <div class="lay-card-body"><span class="lay-name">${lay.label}</span><div class="lay-check">✓</div><button class="lay-del" onclick="delS3Layout(event,'${lay.id}')">✕</button></div>
     </div>`).join('') : '<div class="empty-hint" style="grid-column:1/-1">Noch keine Layouts hochgeladen</div>'
-  // Vorschau
   const active = s3Layouts.filter(l => s3Selected.includes(l.id))
-  document.getElementById('s3-prev-grid').innerHTML = active.length ? active.map(l =>
+  document.getElementById('s3-prev-grid').innerHTML = active.length ? active.map(l=>
     `<div class="prev-card"><img src="${l.bild}"><div class="prev-card-label">${l.label}<span class="badge-active">aktiv</span></div></div>`
   ).join('') : '<div class="empty-hint">Keine Layouts ausgewählt</div>'
 }
@@ -524,11 +666,16 @@ function toggleS3(id, card) {
   buildS3UI()
 }
 
-function delS3Layout(e, id) {
+async function delS3Layout(e, id) {
   e.stopPropagation()
+  if (!confirm('Layout löschen?')) return
+  await getSB().storage.from('screen-assets').remove([kundeId+'/screen3/'+id])
   s3Layouts = s3Layouts.filter(l=>l.id!==id)
   s3Selected = s3Selected.filter(i=>i!==id)
+  const aktive = s3Layouts.filter(l=>s3Selected.includes(l.id))
+  await getSB().from('screen3_config').upsert({kunde_id:kundeId,aktive_layouts:aktive,timer_sekunden:parseInt(document.getElementById('s3-timer').value),updated_at:new Date().toISOString()},{onConflict:'kunde_id'})
   buildS3UI()
+  showToast('Layout gelöscht')
 }
 
 async function sendS3() {
@@ -542,137 +689,31 @@ async function sendS3() {
 
 // ── Hilfsfunktionen ──
 function buildUrls() {
-  const urls = {
-    s1: BASE+'/modules/display/screen.html?kunde='+kundeId+'&screen=screen1',
-    s2: BASE+'/modules/display/screen2.html?kunde='+kundeId+'&screen=screen2',
-    s3: BASE+'/modules/display/screen3.html?kunde='+kundeId+'&screen=screen3'
-  }
+  const urls = { s1: BASE+'/modules/display/screen.html?kunde='+kundeId+'&screen=screen1', s2: BASE+'/modules/display/screen2.html?kunde='+kundeId+'&screen=screen2', s3: BASE+'/modules/display/screen3.html?kunde='+kundeId+'&screen=screen3' }
   document.getElementById('url-panel').innerHTML = Object.entries(urls).map(([k,url],i) => `
     <div class="url-box">
       <div style="font-size:12px;font-weight:600;margin-bottom:4px">Bildschirm ${i+1}</div>
       <div class="url-txt" id="url-${k}">${url}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="copyUrl('${k}')">URL kopieren</button>
-        <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openScreen('${k}')">Öffnen</button>
+        <button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="goToScreen('${k==='s1'?'screen.html':'screen'+(i+2)+'.html'}','screen${i+1}')">Öffnen</button>
         ${k==='s1'?`<button class="mp-btn mp-btn-ghost mp-btn-sm" onclick="openEditor()">⚙️ Editor</button>`:''}
       </div>
     </div>`).join('')
 }
 
 function copyUrl(k){const el=document.getElementById('url-'+k);if(el)navigator.clipboard.writeText(el.textContent).then(()=>showToast('URL kopiert ✓'))}
-function openScreen(k){const el=document.getElementById('url-'+k);if(el)window.open(el.textContent,'_blank')}
-function openEditor(){window.open(BASE+'/modules/display/screen.html?kunde='+kundeId+'&screen=screen1&editor=true','_blank')}
-
-
-// ── Auto/Manuell Toggle ──
-let manualDay = 2
-let manualWeekData = null
-let allWeeks = []
-
-function toggleAutoMode(isAuto) {
-  const lbl = document.getElementById('toggle-label')
-  const status = document.getElementById('toggle-status')
-  const manual = document.getElementById('manual-controls')
-  if (isAuto) {
-    lbl.textContent = '🟢 Automatik aktiv'
-    status.textContent = 'Wochentag & KW werden automatisch erkannt'
-    manual.classList.remove('show')
-  } else {
-    lbl.textContent = '🔴 Manueller Modus'
-    status.textContent = 'Du bestimmst welche Woche & welcher Tag angezeigt wird'
-    manual.classList.add('show')
-    buildManualWeekDropdown()
-  }
-}
-
-function buildManualWeekDropdown() {
-  const sel = document.getElementById('manual-week-sel')
-  sel.innerHTML = '<option value="">— Woche wählen —</option>' +
-    allWeeks.map((w,i) => `<option value="${i}">${w.woche_label||'Woche '+(i+1)} ${w.kw?'(KW '+w.kw+')':''}</option>`).join('')
-  if (allWeeks.length) { sel.value = '0'; onManualWeekChange('0') }
-}
-
-function onManualWeekChange(idx) {
-  if (idx === '') { manualWeekData = null; return }
-  manualWeekData = allWeeks[parseInt(idx)]
-}
-
-function setManualDay(day, btn) {
-  manualDay = day
-  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'))
-  btn.classList.add('active')
-}
-
-async function sendManual() {
-  if (!manualWeekData) { showToast('Woche auswählen!', 'error'); return }
-  const dayNames = {2:'dienstag',3:'mittwoch',4:'donnerstag',5:'freitag'}
-  const content = {
-    type: 'mittagstisch',
-    woche: manualWeekData.woche_label || '',
-    gerichte: manualWeekData.gerichte || {},
-    manualDay: manualDay,
-    updatedAt: new Date().toISOString()
-  }
-  await MP.publishDisplay(kundeId, 'screen1', content)
-  showToast('✅ Manuell gesendet — ' + (dayNames[manualDay]||'') + ', ' + (manualWeekData.woche_label||''))
-  checkStatus()
-}
-
-
-// ── Warme Theke ──
-async function loadWarmeTheke() {
-  try {
-    const { data } = await getSB().from('screen2_config').select('warme_theke_bild').eq('kunde_id', kundeId).limit(1)
-    if (data && data[0] && data[0].warme_theke_bild) {
-      showWTPreview(data[0].warme_theke_bild)
-    }
-  } catch(e) {}
-}
-
-function showWTPreview(url) {
-  const img = document.getElementById('wt-preview-img')
-  const wrap = document.getElementById('wt-preview-wrap')
-  const lbl = document.getElementById('wt-upload-label')
-  if (img) img.src = url
-  if (wrap) wrap.style.display = 'block'
-  if (lbl) lbl.textContent = '🔄 Bild ändern'
-}
-
-async function uploadWarmeTheke(file) {
-  if (!file) return
-  const status = document.getElementById('wt-status')
-  if (status) status.textContent = '⏳ Wird hochgeladen…'
-  const path = kundeId + '/warme_theke.' + file.name.split('.').pop()
-  const { error } = await getSB().storage.from('screen-assets').upload(path, file, { upsert: true })
-  if (error) { if(status) status.textContent = '❌ Fehler: ' + error.message; return }
-  const { data: { publicUrl } } = getSB().storage.from('screen-assets').getPublicUrl(path)
-  // In screen2_config speichern (warme_theke_bild Spalte)
-  await getSB().from('screen2_config').upsert(
-    { kunde_id: kundeId, warme_theke_bild: publicUrl },
-    { onConflict: 'kunde_id' }
-  )
-  // Auch in display_configs für screen1 speichern
-  await getSB().from('display_configs').upsert(
-    { kunde_id: kundeId, screen_id: 'screen1', warme_theke_bild: publicUrl },
-    { onConflict: 'kunde_id,screen_id' }
-  )
-  showWTPreview(publicUrl)
-  if (status) status.textContent = '✅ Gespeichert — wird automatisch Mo/Fr/Sa angezeigt'
-  showToast('✅ Warme Theke Bild gespeichert!')
-}
+function goToScreen(file,screenId,extra){var url='/modules/display/'+file+'?kunde='+kundeId+'&screen='+screenId;if(extra)url+='&'+extra;window.location.href=url}
+function openEditor(){goToScreen('screen.html','screen1','editor=true')}
 
 async function checkStatus(){
-  const map = {s1:'screen1',s2:'screen2',s3:'screen3'}
+  const map={s1:'screen1',s2:'screen2',s3:'screen3'}
   for(const [k,sid] of Object.entries(map)){
     try{
-      const {data} = await getSB().from('displays').select('*').eq('kunde_id',kundeId).eq('screen_id',sid).limit(1)
+      const {data}=await getSB().from('displays').select('*').eq('kunde_id',kundeId).eq('screen_id',sid).limit(1)
       const d=data&&data[0]
-      const dot=document.getElementById('dot-'+k)
-      const meta=document.getElementById('meta-'+k)
-      if(d&&d.content){
-        if(dot)dot.classList.remove('offline')
-        if(meta)meta.textContent='Zuletzt: '+formatRelative(d.updated_at||new Date().toISOString())+(d.content.woche?' · '+d.content.woche:'')
-      }
+      const dot=document.getElementById('dot-'+k);const meta=document.getElementById('meta-'+k)
+      if(d&&d.content){if(dot)dot.classList.remove('offline');if(meta)meta.textContent='Zuletzt: '+formatRelative(d.updated_at||new Date().toISOString())+(d.content.woche?' · '+d.content.woche:'')}
     }catch(e){}
   }
 }

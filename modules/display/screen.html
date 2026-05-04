@@ -570,7 +570,11 @@ function saveConfig(){
 }
 
 window.addEventListener('DOMContentLoaded',function(){
-  if(!IS_EDITOR){var eb=document.getElementById('editor-open-btn');if(eb)eb.style.display='none';var fb=document.getElementById('fs-btn');if(fb)fb.style.display='none';}
+  if(!IS_EDITOR){
+    var eb=document.getElementById('editor-open-btn');if(eb)eb.parentNode.removeChild(eb);
+    var fb=document.getElementById('fs-btn');if(fb)fb.parentNode.removeChild(fb);
+    var bb=document.getElementById('back-btn');if(bb)bb.parentNode.removeChild(bb);
+  }
   if(IS_EDITOR)overrideLayout='dienstag';
   if(IS_DEMO&&!IS_EDITOR){
     if(window.supabase){

@@ -295,7 +295,8 @@ function checkSonderLayouts(callback){
       if(!d||!d.content||!d.content.layouts){callback(false);return}
       var heute=new Date();
       var heuteTag=heute.getDay();
-      var heuteDatum=heute.toISOString().split('T')[0];
+      // Lokales Datum (nicht UTC) fuer Zeitzone-Korrektheit
+      var heuteDatum=heute.getFullYear()+'-'+String(heute.getMonth()+1).padStart(2,'0')+'-'+String(heute.getDate()).padStart(2,'0');
       var layouts=d.content.layouts;
       var matches=[];
       // Datum-Layouts zuerst (höhere Priorität)

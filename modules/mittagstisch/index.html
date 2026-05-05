@@ -269,7 +269,7 @@ input[readonly] {
   <div class="woche-picker-wrap">
     <label>&#128197; Woche auswählen</label>
     <div class="woche-picker-row">
-      <input type="week" id="woche-kalender" onchange="onWocheKalenderChange()" />
+      <input type="date" id="woche-kalender" onchange="onWocheKalenderChange()" style="padding:8px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:14px;cursor:pointer" />
       <span class="woche-label-preview" id="woche-label-preview">—</span>
     </div>
   </div>
@@ -647,15 +647,19 @@ input[readonly] {
 
 // ── Wochen-Kalender-Picker ──
 function onWocheKalenderChange() {
-  var val = document.getElementById('woche-kalender').value;
+  var val = document.getElementById('woche-kalender').value; // "2026-04-28"
   if (!val) return;
-  var parts = val.split('-W');
-  var jahr = parseInt(parts[0]);
-  var kw = parseInt(parts[1]);
-  var simple = new Date(jahr, 0, 1 + (kw - 1) * 7);
-  var dow = simple.getDay();
-  var monday = new Date(simple);
-  monday.setDate(simple.getDate() - (dow <= 4 ? dow - 1 : dow - 8));
+  var parts = val.split('-');
+  var picked = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+  var dow = picked.getDay();
+  var monday = new Date(picked);
+  monday.setDate(picked.getDate() - (dow === 0 ? 6 : dow - 1));
+  var kw = (function(d){
+    var dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+    dt.setUTCDate(dt.getUTCDate()+4-(dt.getUTCDay()||7));
+    var y1=new Date(Date.UTC(dt.getUTCFullYear(),0,1));
+    return Math.ceil((((dt-y1)/86400000)+1)/7);
+  })(monday);
   var tuesday = new Date(monday); tuesday.setDate(monday.getDate() + 1);
   var friday = new Date(monday); friday.setDate(monday.getDate() + 4);
   function fmt(d) {

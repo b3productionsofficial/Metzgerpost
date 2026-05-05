@@ -52,6 +52,11 @@
       <div class="mp-module-card-desc">Inhalte auf Bildschirmen im Laden synchronisieren</div>
       <span class="mp-badge mp-badge-accent mp-module-card-badge">Neu</span>
     </a>
+    <a href="modules/mittagstisch/admin.html" class="mp-module-card mp-animate mp-animate-d3" id="admin-card" style="display:none">
+      <div class="mp-module-card-icon">⚙️</div>
+      <div class="mp-module-card-name">Admin</div>
+      <div class="mp-module-card-desc">Gerichte &amp; Positionen verwalten</div>
+    </a>
     <div class="mp-module-card coming-soon mp-animate mp-animate-d3">
       <div class="mp-module-card-icon">🏷️</div>
       <div class="mp-module-card-name">Angebote</div>
@@ -78,6 +83,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   const name = user.user_metadata?.betrieb_name || user.email.split('@')[0]
   document.getElementById('dash-name').textContent = name.split(' ')[0]
   document.getElementById('stat-plan').textContent = (user.user_metadata?.plan || 'Basis').charAt(0).toUpperCase() + (user.user_metadata?.plan || 'basis').slice(1)
+  if (user.email === 'b3productionsofficial@gmail.com' || user.email?.includes('b3productions')) {
+    const adminCard = document.getElementById('admin-card')
+    if (adminCard) adminCard.style.display = 'flex'
+  }
   const designs = JSON.parse(localStorage.getItem('mp_designs') || '[]')
   const weeks   = JSON.parse(localStorage.getItem('mp_weeks')   || '[]')
   document.getElementById('stat-designs').textContent = designs.length

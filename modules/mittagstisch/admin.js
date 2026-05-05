@@ -1,4 +1,39 @@
 
+async function saveGerichteToSupabase(gerichte) {
+  if (typeof getSB === 'undefined') return false
+  const user = await MP.getUser()
+  if (!user) return false
+  const kundeId = user.id.substring(0, 8)
+  const { error } = await getSB().from('generator_configs').upsert({
+    kunde_id: kundeId,
+    gerichte: gerichte,
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'kunde_id' })
+  return !error
+}
+
+async function loadGerichteFromSupabase() {
+  if (typeof getSB === 'undefined') return null
+  const user = await MP.getUser()
+  if (!user) return null
+  const kundeId = user.id.substring(0, 8)
+  const { data } = await getSB().from('generator_configs').select('gerichte').eq('kunde_id', kundeId).limit(1)
+  return data && data[0] && data[0].gerichte ? data[0].gerichte : null
+}
+
+async function savePositionsToSupabase(positions) {
+  if (typeof getSB === 'undefined') return false
+  const user = await MP.getUser()
+  if (!user) return false
+  const kundeId = user.id.substring(0, 8)
+  const { error } = await getSB().from('generator_configs').upsert({
+    kunde_id: kundeId,
+    layout_positions: positions,
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'kunde_id' })
+  return !error
+}
+
 
 
 
@@ -320,7 +355,7 @@ function renderGerichte() {
   })
 }
 
-function saveGerichte() {
+async function saveGerichte() {
   const gerichte = getGerichte()
 
   Object.keys(gerichte).forEach((key) => {

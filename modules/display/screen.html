@@ -579,20 +579,28 @@ function getKWFromDate(d){
 
 function findAktiveWoche(wochen){
   var heute=new Date();
-  var heuteStr=heute.toISOString().split('T')[0]; // "2026-04-30"
-  var heuteKW=getKWFromDate(heute);
-  var heuteJahr=heute.getFullYear();
+  // Lokales Datum (kein UTC-Problem)
+  function localStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  // Montag der aktuellen Woche
+  var dow=heute.getDay();
+  var montagHeute=new Date(heute);
+  montagHeute.setDate(heute.getDate()-(dow===0?6:dow-1));
+  var heuteStr=localStr(montagHeute);
 
   // 1. Suche Woche wo gueltig_ab in dieser Woche liegt
   var best=null;
   for(var i=0;i<wochen.length;i++){
     var w=wochen[i];
     if(!w.gueltig_ab) continue;
-    var ab=new Date(w.gueltig_ab);
-    // Woche läuft von gueltig_ab (Mo) bis +6 Tage (So)
-    var bis=new Date(ab); bis.setDate(bis.getDate()+6);
-    var abStr=ab.toISOString().split('T')[0];
-    var bisStr=bis.toISOString().split('T')[0];
+    var ab=new Date(w.gueltig_ab+'T00:00:00');
+    // Montag der Woche von gueltig_ab
+    var abDow=ab.getDay();
+    var abMontag=new Date(ab);
+    abMontag.setDate(ab.getDate()-(abDow===0?6:abDow-1));
+    // Woche läuft Mo bis So
+    var bis=new Date(abMontag); bis.setDate(abMontag.getDate()+6);
+    var abStr=localStr(abMontag);
+    var bisStr=localStr(bis);
     if(heuteStr>=abStr && heuteStr<=bisStr){
       best=w; break;
     }

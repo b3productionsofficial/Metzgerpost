@@ -92,6 +92,7 @@
 
 <div id="screen">
   <img id="bg-image" src="" alt="">
+  <img id="sonder-overlay" src="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:fill;opacity:0;transition:opacity 0.6s;z-index:15;pointer-events:none;" alt="">
   <div id="overlay">
     <div id="datum-overlay"></div>
     <div id="gerichte-overlay"></div>
@@ -346,11 +347,9 @@ function showSonderSlide(layouts,idx){
 }
 
 function showDemo(){
-  // Sonderlayouts prüfen
-  checkSonderLayouts(function(found){
-    if(!found){
-      document.getElementById('no-content').className='show';
-    }
+  document.getElementById('no-content').className='show';
+  document.getElementById('s-text').textContent='Kein Inhalt';
+}
   });
 }
 
@@ -620,109 +619,96 @@ function findAktiveWoche(wochen){
   return best;
 }
 
-function loadContent(){
-  if(!sb){showDemo();return}
-  var alleInhalte=[];
-  // Manueller Override prüfen
-  sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1)
-    .then(function(r){
-      var d=r&&r.data&&r.data[0];
-      if(d&&d.content&&d.content.manualDay){
-        overrideLayout=DAY_MAP[d.content.manualDay]||null;
-        renderDisplay(d.content);
-        return;
-      }
-      overrideLayout=null;
-      // Sonderlayouts + Mittagstisch zusammen laden
-      loadSonderFuerHeute(function(sonder){
-        getMtTage(function(tage){
-          if(isMtTagHeute(tage)){
-            sb.from('wochen').select('*').eq('kunde_id',KUNDE_ID).order('gueltig_ab',{ascending:false}).limit(20)
-              .then(function(r2){
-                var wochen=r2&&r2.data?r2.data:[];
-                var aktiv=findAktiveWoche(wochen);
-                if(aktiv) alleInhalte.push({type:'mittagstisch',data:aktiv});
-                for(var i=0;i<sonder.length;i++) alleInhalte.push({type:'sonder',data:sonder[i]});
-                if(alleInhalte.length>0) startKombinierteRotation(alleInhalte);
-                else showDemo();
-              });
-          } else {
-            for(var i=0;i<sonder.length;i++) alleInhalte.push({type:'sonder',data:sonder[i]});
-            if(alleInhalte.length>0) startKombinierteRotation(alleInhalte);
-            else showDemo();
-          }
-        });
-      });
-    }).catch(function(){showDemo()});
-}
 
-function loadSonderFuerHeute(callback){
-  if(!sb){callback([]);return}
-  sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','sonder_configs').limit(1)
-    .then(function(r){
-      var d=r&&r.data&&r.data[0];
-      if(!d||!d.content||!d.content.layouts){callback([]);return}
-      var heute=new Date();
-      var heuteTag=heute.getDay();
-      var heuteDatum=heute.getFullYear()+'-'+String(heute.getMonth()+1).padStart(2,'0')+'-'+String(heute.getDate()).padStart(2,'0');
-      var matches=[];
-      for(var i=0;i<d.content.layouts.length;i++){
-        var lay=d.content.layouts[i];
-        if(lay.type==='datum'&&lay.datum===heuteDatum) matches.unshift(lay);
-        else if(lay.type==='wochentage'&&lay.wochentage&&lay.wochentage.indexOf(heuteTag)>=0) matches.push(lay);
-      }
-      callback(matches);
-    }).catch(function(){callback([])});
-}
+// ── Einziges Rotationssystem ──
+var _rotTimer=null;
+var _rotIdx=0;
+var _rotItems=[];
 
-var _rotationTimer=null;
-var _rotationIdx=0;
-function startKombinierteRotation(inhalte){
-  if(_rotationTimer)clearInterval(_rotationTimer);
-  _rotationIdx=0;
-  zeigeInhalt(inhalte,0);
-  if(inhalte.length>1){
-    _rotationTimer=setInterval(function(){
-      _rotationIdx=(_rotationIdx+1)%inhalte.length;
-      zeigeInhalt(inhalte,_rotationIdx);
-    },8000);
+function startRotation(items){
+  if(_rotTimer)clearInterval(_rotTimer);
+  if(!items||!items.length)return;
+  _rotItems=items;
+  _rotIdx=0;
+  zeigeRotItem(0);
+  if(items.length>1){
+    _rotTimer=setInterval(function(){
+      _rotIdx=(_rotIdx+1)%_rotItems.length;
+      zeigeRotItem(_rotIdx);
+    },10000);
   }
 }
 
-function zeigeInhalt(inhalte,idx){
-  var item=inhalte[idx];
+function zeigeRotItem(idx){
+  var item=_rotItems[idx];
+  if(!item)return;
+  var so=document.getElementById('sonder-overlay');
   if(item.type==='mittagstisch'){
-    renderDisplay({woche:item.data.woche_label||'',gerichte:item.data.gerichte||{}});
+    // Sonderbild ausblenden
+    if(so){so.style.opacity='0';setTimeout(function(){so.src='';},600);}
+    renderDisplay(item.data);
   } else if(item.type==='sonder'){
-    var bg=document.getElementById('bg-image');
-    bg.style.opacity='0';
-    setTimeout(function(){
-      bg.src=item.data.bild+'?t='+Date.now();
-      bg.style.opacity='1';
-    },200);
+    // Gerichte leeren
     document.getElementById('gerichte-overlay').innerHTML='';
     document.getElementById('datum-overlay').textContent='';
     document.getElementById('no-content').className='';
+    // Sonderbild einblenden
+    if(so){
+      so.style.opacity='0';
+      so.onload=function(){so.style.opacity='1';};
+      so.src=item.data.bild+'?t='+Date.now();
+    }
   }
 }
 
+function loadContent(){
+  if(!sb){showDemo();return;}
+  Promise.all([
+    sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1),
+    sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','sonder_configs').limit(1),
+    sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','mt_settings').limit(1),
+    sb.from('wochen').select('*').eq('kunde_id',KUNDE_ID).order('gueltig_ab',{ascending:false}).limit(20)
+  ]).then(function(res){
+    var dispContent=res[0].data&&res[0].data[0]?res[0].data[0].content:null;
+    var sonderContent=res[1].data&&res[1].data[0]?res[1].data[0].content:null;
+    var mtContent=res[2].data&&res[2].data[0]?res[2].data[0].content:null;
+    var wochen=res[3].data||[];
 
-var _lastReloadAt = null;
-function startReloadTrigger(kId, sId, sb) {
-  if (!sb) return;
-  sb.from('displays').select('updated_at').eq('kunde_id',kId).eq('screen_id',sId).limit(1)
-    .then(function(r){var d=r&&r.data&&r.data[0];if(d)_lastReloadAt=d.updated_at;});
-  setInterval(function(){
-    sb.from('displays').select('updated_at').eq('kunde_id',kId).eq('screen_id',sId).limit(1)
-      .then(function(r){
-        var d=r&&r.data&&r.data[0];if(!d)return;
-        if(_lastReloadAt&&d.updated_at!==_lastReloadAt){
-          _lastReloadAt=d.updated_at;
-          if(typeof loadContent==='function')loadContent();
-          else window.location.reload();
-        }else if(!_lastReloadAt){_lastReloadAt=d.updated_at;}
-      }).catch(function(){});
-  },30000);
+    // Manueller Override
+    if(dispContent&&dispContent.manualDay){
+      overrideLayout=DAY_MAP[dispContent.manualDay]||null;
+      renderDisplay(dispContent);return;
+    }
+    overrideLayout=null;
+
+    // MT-Tage prüfen
+    var mtTage=mtContent&&mtContent.tage?mtContent.tage:[2,3,4,5];
+    var heute=new Date().getDay();
+    var istMT=mtTage.indexOf(heute)>=0;
+
+    // Sonderlayouts für heute
+    var sonder=[];
+    if(sonderContent&&sonderContent.layouts){
+      var heuteDatum=(function(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');})();
+      var layouts=sonderContent.layouts;
+      for(var i=0;i<layouts.length;i++){
+        var lay=layouts[i];
+        if(lay.type==='datum'&&lay.datum===heuteDatum)sonder.unshift(lay);
+        else if(lay.type==='wochentage'&&lay.wochentage&&lay.wochentage.indexOf(heute)>=0)sonder.push(lay);
+      }
+    }
+
+    // Items sammeln
+    var items=[];
+    if(istMT){
+      var aktiv=findAktiveWoche(wochen);
+      if(aktiv)items.push({type:'mittagstisch',data:aktiv});
+    }
+    for(var j=0;j<sonder.length;j++)items.push({type:'sonder',data:sonder[j]});
+
+    if(items.length>0)startRotation(items);
+    else{document.getElementById('no-content').className='show';}
+  }).catch(function(){showDemo();});
 }
 
 function subscribeRealtime(){

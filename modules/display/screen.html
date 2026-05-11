@@ -181,9 +181,14 @@ var DEFAULT_CONFIG={
 var CONFIG=JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 
 function getTodayKey(){
-  if(overrideLayout)return overrideLayout; // immer - auch im normalen Modus
+  if(overrideLayout)return overrideLayout;
   if(IS_EDITOR){var t=getParam('testday');if(t)return DAY_MAP[parseInt(t,10)]||null;}
   return DAY_MAP[new Date().getDay()]||null;
+}
+
+function isMtTagHeute(tage){
+  var today=new Date().getDay();
+  return tage.indexOf(today)>=0;
 }
 function getKW(d){if(!d)d=new Date();var dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));dt.setUTCDate(dt.getUTCDate()+4-(dt.getUTCDay()||7));var y1=new Date(Date.UTC(dt.getUTCFullYear(),0,1));return Math.ceil((((dt-y1)/86400000)+1)/7)}
 
@@ -341,12 +346,21 @@ function showSonderSlide(layouts,idx){
 }
 
 function showDemo(){
-  // Sonderlayouts prüfen (ersetzt Warme Theke und andere Sonderfälle)
+  // Sonderlayouts prüfen
   checkSonderLayouts(function(found){
     if(!found){
       document.getElementById('no-content').className='show';
     }
   });
+}
+
+function getMtTage(callback){
+  if(!sb){callback([2,3,4,5]);return}
+  sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','mt_settings').limit(1)
+    .then(function(r){
+      var d=r&&r.data&&r.data[0];
+      callback(d&&d.content&&d.content.tage?d.content.tage:[2,3,4,5]);
+    }).catch(function(){callback([2,3,4,5])});
 }
 function _showDemoOld(){
   renderDisplay({
@@ -627,6 +641,25 @@ function loadContent(){
           });
       }).catch(function(){showDemo()});
   });
+}
+
+
+var _lastReloadAt = null;
+function startReloadTrigger(kId, sId, sb) {
+  if (!sb) return;
+  sb.from('displays').select('updated_at').eq('kunde_id',kId).eq('screen_id',sId).limit(1)
+    .then(function(r){var d=r&&r.data&&r.data[0];if(d)_lastReloadAt=d.updated_at;});
+  setInterval(function(){
+    sb.from('displays').select('updated_at').eq('kunde_id',kId).eq('screen_id',sId).limit(1)
+      .then(function(r){
+        var d=r&&r.data&&r.data[0];if(!d)return;
+        if(_lastReloadAt&&d.updated_at!==_lastReloadAt){
+          _lastReloadAt=d.updated_at;
+          if(typeof loadContent==='function')loadContent();
+          else window.location.reload();
+        }else if(!_lastReloadAt){_lastReloadAt=d.updated_at;}
+      }).catch(function(){});
+  },30000);
 }
 
 function subscribeRealtime(){

@@ -202,6 +202,22 @@
 
       <hr class="divider">
 
+
+      <!-- Mittagstisch Tage -->
+      <hr class="divider">
+      <div class="mp-label" style="margin-bottom:4px">📅 Mittagstisch-Tage</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">An welchen Tagen soll der Mittagstisch angezeigt werden?</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px" id="mt-tage-wrap">
+        <div class="day-btn" onclick="toggleMtTag(0,this)">So</div>
+        <div class="day-btn" onclick="toggleMtTag(1,this)">Mo</div>
+        <div class="day-btn active" onclick="toggleMtTag(2,this)">Di</div>
+        <div class="day-btn active" onclick="toggleMtTag(3,this)">Mi</div>
+        <div class="day-btn active" onclick="toggleMtTag(4,this)">Do</div>
+        <div class="day-btn active" onclick="toggleMtTag(5,this)">Fr</div>
+        <div class="day-btn" onclick="toggleMtTag(6,this)">Sa</div>
+      </div>
+      <button class="mp-btn mp-btn-secondary" style="width:100%;margin-bottom:4px" onclick="saveMtTage()">💾 Tage speichern</button>
+
       <!-- Sonderlayouts -->
       <div class="mp-label" style="margin-bottom:4px">📸 Sonderlayouts</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Überschreiben den Mittagstisch an bestimmten Tagen oder Daten — z.B. Warme Theke, Eröffnung, Feiertag</div>
@@ -334,6 +350,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   loadS3()
   loadSonderLayouts()
   loadToggleStatus()
+  loadMtTage()
 })
 
 // ── Tab Switch ──
@@ -346,6 +363,33 @@ function switchScreen(id) {
 }
 
 // ── Toggle ──
+
+var mtTage = [2,3,4,5]; // Di-Fr default
+
+async function loadMtTage() {
+  try {
+    const { data } = await getSB().from('displays').select('content').eq('kunde_id',kundeId).eq('screen_id','mt_settings').limit(1)
+    if (data && data[0] && data[0].content && data[0].content.tage) {
+      mtTage = data[0].content.tage
+      // Buttons updaten
+      document.querySelectorAll('#mt-tage-wrap .day-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', mtTage.includes(i))
+      })
+    }
+  } catch(e) {}
+}
+
+function toggleMtTag(day, btn) {
+  const idx = mtTage.indexOf(day)
+  if (idx >= 0) { mtTage.splice(idx,1); btn.classList.remove('active') }
+  else { mtTage.push(day); btn.classList.add('active') }
+}
+
+async function saveMtTage() {
+  await getSB().from('displays').upsert({ kunde_id: kundeId, screen_id: 'mt_settings', content: { tage: mtTage } }, { onConflict: 'kunde_id,screen_id' })
+  showToast('✅ Tage gespeichert!')
+}
+
 async function loadToggleStatus() {
   try {
     const { data } = await getSB().from('displays').select('content').eq('kunde_id',kundeId).eq('screen_id','screen1').limit(1)

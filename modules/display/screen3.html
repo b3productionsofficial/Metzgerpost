@@ -116,6 +116,25 @@ function subscribeRealtime(){
   }catch(e){setInterval(loadConfig,60000)}
 }
 
+
+var _lastReloadAt = null;
+function startReloadTrigger(kId, sId, sb) {
+  if (!sb) return;
+  sb.from('displays').select('updated_at').eq('kunde_id',kId).eq('screen_id',sId).limit(1)
+    .then(function(r){var d=r&&r.data&&r.data[0];if(d)_lastReloadAt=d.updated_at;});
+  setInterval(function(){
+    sb.from('displays').select('updated_at').eq('kunde_id',kId).eq('screen_id',sId).limit(1)
+      .then(function(r){
+        var d=r&&r.data&&r.data[0];if(!d)return;
+        if(_lastReloadAt&&d.updated_at!==_lastReloadAt){
+          _lastReloadAt=d.updated_at;
+          if(typeof loadContent==='function')loadContent();
+          else window.location.reload();
+        }else if(!_lastReloadAt){_lastReloadAt=d.updated_at;}
+      }).catch(function(){});
+  },30000);
+}
+
 window.addEventListener('DOMContentLoaded',function(){
   if(!window.supabase){document.getElementById('no-content').className='show';return}
   sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON);

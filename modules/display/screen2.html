@@ -122,6 +122,7 @@ window.addEventListener('DOMContentLoaded', function(){
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
   loadConfig();
   subscribeRealtime();
+  startReloadTrigger(KUNDE_ID,'screen2',sb);
 });
 </script>
 </body>

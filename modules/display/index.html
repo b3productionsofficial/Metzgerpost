@@ -602,7 +602,8 @@ async function uploadS2Bg(si, file) {
   const { data: { publicUrl } } = getSB().storage.from('screen-assets').getPublicUrl(path)
   s2Data.slides[si].bild = publicUrl
   buildS2UI()
-  showToast('✅ Bild hochgeladen!')
+  // Automatisch speichern nach Upload
+  sendS2().then(function(){showToast('✅ Bild hochgeladen & gespeichert!')})
 }
 
 async function delS2Bg(si) {

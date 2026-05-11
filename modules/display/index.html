@@ -612,7 +612,10 @@ async function delS2Bg(si) {
   const filename = parts[parts.length-1].split('?')[0]
   try { await getSB().storage.from('screen-assets').remove([kundeId+'/screen2/'+filename]) } catch(e) {}
   s2Data.slides[si].bild = ''
+  // Sofort in Config speichern
+  await sendS2()
   buildS2UI()
+  showToast('Bild gelöscht')
 }
 
 function buildS2UI() {

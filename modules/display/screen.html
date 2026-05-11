@@ -343,7 +343,8 @@ function renderDisplay(content) {
     imgEl.setAttribute('data-type', 'img')
     imgEl.style.cssText = 'left:'+cfg.img.x+'%;top:'+cfg.img.y+'%;width:'+imgSize+'px;height:'+imgSize+'px;'
     if (m.bild) {
-      imgEl.innerHTML = '<img src="../../' + m.bild + '" onerror="this.parentNode.innerHTML=\'<div class=placeholder>🍽️</div>\'">'
+      var bildSrc = m.bild && m.bild.startsWith('/') ? m.bild : '../../' + m.bild
+      imgEl.innerHTML = '<img src="' + bildSrc + '" onerror="this.parentNode.innerHTML=\'<div class=placeholder>🍽️</div>\'">'
     } else {
       imgEl.innerHTML = '<div class="placeholder">🍽️</div>'
     }

@@ -598,15 +598,18 @@ function zeigeRotItem(idx){
     }
     renderDisplay({woche:item.data.woche_label||'',gerichte:gerichte});
   } else if(item.type==='sonder'){
-    // Gerichte leeren
-    document.getElementById('gerichte-overlay').innerHTML='';
-    document.getElementById('datum-overlay').textContent='';
     document.getElementById('no-content').className='';
-    // Sonderbild einblenden
     if(so){
-      so.style.opacity='0';
-      so.onload=function(){so.style.opacity='1';};
-      so.src=item.data.bild+'?t='+Date.now();
+      // Bild vorladen
+      var tmpImg=new Image();
+      tmpImg.onload=function(){
+        // Erst wenn Bild geladen: Gerichte leeren und Sonder einblenden
+        document.getElementById('gerichte-overlay').innerHTML='';
+        document.getElementById('datum-overlay').textContent='';
+        so.src=tmpImg.src;
+        so.style.opacity='1';
+      };
+      tmpImg.src=item.data.bild+'?t='+Date.now();
     }
   }
 }

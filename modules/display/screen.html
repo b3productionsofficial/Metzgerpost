@@ -590,7 +590,13 @@ function zeigeRotItem(idx){
   if(item.type==='mittagstisch'){
     // Sonderbild ausblenden
     if(so){so.style.opacity='0';setTimeout(function(){so.src='';},600);}
-    renderDisplay({woche:item.data.woche_label||'',gerichte:item.data.gerichte||{}});
+    var gerichte=item.data.gerichte||{};
+    var todayKey=getTodayKey();
+    if(!todayKey||!gerichte[todayKey]){
+      var tage=['dienstag','mittwoch','donnerstag','freitag'];
+      for(var t=0;t<tage.length;t++){if(gerichte[tage[t]]){overrideLayout=tage[t];break;}}
+    }
+    renderDisplay({woche:item.data.woche_label||'',gerichte:gerichte});
   } else if(item.type==='sonder'){
     // Gerichte leeren
     document.getElementById('gerichte-overlay').innerHTML='';

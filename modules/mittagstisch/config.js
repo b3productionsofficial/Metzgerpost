@@ -23,7 +23,7 @@ const standardGerichte = {
   spareribs: { bild: "Gerichte/spareribs.jpg", preis: "6,80 €", text: "Sparerips mit Wedges" },
   saschliktopf: { bild: "Gerichte/schaschliktopf.jpg", preis: "6,80 €", text: "Schaschliktopf mit Semmel" },
   
-  rindfleisch_meerrettich: { bild: "Gerichte/rindfleisch_meerrettich.jpg", preis: "8,50 €", text: "Rindfleisch mit Kartoffelsalat und Meerrettich" }
+  rindfleisch_meerrettich: { bild: "Gerichte/rindfleisch_meerrettich.jpg", preis: "8,50 €", text: "Rindfleisch mit Kartoffelsalat und Meerrettich" },
   feiertag: { bild: "Gerichte/feiertag.jpg", preis: "", text: "Feiertag" },
 
 }

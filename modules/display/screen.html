@@ -327,7 +327,7 @@ function renderDisplay(content) {
   var overlay = document.getElementById('gerichte-overlay')
   overlay.innerHTML = ''
   var gerichte = content.gerichte || {}
-  var screenW = document.getElementById('screen').offsetWidth
+  var screenEl = document.getElementById('screen'); var screenW = screenEl ? screenEl.offsetWidth : window.innerWidth
 
   ['dienstag','mittwoch','donnerstag','freitag'].forEach(function(day) {
     var m = gerichte[day] && gerichte[day][0]

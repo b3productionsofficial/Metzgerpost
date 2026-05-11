@@ -622,57 +622,53 @@ function findAktiveWoche(wochen){
 
 function loadContent(){
   if(!sb){showDemo();return}
-  var alleInhalte=[];
-  // Manueller Override prüfen
-  sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1)
-    .then(function(r){
-      var d=r&&r.data&&r.data[0];
-      if(d&&d.content&&d.content.manualDay){
-        overrideLayout=DAY_MAP[d.content.manualDay]||null;
-        renderDisplay(d.content);
-        return;
-      }
-      overrideLayout=null;
-      // Sonderlayouts + Mittagstisch zusammen laden
-      loadSonderFuerHeute(function(sonder){
-        getMtTage(function(tage){
-          if(isMtTagHeute(tage)){
-            sb.from('wochen').select('*').eq('kunde_id',KUNDE_ID).order('gueltig_ab',{ascending:false}).limit(20)
-              .then(function(r2){
-                var wochen=r2&&r2.data?r2.data:[];
-                var aktiv=findAktiveWoche(wochen);
-                if(aktiv) alleInhalte.push({type:'mittagstisch',data:aktiv});
-                for(var i=0;i<sonder.length;i++) alleInhalte.push({type:'sonder',data:sonder[i]});
-                if(alleInhalte.length>0) startKombinierteRotation(alleInhalte);
-                else showDemo();
-              });
-          } else {
-            for(var i=0;i<sonder.length;i++) alleInhalte.push({type:'sonder',data:sonder[i]});
-            if(alleInhalte.length>0) startKombinierteRotation(alleInhalte);
-            else showDemo();
-          }
-        });
-      });
-    }).catch(function(){showDemo()});
-}
+  // Alle Daten parallel laden
+  Promise.all([
+    sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1),
+    sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','sonder_configs').limit(1),
+    sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','mt_settings').limit(1),
+    sb.from('wochen').select('*').eq('kunde_id',KUNDE_ID).order('gueltig_ab',{ascending:false}).limit(20)
+  ]).then(function(results){
+    var dispData=results[0].data&&results[0].data[0]?results[0].data[0].content:null;
+    var sonderData=results[1].data&&results[1].data[0]?results[1].data[0].content:null;
+    var mtData=results[2].data&&results[2].data[0]?results[2].data[0].content:null;
+    var wochen=results[3].data||[];
 
-function loadSonderFuerHeute(callback){
-  if(!sb){callback([]);return}
-  sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','sonder_configs').limit(1)
-    .then(function(r){
-      var d=r&&r.data&&r.data[0];
-      if(!d||!d.content||!d.content.layouts){callback([]);return}
+    // Manueller Override
+    if(dispData&&dispData.manualDay){
+      overrideLayout=DAY_MAP[dispData.manualDay]||null;
+      renderDisplay(dispData);return;
+    }
+    overrideLayout=null;
+
+    // Sonderlayouts für heute
+    var sonder=[];
+    if(sonderData&&sonderData.layouts){
       var heute=new Date();
       var heuteTag=heute.getDay();
       var heuteDatum=heute.getFullYear()+'-'+String(heute.getMonth()+1).padStart(2,'0')+'-'+String(heute.getDate()).padStart(2,'0');
-      var matches=[];
-      for(var i=0;i<d.content.layouts.length;i++){
-        var lay=d.content.layouts[i];
-        if(lay.type==='datum'&&lay.datum===heuteDatum) matches.unshift(lay);
-        else if(lay.type==='wochentage'&&lay.wochentage&&lay.wochentage.indexOf(heuteTag)>=0) matches.push(lay);
+      for(var i=0;i<sonderData.layouts.length;i++){
+        var lay=sonderData.layouts[i];
+        if(lay.type==='datum'&&lay.datum===heuteDatum) sonder.unshift(lay);
+        else if(lay.type==='wochentage'&&lay.wochentage&&lay.wochentage.indexOf(heuteTag)>=0) sonder.push(lay);
       }
-      callback(matches);
-    }).catch(function(){callback([])});
+    }
+
+    // MT-Tage
+    var mtTageArr=mtData&&mtData.tage?mtData.tage:[2,3,4,5];
+    _mtTageCache=mtTageArr;
+    var alleInhalte=[];
+
+    if(isMtTagHeute(mtTageArr)){
+      var aktiv=findAktiveWoche(wochen);
+      if(aktiv) alleInhalte.push({type:'mittagstisch',data:aktiv});
+    }
+    for(var j=0;j<sonder.length;j++) alleInhalte.push({type:'sonder',data:sonder[j]});
+
+    if(alleInhalte.length>0) startKombinierteRotation(alleInhalte);
+    else showDemo();
+
+  }).catch(function(){showDemo()});
 }
 
 var _rotationTimer=null;

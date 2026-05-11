@@ -680,160 +680,54 @@ function loadContent(){
 
 var _rotationTimer=null;
 var _rotationIdx=0;
+var _rotationInhalte=[];
+
 function startKombinierteRotation(inhalte){
   if(_rotationTimer)clearInterval(_rotationTimer);
+  _rotationInhalte=inhalte;
   _rotationIdx=0;
-  // MT vorab rendern falls vorhanden
-  var mtItem=null;
-  for(var i=0;i<inhalte.length;i++){if(inhalte[i].type==='mittagstisch'){mtItem=inhalte[i];break;}}
-  if(mtItem){
-    var gerichte=mtItem.data.gerichte||{};
+  zeigeInhalt(0);
+  if(inhalte.length>1){
+    _rotationTimer=setInterval(function(){
+      _rotationIdx=(_rotationIdx+1)%_rotationInhalte.length;
+      zeigeInhalt(_rotationIdx);
+    },10000);
+  }
+}
+
+function zeigeInhalt(idx){
+  var item=_rotationInhalte[idx];
+  if(!item)return;
+  
+  if(item.type==='mittagstisch'){
+    // Sonderbild ausblenden
+    var bg=document.getElementById('bg-image');
+    bg.style.opacity='0';
+    bg.src='';
+    // MT rendern
+    var gerichte=item.data.gerichte||{};
     var todayKey=getTodayKey();
     if(todayKey&&!gerichte[todayKey]){
       var tage=['montag','dienstag','mittwoch','donnerstag','freitag'];
       for(var t=0;t<tage.length;t++){if(gerichte[tage[t]]){todayKey=tage[t];break;}}
     }
     overrideLayout=todayKey;
-    renderDisplay({woche:mtItem.data.woche_label||'',gerichte:gerichte});
-  }
-  if(inhalte.length>1){
-    // Kurz warten bis MT gerendert, dann Rotation starten
-    setTimeout(function(){
-      zeigeInhalt(inhalte,0);
-      _rotationTimer=setInterval(function(){
-        _rotationIdx=(_rotationIdx+1)%inhalte.length;
-        zeigeInhalt(inhalte,_rotationIdx);
-      },8000);
-    },500);
-  }
-}
-
-function zeigeInhalt(inhalte,idx){
-  var item=inhalte[idx];
-  if(item.type==='mittagstisch'){
-    // MT ist bereits gerendert - nur Sonderbild ausblenden
-    var bg2=document.getElementById('bg-image');
-    bg2.style.transition='opacity 0.5s';
-    bg2.style.opacity='0';
-    setTimeout(function(){bg2.src='';},300);
-    // Gerichte-Overlay wieder einblenden
-    document.getElementById('gerichte-overlay').style.opacity='1';
-    document.getElementById('datum-overlay').style.opacity='1';
-  } else if(item.type==='sonder'){
-    // Alles leeren bevor Sonderlayout
-    document.getElementById('gerichte-overlay').innerHTML='';
-    document.getElementById('datum-overlay').textContent='';
-    document.getElementById('no-content').className='';
-    var bg=document.getElementById('bg-image');
-    bg.style.opacity='0';
-    setTimeout(function(){
-      bg.src=item.data.bild+'?t='+Date.now();
-      bg.style.opacity='1';
-    },300);
-  }
-}
-
-
-var _lastReloadAt = null;
-function startReloadTrigger(kId, sId, sb) {
-  if (!sb) return;
-  sb.from('displays').select('updated_at').eq('kunde_id',kId).eq('screen_id',sId).limit(1)
-    .then(function(r){var d=r&&r.data&&r.data[0];if(d)_lastReloadAt=d.updated_at;});
-  setInterval(function(){
-    sb.from('displays').select('updated_at').eq('kunde_id',kId).eq('screen_id',sId).limit(1)
-      .then(function(r){
-        var d=r&&r.data&&r.data[0];if(!d)return;
-        if(_lastReloadAt&&d.updated_at!==_lastReloadAt){
-          _lastReloadAt=d.updated_at;
-          if(typeof loadContent==='function')loadContent();
-          else window.location.reload();
-        }else if(!_lastReloadAt){_lastReloadAt=d.updated_at;}
-      }).catch(function(){});
-  },30000);
-}
-
-function subscribeRealtime(){
-  if(!sb)return;
-  try{
-    // Auf neue Wochen horchen
-    sb.channel('wochen-'+KUNDE_ID)
-      .on('postgres_changes',{event:'INSERT',schema:'public',table:'wochen',filter:'kunde_id=eq.'+KUNDE_ID},
-        function(){loadContent()})
-      .subscribe(function(){});
-    // Auch auf displays horchen (manuelles Senden)
-    sb.channel('disp-'+SCREEN_ID)
-      .on('postgres_changes',{event:'*',schema:'public',table:'displays',filter:'kunde_id=eq.'+KUNDE_ID},
-        function(p){if(p&&p.new&&p.new.content)renderDisplay(p.new.content)})
-      .subscribe(function(){});
-  }catch(e){setInterval(loadContent,60000)}
-}
-function saveConfig(){
-  if(!sb){alert('Kein Supabase — Config nur lokal');return}
-  sb.from('display_configs').upsert({kunde_id:KUNDE_ID,screen_id:SCREEN_ID,config:CONFIG},{onConflict:'kunde_id,screen_id'})
-    .then(function(){var el=document.getElementById('ep-ok');el.style.display='block';setTimeout(function(){el.style.display='none'},2000)})
-    .catch(function(){});
-}
-
-window.addEventListener('DOMContentLoaded',function(){
-  if(!IS_EDITOR){
-    var eb=document.getElementById('editor-open-btn');if(eb)eb.parentNode.removeChild(eb);
-    var fb=document.getElementById('fs-btn');if(fb)fb.parentNode.removeChild(fb);
-    var bb=document.getElementById('back-btn');if(bb)bb.parentNode.removeChild(bb);
-  }
-  if(IS_EDITOR)overrideLayout='dienstag';
-  if(IS_DEMO&&!IS_EDITOR){
-    if(window.supabase){
+    renderDisplay({woche:item.data.woche_label||'',gerichte:gerichte});
     
-var cursorTimer;
-function resetCursorTimer() {
-  document.body.classList.remove('hide-cursor');
-  clearTimeout(cursorTimer);
-  cursorTimer = setTimeout(function() {
-    if (!IS_EDITOR) document.body.classList.add('hide-cursor');
-  }, 3000);
+  } else if(item.type==='sonder'){
+    // Gerichte ausblenden
+    var ov=document.getElementById('gerichte-overlay');
+    var dv=document.getElementById('datum-overlay');
+    if(ov)ov.innerHTML='';
+    if(dv)dv.textContent='';
+    document.getElementById('no-content').className='';
+    // Sonderbild einblenden
+    var bg2=document.getElementById('bg-image');
+    bg2.style.opacity='0';
+    var newSrc=item.data.bild+'?t='+Date.now();
+    bg2.onload=function(){bg2.style.opacity='1';};
+    bg2.src=newSrc;
+  }
 }
-document.addEventListener('mousemove', resetCursorTimer);
-document.addEventListener('touchstart', resetCursorTimer);
-resetCursorTimer();
-  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
-      loadContent();
-    } else { showDemo(); }
-    return;
-  }
-  if(IS_DEMO&&IS_EDITOR){
-    showDemo();
-    document.getElementById('ep').className='open';document.getElementById('fs-btn').className='hidden';buildEditorFields();
-    return;
-  }
-  if(!window.supabase){showDemo();return}
 
-var cursorTimer;
-function resetCursorTimer() {
-  document.body.classList.remove('hide-cursor');
-  clearTimeout(cursorTimer);
-  cursorTimer = setTimeout(function() {
-    if (!IS_EDITOR) document.body.classList.add('hide-cursor');
-  }, 3000);
-}
-document.addEventListener('mousemove', resetCursorTimer);
-document.addEventListener('touchstart', resetCursorTimer);
-resetCursorTimer();
-  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
-  var fb=setTimeout(function(){if(!currentContent)showDemo()},8000);
-  loadConfig().then(function(){return loadContent()}).then(function(){
-    clearTimeout(fb);subscribeRealtime();
-    if(IS_EDITOR){document.getElementById('ep').className='open';document.getElementById('fs-btn').className='hidden';buildEditorFields()}
-    // Jede Minute prüfen ob Tageswechsel (für automatisches Layout-Wechseln)
-    var lastDay=new Date().getDay();
-    setInterval(function(){
-      var today=new Date().getDay();
-      if(today!==lastDay){lastDay=today;loadContent();}
-    },60000);
-    // Exakter Mitternachts-Reload
-    var now=new Date(),mn=new Date(now);mn.setHours(24,0,5,0);
-    setTimeout(function(){loadContent();setInterval(loadContent,86400000)},mn-now);
-  });
-});
-</script>
-</body>
-</html>
+

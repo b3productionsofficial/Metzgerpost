@@ -634,6 +634,13 @@ function loadContent(){
     var mtData=results[2].data&&results[2].data[0]?results[2].data[0].content:null;
     var wochen=results[3].data||[];
 
+    // Editor-Modus: nur Mittagstisch, keine Rotation
+    if(IS_EDITOR){
+      var aktivE=findAktiveWoche(wochen);
+      if(aktivE)renderDisplay({woche:aktivE.woche_label||'',gerichte:aktivE.gerichte||{}});
+      else showDemo();
+      return;
+    }
     // Manueller Override
     if(dispData&&dispData.manualDay){
       overrideLayout=DAY_MAP[dispData.manualDay]||null;

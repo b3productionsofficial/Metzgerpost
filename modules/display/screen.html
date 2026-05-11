@@ -586,9 +586,7 @@ window.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('editor-panel').classList.add('open')
     document.getElementById('editor-open-btn').style.display = 'none'
     buildEditorUI()
-  } else {
-    document.getElementById('editor-open-btn').style.display = 'block'
-  }
+  } // Editor-Button bleibt versteckt im normalen Modus
 
   // Mitternacht-Reload
   var now = new Date(), midnight = new Date(now)

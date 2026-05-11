@@ -329,7 +329,7 @@ function renderDisplay(content) {
   var gerichte = content.gerichte || {}
   var screenW = document.getElementById('screen').offsetWidth
 
-  Object.keys(CONFIG).forEach(function(day) {
+  ['dienstag','mittwoch','donnerstag','freitag'].forEach(function(day) {
     var m = gerichte[day] && gerichte[day][0]
     if (!m || !m.name) return
     var cfg = CONFIG[day]

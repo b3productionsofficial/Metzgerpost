@@ -472,7 +472,13 @@ function startReloadTrigger() {
 async function loadConfig() {
   try {
     var r = await sb.from('display_configs').select('config').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1)
-    if (r.data && r.data[0] && r.data[0].config) CONFIG = Object.assign(CONFIG, r.data[0].config)
+    if (r.data && r.data[0] && r.data[0].config) {
+      var c = r.data[0].config
+      // Nur laden wenn Struktur stimmt (hat img/text/preis)
+      if (c.dienstag && c.dienstag.img && c.dienstag.text) {
+        CONFIG = Object.assign(CONFIG, c)
+      }
+    }
   } catch(e) {}
 }
 

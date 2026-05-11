@@ -627,6 +627,17 @@ function loadContent(){
     var mtContent=res[2].data&&res[2].data[0]?res[2].data[0].content:null;
     var wochen=res[3].data||[];
 
+    // Editor-Modus: nur Mittagstisch, keine Rotation
+    if(IS_EDITOR){
+      var aktivE=findAktiveWoche(wochen);
+      if(aktivE){
+        var gerE=aktivE.gerichte||{};
+        var tageE=['dienstag','mittwoch','donnerstag','freitag'];
+        for(var te=0;te<tageE.length;te++){if(gerE[tageE[te]]){overrideLayout=tageE[te];break;}}
+        renderDisplay({woche:aktivE.woche_label||'',gerichte:gerE});
+      }
+      return;
+    }
     // Manueller Override
     if(dispContent&&dispContent.manualDay){
       overrideLayout=DAY_MAP[dispContent.manualDay]||null;

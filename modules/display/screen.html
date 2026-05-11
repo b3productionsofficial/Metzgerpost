@@ -329,7 +329,7 @@ function renderDisplay(content) {
   var gerichte = content.gerichte || {}
   var screenEl = document.getElementById('screen'); var screenW = screenEl ? screenEl.offsetWidth : window.innerWidth
 
-  ['dienstag','mittwoch','donnerstag','freitag'].forEach(function(day) {
+  console.log('forEach start', Object.keys(gerichte)); ['dienstag','mittwoch','donnerstag','freitag'].forEach(function(day) { console.log('day:', day, 'append to:', overlay.id);
     var m = gerichte[day] && gerichte[day][0]
     if (!m || !m.name) return
     var cfg = CONFIG[day]

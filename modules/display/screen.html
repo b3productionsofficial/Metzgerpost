@@ -354,12 +354,15 @@ function showDemo(){
   });
 }
 
+var _mtTageCache=null;
 function getMtTage(callback){
+  if(_mtTageCache){callback(_mtTageCache);return}
   if(!sb){callback([2,3,4,5]);return}
   sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','mt_settings').limit(1)
     .then(function(r){
       var d=r&&r.data&&r.data[0];
-      callback(d&&d.content&&d.content.tage?d.content.tage:[2,3,4,5]);
+      _mtTageCache=d&&d.content&&d.content.tage?d.content.tage:[2,3,4,5];
+      callback(_mtTageCache);
     }).catch(function(){callback([2,3,4,5])});
 }
 function _showDemoOld(){

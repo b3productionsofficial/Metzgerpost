@@ -719,7 +719,7 @@ async function saveWocheToSupabase() {
     return;
   }
 
-  // Datum aus Label parsen: "28.04. - 02.05.2026" → { date, kw, jahr }
+  // gueltig_ab immer Montag der Woche: "28.04. - 02.05.2026" → { date, kw, jahr }
   function parseDatumLabel(label) {
     if (!label) return { date: null, kw: null, jahr: new Date().getFullYear() };
     // Format: "28.04. - 02.05.2026" oder "28.04.-02.05.2026"

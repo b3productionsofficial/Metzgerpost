@@ -102,7 +102,9 @@ function loadConfig() {
   sb.from('screen2_config').select('*').eq('kunde_id',KUNDE_ID).limit(1)
     .then(function(r){
       var d = r && r.data && r.data[0];
-      if (d && d.aktive_layouts && d.aktive_layouts.length) renderLayouts(d);
+      if (d && (d.slides||d.aktive_layouts) && (d.slides||d.aktive_layouts).length) {
+        renderLayouts({aktive_layouts: d.slides||d.aktive_layouts, timer_sekunden: d.timer_sekunden});
+      }
       else document.getElementById('no-content').className='show';
     }).catch(function(){ document.getElementById('no-content').className='show' });
 }

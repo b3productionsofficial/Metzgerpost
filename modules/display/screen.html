@@ -683,31 +683,42 @@ var _rotationIdx=0;
 function startKombinierteRotation(inhalte){
   if(_rotationTimer)clearInterval(_rotationTimer);
   _rotationIdx=0;
-  zeigeInhalt(inhalte,0);
+  // MT vorab rendern falls vorhanden
+  var mtItem=null;
+  for(var i=0;i<inhalte.length;i++){if(inhalte[i].type==='mittagstisch'){mtItem=inhalte[i];break;}}
+  if(mtItem){
+    var gerichte=mtItem.data.gerichte||{};
+    var todayKey=getTodayKey();
+    if(todayKey&&!gerichte[todayKey]){
+      var tage=['montag','dienstag','mittwoch','donnerstag','freitag'];
+      for(var t=0;t<tage.length;t++){if(gerichte[tage[t]]){todayKey=tage[t];break;}}
+    }
+    overrideLayout=todayKey;
+    renderDisplay({woche:mtItem.data.woche_label||'',gerichte:gerichte});
+  }
   if(inhalte.length>1){
-    _rotationTimer=setInterval(function(){
-      _rotationIdx=(_rotationIdx+1)%inhalte.length;
-      zeigeInhalt(inhalte,_rotationIdx);
-    },8000);
+    // Kurz warten bis MT gerendert, dann Rotation starten
+    setTimeout(function(){
+      zeigeInhalt(inhalte,0);
+      _rotationTimer=setInterval(function(){
+        _rotationIdx=(_rotationIdx+1)%inhalte.length;
+        zeigeInhalt(inhalte,_rotationIdx);
+      },8000);
+    },500);
   }
 }
 
 function zeigeInhalt(inhalte,idx){
   var item=inhalte[idx];
   if(item.type==='mittagstisch'){
-    // Sonderlayout-Bild leeren
+    // MT ist bereits gerendert - nur Sonderbild ausblenden
     var bg2=document.getElementById('bg-image');
+    bg2.style.transition='opacity 0.5s';
     bg2.style.opacity='0';
-    setTimeout(function(){bg2.src='';bg2.style.opacity='0';},200);
-    var gerichte=item.data.gerichte||{};
-    var todayKey=getTodayKey();
-    // Wenn heute kein Eintrag: ersten verfügbaren Tag nehmen
-    if(todayKey&&!gerichte[todayKey]){
-      var tage=['montag','dienstag','mittwoch','donnerstag','freitag'];
-      for(var t=0;t<tage.length;t++){if(gerichte[tage[t]]){todayKey=tage[t];break;}}
-    }
-    overrideLayout=todayKey;
-    renderDisplay({woche:item.data.woche_label||'',gerichte:gerichte});
+    setTimeout(function(){bg2.src='';},300);
+    // Gerichte-Overlay wieder einblenden
+    document.getElementById('gerichte-overlay').style.opacity='1';
+    document.getElementById('datum-overlay').style.opacity='1';
   } else if(item.type==='sonder'){
     // Alles leeren bevor Sonderlayout
     document.getElementById('gerichte-overlay').innerHTML='';

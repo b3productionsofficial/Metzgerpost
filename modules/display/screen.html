@@ -692,7 +692,15 @@ function startKombinierteRotation(inhalte){
 function zeigeInhalt(inhalte,idx){
   var item=inhalte[idx];
   if(item.type==='mittagstisch'){
-    renderDisplay({woche:item.data.woche_label||'',gerichte:item.data.gerichte||{}});
+    var gerichte=item.data.gerichte||{};
+    var todayKey=getTodayKey();
+    // Wenn heute kein Eintrag: ersten verfügbaren Tag nehmen
+    if(todayKey&&!gerichte[todayKey]){
+      var tage=['montag','dienstag','mittwoch','donnerstag','freitag'];
+      for(var t=0;t<tage.length;t++){if(gerichte[tage[t]]){todayKey=tage[t];break;}}
+    }
+    overrideLayout=todayKey;
+    renderDisplay({woche:item.data.woche_label||'',gerichte:gerichte});
   } else if(item.type==='sonder'){
     var bg=document.getElementById('bg-image');
     bg.style.opacity='0';

@@ -289,7 +289,55 @@ function loadWarmeTheke(){
 }
 
 
-,200);
+var sonderSlideIdx=0;
+var sonderSlideTimer=null;
+
+function checkSonderLayouts(callback){
+  if(!sb){callback(false);return}
+  sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','sonder_configs').limit(1)
+    .then(function(r){
+      var d=r&&r.data&&r.data[0];
+      if(!d||!d.content||!d.content.layouts){callback(false);return}
+      var heute=new Date();
+      var heuteTag=heute.getDay();
+      // Lokales Datum (nicht UTC) fuer Zeitzone-Korrektheit
+      var heuteDatum=heute.getFullYear()+'-'+String(heute.getMonth()+1).padStart(2,'0')+'-'+String(heute.getDate()).padStart(2,'0');
+      var layouts=d.content.layouts;
+      var matches=[];
+      // Datum-Layouts zuerst (höhere Priorität)
+      for(var i=0;i<layouts.length;i++){
+        if(layouts[i].type==='datum'&&layouts[i].datum===heuteDatum) matches.unshift(layouts[i]);
+        else if(layouts[i].type==='wochentage'&&layouts[i].wochentage&&layouts[i].wochentage.indexOf(heuteTag)>=0) matches.push(layouts[i]);
+      }
+      if(!matches.length){callback(false);return}
+      // Timer stoppen falls schon läuft
+      if(sonderSlideTimer)clearInterval(sonderSlideTimer);
+      // Erstes Bild sofort zeigen
+      showSonderSlide(matches,0);
+      // Mehrere: rotieren
+      if(matches.length>1){
+        sonderSlideIdx=0;
+        var sonderTimer=(d.content&&d.content.sonder_timer)||8;
+        sonderSlideTimer=setInterval(function(){
+          sonderSlideIdx=(sonderSlideIdx+1)%matches.length;
+          showSonderSlide(matches,sonderSlideIdx);
+        },sonderTimer*1000);
+      }
+      callback(true);
+    }).catch(function(){callback(false)});
+}
+
+function showSonderSlide(layouts,idx){
+  var lay=layouts[idx];
+  var bg=document.getElementById('bg-image');
+  // Bild vorladen dann einblenden
+  var tmp=new Image();
+  tmp.onload=function(){
+    bg.style.opacity='0';
+    setTimeout(function(){
+      bg.src=lay.bild;
+      bg.style.opacity='1';
+    },200);
   };
   tmp.src=lay.bild;
   document.getElementById('gerichte-overlay').innerHTML='';
@@ -298,7 +346,12 @@ function loadWarmeTheke(){
 }
 
 function showDemo(){
-  document.getElementById('no-content').className='show';
+  // Sonderlayouts prüfen
+  checkSonderLayouts(function(found){
+    if(!found){
+      document.getElementById('no-content').className='show';
+    }
+  });
 }
 
 var _mtTageCache=null;

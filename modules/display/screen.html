@@ -1,129 +1,97 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MetzgerPost — Display</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MetzgerPost Display</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;800&family=Lora:wght@400;600;700&family=Lato:wght@400;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">  // Cursor auto-hide
+  
+</script>
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { cursor:none; background:#000; width:100vw; height:100vh; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{ cursor:none;background:#000;width:100vw;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center}
+    #screen{position:relative;width:100vw;height:calc(100vw * 9/16);max-height:100vh;max-width:calc(100vh * 16/9)}
+    #bg-image{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;transition:opacity .5s}
+    #overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+    #datum-overlay{position:absolute;pointer-events:none;white-space:nowrap}
+    .day-circle{position:absolute;border-radius:50%;overflow:hidden;border:3px solid #fff;box-shadow:0 3px 12px rgba(0,0,0,.25);transform:translate(-50%,-50%)}
+    .day-circle img{width:100%;height:100%;object-fit:cover}
+    .day-circle .ph{width:100%;height:100%;background:linear-gradient(135deg,#87CEEB,#90EE90);display:flex;align-items:center;justify-content:center;font-size:1.5em}
+    .day-text{position:absolute;text-align:center;transform:translateX(-50%);line-height:1.3;pointer-events:none}
+    .day-price{position:absolute;transform:translate(-50%,-50%);font-weight:700;text-align:center;pointer-events:none}
+    .fade-in{animation:fi .6s ease both}
+    @keyframes fi{from{opacity:0;transform:translate(-50%,calc(-50% + 8px))}to{opacity:1;transform:translate(-50%,-50%)}}
+    .day-text.fade-in{animation:fit .6s ease both}
+    @keyframes fit{from{opacity:0;transform:translateX(-50%) translateY(6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+    #no-content{display:none;position:absolute;inset:0;background:#e8e4de;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+    #no-content.show{display:flex}
+    #no-content h1{font-size:4vw;color:#2d4a2d;font-family:Georgia,serif}
+    #no-content p{font-size:2vw;color:#666}
 
-    #screen {
-      position:relative;
-      width:100vw; height:calc(100vw * 9/16);
-      max-height:100vh; max-width:calc(100vh * 16/9);
+    /* Cursor nach 3 Sekunden verstecken */
+    
+    .drag-handle{cursor:move!important;pointer-events:all!important;user-select:none;-webkit-user-select:none}
+    .drag-handle:hover{outline:2px dashed rgba(212,133,58,.8);outline-offset:4px}
+    .drag-handle.dragging{outline:2px solid #d4853a;outline-offset:4px;z-index:50}
+    #fs-btn{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.75);color:#fff;border:2px solid rgba(255,255,255,.8);padding:24px 52px;font-size:3vw;font-family:Georgia,serif;border-radius:16px;cursor:pointer;z-index:9999;transition:opacity .6s}
+    #fs-btn:hover{background:rgba(0,0,0,.9)}
+    #fs-btn.hidden{opacity:0;pointer-events:none}
+    #editor-open-btn { display:none !important; /* nur per JS einblenden */
+    
+      position:fixed; bottom:16px; right:16px;
+      background:rgba(212,133,58,.9); color:#fff;
+      border:none; border-radius:50%; width:48px; height:48px;
+      font-size:20px; cursor:pointer; z-index:9998;
+      box-shadow:0 2px 12px rgba(0,0,0,.4);
+      transition:opacity .3s;
     }
+    #editor-open-btn:hover { background:#e8964a; }
+    #editor-open-btn.hidden { opacity:0; pointer-events:none; }
 
-    #bg-image {
-      position:absolute; inset:0; width:100%; height:100%;
-      object-fit:fill; transition:opacity 0.5s ease;
-    }
+    /* ── Editor ── */
+    #ep{display:none;position:fixed;top:0;right:0;bottom:0;width:310px;background:rgba(13,11,9,.97);border-left:1px solid #2e2a24;overflow-y:auto;z-index:100;padding:12px;font-family:'Lato',sans-serif;color:#f0ece4;pointer-events:all}
+    #ep.open{display:block}
+    .ep-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #2e2a24}
+    .ep-ttl{font-size:11px;font-weight:700;color:#d4853a;text-transform:uppercase;letter-spacing:.6px}
+    .ep-x{background:none;border:none;color:#666;font-size:16px;cursor:pointer;padding:2px 6px}
+    .ep-x:hover{color:#f0ece4}
 
-    #overlay { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+    /* Zwei Tab-Reihen */
+    .ep-row-label{font-size:9px;color:#5a5040;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+    .ep-tabs{display:flex;gap:3px;margin-bottom:6px}
+    .ep-tab{flex:1;padding:5px 3px;border:1px solid #2e2a24;border-radius:4px;background:#1a1714;color:#666;font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s}
+    .ep-tab.active{border-color:#d4853a;color:#d4853a;background:rgba(212,133,58,.12)}
+    .ep-tab.layout-tab.active{border-color:#5cad7a;color:#5cad7a;background:rgba(92,173,122,.12)}
 
-    #datum-overlay {
-      position:absolute; top:5%; left:50%; transform:translateX(-50%);
-      font-size:2.2vw; font-weight:700; color:#2d2d2d;
-      white-space:nowrap; font-family:Georgia,serif; pointer-events:none;
-    }
-
-    .day-circle {
-      position:absolute; border-radius:50%; overflow:hidden;
-      border:3px solid #fff; box-shadow:0 3px 12px rgba(0,0,0,.25);
-      transform:translate(-50%,-50%);
-    }
-    .day-circle img { width:100%; height:100%; object-fit:cover; }
-    .day-circle .placeholder {
-      width:100%; height:100%;
-      background:linear-gradient(135deg,#87CEEB,#90EE90);
-      display:flex; align-items:center; justify-content:center; font-size:1.5em;
-    }
-
-    .day-text {
-      position:absolute; text-align:center; transform:translateX(-50%);
-      font-family:Georgia,serif; line-height:1.3; pointer-events:none;
-    }
-
-    .day-price {
-      position:absolute; transform:translate(-50%,-50%);
-      font-family:Georgia,serif; font-weight:700; text-align:center; pointer-events:none;
-    }
-
-    .fade-in { animation:fadeIn .6s ease both; }
-    @keyframes fadeIn { from{opacity:0;transform:translate(-50%,calc(-50% + 8px))} to{opacity:1;transform:translate(-50%,-50%)} }
-    .day-text.fade-in { animation:fadeInText .6s ease both; }
-    @keyframes fadeInText { from{opacity:0;transform:translateX(-50%) translateY(6px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-
-    /* Sonderlayout Overlay */
-    #sonder-overlay {
-      position:absolute; inset:0; width:100%; height:100%;
-      object-fit:fill; opacity:0; transition:opacity 0.6s ease; z-index:10;
-    }
-    #sonder-overlay.show { opacity:1; }
-
-    #no-content {
-      display:none; position:absolute; inset:0;
-      background:#e8e4de; align-items:center; justify-content:center;
-      flex-direction:column; gap:16px; z-index:5;
-    }
-    #no-content.show { display:flex; }
-    #no-content h1 { font-size:4vw; color:#2d4a2d; font-family:Georgia,serif; }
-    #no-content p  { font-size:2vw; color:#666; }
-
-    #timer-bar { position:absolute; bottom:0; left:0; height:6px; background:#2d6a4f; transition:none; z-index:20; }
-
-    #status-bar {
-      position:fixed; bottom:0; left:0; right:0; height:24px;
-      background:rgba(0,0,0,.45); display:flex; align-items:center;
-      justify-content:space-between; padding:0 14px;
-      font-family:monospace; font-size:11px; color:rgba(255,255,255,.5);
-      z-index:999; pointer-events:none;
-    }
-    .s-live { display:flex; align-items:center; gap:5px; color:#5cad7a; }
-    .s-dot { width:5px; height:5px; border-radius:50%; background:#5cad7a; animation:pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-
-    /* Editor */
-    #editor-panel {
-      display:none; position:fixed; top:0; right:0; bottom:24px; width:320px;
-      background:rgba(15,13,11,.95); border-left:1px solid #2e2a24;
-      overflow-y:auto; z-index:100; padding:16px;
-      font-family:'DM Sans',sans-serif; color:#f0ece4; pointer-events:all;
-    }
-    #editor-panel.open { display:block; }
-    .ep-title { font-size:14px; font-weight:700; color:#d4853a; margin-bottom:12px; text-transform:uppercase; letter-spacing:.5px; }
-    .ep-day { background:#1a1714; border:1px solid #2e2a24; border-radius:8px; padding:12px; margin-bottom:10px; }
-    .ep-day-name { font-size:12px; font-weight:700; margin-bottom:8px; color:#d4853a; }
-    .ep-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-    .ep-row label { font-size:11px; color:#8a8070; width:80px; flex-shrink:0; }
-    .ep-row input[type=number] { flex:1; background:#242018; border:1px solid #2e2a24; border-radius:4px; color:#f0ece4; padding:4px 6px; font-size:12px; outline:none; }
-    .ep-row input[type=number]:focus { border-color:#d4853a; }
-    .ep-row select { flex:1; background:#242018; border:1px solid #2e2a24; border-radius:4px; color:#f0ece4; padding:4px 6px; font-size:12px; outline:none; }
-    .ep-btn { width:100%; padding:10px; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; margin-top:8px; }
-    .ep-btn-save { background:#d4853a; color:#fff; }
-    .ep-btn-save:hover { background:#e8a055; }
-    .ep-btn-test { background:#242018; color:#8a8070; border:1px solid #2e2a24; margin-bottom:8px; }
-    .ep-day-slider { display:flex; gap:4px; margin-bottom:12px; }
-    .ep-day-btn { flex:1; padding:6px 4px; border:1px solid #2e2a24; border-radius:4px; background:#242018; color:#8a8070; font-size:11px; cursor:pointer; text-align:center; }
-    .ep-day-btn.active { border-color:#d4853a; color:#d4853a; background:rgba(212,133,58,.1); }
-    .drag-handle { cursor:move !important; pointer-events:all !important; }
-    .drag-handle:hover { outline:2px dashed #d4853a; outline-offset:3px; }
-
-    #editor-open-btn {
-      position:fixed; bottom:40px; right:16px;
-      background:rgba(212,133,58,.9); color:#fff; border:none;
-      border-radius:50%; width:48px; height:48px; font-size:20px;
-      cursor:pointer; z-index:9998; box-shadow:0 2px 12px rgba(0,0,0,.4);
-    }
+    .ep-divider{border:none;border-top:1px solid #2e2a24;margin:8px 0}
+    .ep-sec{font-size:9px;font-weight:700;color:#5a5040;text-transform:uppercase;letter-spacing:.5px;margin:6px 0 4px}
+    .ep-r{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+    .ep-r label{font-size:10px;color:#8a8070;width:64px;flex-shrink:0}
+    .ep-r input[type=number]{flex:1;background:#1e1c18;border:1px solid #2e2a24;border-radius:3px;color:#f0ece4;padding:4px 5px;font-size:11px;outline:none}
+    .ep-r input[type=number]:focus{border-color:#d4853a}
+    .ep-r select{flex:1;background:#1e1c18;border:1px solid #2e2a24;border-radius:3px;color:#f0ece4;padding:4px 5px;font-size:11px;outline:none}
+    .ep-r select:focus{border-color:#d4853a}
+    .ep-clr{display:flex;gap:4px;flex:1}
+    .ep-cb{flex:1;padding:4px;border-radius:3px;border:2px solid transparent;font-size:10px;font-weight:700;cursor:pointer;text-align:center}
+    .ep-cb.dark{background:#1a1a1a;color:#fff}
+    .ep-cb.white{background:#f0f0f0;color:#1a1a1a}
+    .ep-cb.sel{border-color:#d4853a}
+    .ep-hint{font-size:10px;color:#6a6050;background:#1a1714;border-radius:4px;padding:6px 8px;line-height:1.5;margin-bottom:8px}
+    .ep-btn{width:100%;padding:9px;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;margin-top:5px}
+    .ep-save{background:#d4853a;color:#fff}
+    .ep-save:hover{background:#e8964a}
+    .ep-reset{background:#1e1c18;color:#7a7060;border:1px solid #2e2a24}
+    .ep-ok{display:none;color:#5cad7a;font-size:11px;text-align:center;margin-top:6px}
   </style>
 </head>
 <body>
 
+<button id="fs-btn" onclick="goFullscreen()">&#x26F6;&nbsp; Vollbild</button>
+<button id="editor-open-btn" onclick="toggleEditor()" title="Editor öffnen">&#9881;</button>
+
 <div id="screen">
   <img id="bg-image" src="" alt="">
-  <!-- Sonderlayout Bild -->
-  <img id="sonder-overlay" src="" alt="">
   <div id="overlay">
     <div id="datum-overlay"></div>
     <div id="gerichte-overlay"></div>
@@ -132,474 +100,713 @@
     <h1>Metzgerei Sorg &amp; Seitz</h1>
     <p>Heute kein Mittagstisch</p>
   </div>
-  <div id="timer-bar"></div>
 </div>
 
-<div id="editor-panel">
-  <div class="ep-title">⚙️ Position Editor</div>
-  <div class="ep-day-slider" id="ep-testday-btns">
-    <div class="ep-day-btn active" onclick="setTestDay(2,this)">Di</div>
-    <div class="ep-day-btn" onclick="setTestDay(3,this)">Mi</div>
-    <div class="ep-day-btn" onclick="setTestDay(4,this)">Do</div>
-    <div class="ep-day-btn" onclick="setTestDay(5,this)">Fr</div>
+<div id="ep">
+  <div class="ep-hd">
+    <span class="ep-ttl">&#9881; Position Editor</span>
+    <button class="ep-x" onclick="toggleEditor()">&#10005;</button>
   </div>
-  <div id="ep-positions"></div>
-  <button class="ep-btn ep-btn-save" onclick="saveConfig()">💾 Positionen speichern</button>
-  <button class="ep-btn ep-btn-test" onclick="toggleEditor()">✕ Editor schließen</button>
-</div>
+  <div class="ep-hint">&#128073; Elemente auf dem Bild <b>ziehen</b> &mdash; oder Werte eingeben.</div>
 
-<button id="editor-open-btn" onclick="toggleEditor()" style="display:none">⚙</button>
+  <!-- Reihe 1: Welches Layout (PNG) -->
+  <div class="ep-row-label">&#127775; Layout (aktives PNG)</div>
+  <div class="ep-tabs" id="layout-tabs">
+    <div class="ep-tab layout-tab active" onclick="switchLayout('dienstag',this)">Di</div>
+    <div class="ep-tab layout-tab" onclick="switchLayout('mittwoch',this)">Mi</div>
+    <div class="ep-tab layout-tab" onclick="switchLayout('donnerstag',this)">Do</div>
+    <div class="ep-tab layout-tab" onclick="switchLayout('freitag',this)">Fr</div>
+  </div>
 
-<div id="status-bar">
-  <div class="s-live"><div class="s-dot"></div><span id="s-text">Verbinde…</span></div>
-  <span id="s-time"></span>
+  <!-- Reihe 2: Welcher Slot -->
+  <div class="ep-row-label">&#9711; Slot bearbeiten</div>
+  <div class="ep-tabs" id="slot-tabs">
+    <div class="ep-tab active" onclick="switchSlot('dienstag',this)">Di</div>
+    <div class="ep-tab" onclick="switchSlot('mittwoch',this)">Mi</div>
+    <div class="ep-tab" onclick="switchSlot('donnerstag',this)">Do</div>
+    <div class="ep-tab" onclick="switchSlot('freitag',this)">Fr</div>
+    <div class="ep-tab" onclick="switchSlot('datum',this)">Dat.</div>
+  </div>
+
+  <hr class="ep-divider">
+  <div id="ep-fields"></div>
+  <button class="ep-btn ep-save" onclick="saveConfig()">&#128190; Speichern</button>
+  <button class="ep-btn ep-reset" onclick="resetSlot()">&#8634; Slot zur&uuml;cksetzen</button>
+  <div class="ep-ok" id="ep-ok">&#10003; Gespeichert!</div>
 </div>
 
 <script>
-// ── Konstanten ──
-var SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co'
-var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10'
+var SUPABASE_URL  = 'https://jfrqbchgrpixwlecerax.supabase.co';
+var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10';
 
 function getParam(n){var s=window.location.search;if(!s)return null;var p=s.substring(1).split('&');for(var i=0;i<p.length;i++){var kv=p[i].split('=');if(decodeURIComponent(kv[0])===n)return kv.length>1?decodeURIComponent(kv[1]):''}return null}
 
-var KUNDE_ID  = getParam('kunde')  || 'demo'
-var SCREEN_ID = getParam('screen') || 'screen1'
-var IS_EDITOR = getParam('editor') === 'true'
+var KUNDE_ID  = getParam('kunde')  || 'demo';
+var SCREEN_ID = getParam('screen') || 'screen1';
+var IS_EDITOR = getParam('editor') === 'true';
+var IS_DEMO   = getParam('demo')   === 'true';
+var sb = null;
+var currentContent = null;
+var activeLayout = 'dienstag'; // welches PNG gerade im Editor
+var activeSlot   = 'dienstag'; // welcher Slot gerade bearbeitet
 
-var DAY_MAP    = {1:'montag',2:'dienstag',3:'mittwoch',4:'donnerstag',5:'freitag',6:'samstag',0:'sonntag'}
-var DAY_LABELS = {montag:'Montag',dienstag:'Dienstag',mittwoch:'Mittwoch',donnerstag:'Donnerstag',freitag:'Freitag',samstag:'Samstag'}
+var DAY_MAP  = {2:'dienstag',3:'mittwoch',4:'donnerstag',5:'freitag'};
+var DAY_NUM  = {dienstag:2,mittwoch:3,donnerstag:4,freitag:5};
+var LABELS   = {dienstag:'Dienstag',mittwoch:'Mittwoch',donnerstag:'Donnerstag',freitag:'Freitag'};
+var FONTS    = {'Georgia':'Georgia, serif','Playfair':"'Playfair Display', Georgia, serif",'Lora':"'Lora', Georgia, serif",'Lato':"'Lato', Arial, sans-serif",'Open Sans':"'Open Sans', Arial, sans-serif"};
+var LAYOUTS  = {dienstag:'assets/Bildschirm_1_Dienstag.png',mittwoch:'assets/Bildschirm_1_Mittwoch.png',donnerstag:'assets/Bildschirm_1_Donnerstag.png',freitag:'assets/Bildschirm_1_Freitag.png'};
 
-var LAYOUTS = {
-  dienstag:   'assets/Bildschirm_1_Dienstag.png',
-  mittwoch:   'assets/Bildschirm_1_Mittwoch.png',
-  donnerstag: 'assets/Bildschirm_1_Donnerstag.png',
-  freitag:    'assets/Bildschirm_1_Freitag.png',
-}
-// Mo/Sa/So: Dienstag-Layout (kein Highlighting)
-LAYOUTS.montag   = LAYOUTS.dienstag
-LAYOUTS.samstag  = LAYOUTS.dienstag
-LAYOUTS.sonntag  = LAYOUTS.dienstag
+// Slot-Defaults (klein = nicht-aktiver Tag)
+function slotSmall(x){return{img:{x:x,y:32,r:3.2},text:{x:x,y:55,w:14,size:1.4,font:'Georgia',color:'#1a1a1a'},preis:{x:x,y:68,size:1.2,font:'Georgia',color:'#1a1a1a'}}}
+function slotBig(x){return{img:{x:x,y:34,r:5.0},text:{x:x,y:60,w:18,size:2.0,font:'Georgia',color:'#1a1a1a'},preis:{x:x,y:76,size:1.6,font:'Georgia',color:'#1a1a1a'}}}
+function datumDefault(){return{x:50,y:5,size:2.2,font:'Georgia',color:'#2d2d2d'}}
 
-var CONFIG = {
-  dienstag:   {img:{x:12.5,y:30,r:3.8},text:{x:12.5,y:55,w:20,size:1.8},preis:{x:12.5,y:70,size:1.5,color:'#1a1a1a'}},
-  mittwoch:   {img:{x:37.5,y:32,r:3.2},text:{x:37.5,y:55,w:18,size:1.4},preis:{x:37.5,y:68,size:1.2,color:'#ffffff'}},
-  donnerstag: {img:{x:62.5,y:32,r:3.2},text:{x:62.5,y:55,w:18,size:1.4},preis:{x:62.5,y:68,size:1.2,color:'#1a1a1a'}},
-  freitag:    {img:{x:87.5,y:32,r:3.2},text:{x:87.5,y:55,w:18,size:1.4},preis:{x:87.5,y:68,size:1.2,color:'#ffffff'}},
-}
-
-var sb = null
-var currentContent = null
-var overrideLayout = null
-
-// ── Rotation ──
-var _rotTimer = null
-var _rotIdx   = 0
-var _rotItems = []  // [{type:'mittagstisch',data:...} | {type:'sonder',data:...}]
-var _rotSek   = 10
-
-function startRotation(items, sek) {
-  if (_rotTimer) clearInterval(_rotTimer)
-  _rotItems = items
-  _rotSek   = sek || 10
-  _rotIdx   = 0
-  zeigeItem(0)
-  if (items.length > 1) {
-    _rotTimer = setInterval(function(){
-      _rotIdx = (_rotIdx + 1) % _rotItems.length
-      zeigeItem(_rotIdx)
-    }, _rotSek * 1000)
-    animateTimerBar()
+function makeLayout(bigDay){
+  var days=['dienstag','mittwoch','donnerstag','freitag'];
+  var xs={dienstag:12.5,mittwoch:37.5,donnerstag:62.5,freitag:87.5};
+  var l={datum:datumDefault()};
+  for(var i=0;i<days.length;i++){
+    l[days[i]]=days[i]===bigDay?slotBig(xs[days[i]]):slotSmall(xs[days[i]]);
   }
+  return l;
 }
 
-function animateTimerBar() {
-  var bar = document.getElementById('timer-bar')
-  bar.style.transition = 'none'
-  bar.style.width = '0%'
-  setTimeout(function(){
-    bar.style.transition = 'width ' + _rotSek + 's linear'
-    bar.style.width = '100%'
-  }, 50)
+var DEFAULT_CONFIG={
+  dienstag:   makeLayout('dienstag'),
+  mittwoch:   makeLayout('mittwoch'),
+  donnerstag: makeLayout('donnerstag'),
+  freitag:    makeLayout('freitag')
+};
+
+var CONFIG=JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+
+function getTodayKey(){
+  if(overrideLayout)return overrideLayout;
+  if(IS_EDITOR){var t=getParam('testday');if(t)return DAY_MAP[parseInt(t,10)]||null;}
+  return DAY_MAP[new Date().getDay()]||null;
 }
 
-function zeigeItem(idx) {
-  var item = _rotItems[idx]
-  if (!item) return
-  animateTimerBar()
-
-  if (item.type === 'mittagstisch') {
-    // Sonderlayout ausblenden
-    var so = document.getElementById('sonder-overlay')
-    so.className = ''
-    so.src = ''
-    document.getElementById('no-content').className = ''
-    renderDisplay(item.data)
-
-  } else if (item.type === 'sonder') {
-    // Gerichte-Overlay leeren
-    document.getElementById('gerichte-overlay').innerHTML = ''
-    document.getElementById('datum-overlay').textContent = ''
-    document.getElementById('no-content').className = ''
-    // Sonderbild einblenden
-    var so2 = document.getElementById('sonder-overlay')
-    so2.className = ''
-    so2.onload = function(){ so2.className = 'show' }
-    so2.src = item.data.bild + '?t=' + Date.now()
-    document.getElementById('s-text').textContent = 'Sonderlayout · ' + (item.data.label || '')
-  }
+function isMtTagHeute(tage){
+  var today=new Date().getDay();
+  return tage.indexOf(today)>=0;
 }
+function getKW(d){if(!d)d=new Date();var dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));dt.setUTCDate(dt.getUTCDate()+4-(dt.getUTCDay()||7));var y1=new Date(Date.UTC(dt.getUTCFullYear(),0,1));return Math.ceil((((dt-y1)/86400000)+1)/7)}
 
-// ── Hilfsfunktionen ──
-function getKW(d) {
-  d = d || new Date()
-  var date = new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))
-  date.setUTCDate(date.getUTCDate()+4-(date.getUTCDay()||7))
-  var y = new Date(Date.UTC(date.getUTCFullYear(),0,1))
-  return Math.ceil((((date-y)/86400000)+1)/7)
-}
+/* Vollbild */
+function goFullscreen(){var el=document.documentElement;if(el.requestFullscreen)el.requestFullscreen();else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();else if(el.mozRequestFullScreen)el.mozRequestFullScreen();document.getElementById('fs-btn').className='hidden'}
+function onFsc(){if(!document.fullscreenElement&&!document.webkitFullscreenElement)document.getElementById('fs-btn').className=''}
+document.addEventListener('fullscreenchange',onFsc);
+document.addEventListener('webkitfullscreenchange',onFsc);
 
-function localDateStr(d) {
-  d = d || new Date()
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')
-}
+/* Render */
+function renderDisplay(content){
+  if(!content)return;
+  currentContent=content;
+  var todayKey=getTodayKey();
+  if(!todayKey){var tod=new Date().getDay();if(tod===1||tod===6){showDemo();}else{document.getElementById('no-content').className='show';document.getElementById('bg-image').style.opacity='0';}return}
+  document.getElementById('no-content').className='';
 
-function getMondayStr(d) {
-  d = d || new Date()
-  var dow = d.getDay()
-  var mon = new Date(d)
-  mon.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1))
-  return localDateStr(mon)
-}
-
-function getTodayKey() {
-  if (overrideLayout) return overrideLayout
-  if (IS_EDITOR) { var t = getParam('testday'); if(t) return DAY_MAP[parseInt(t)] || null }
-  return DAY_MAP[new Date().getDay()] || null
-}
-
-function findAktiveWoche(wochen) {
-  var montagHeute = getMondayStr()
-  for (var i = 0; i < wochen.length; i++) {
-    var w = wochen[i]
-    if (!w.gueltig_ab) continue
-    var ab = new Date(w.gueltig_ab + 'T00:00:00')
-    var abDow = ab.getDay()
-    var abMon = new Date(ab)
-    abMon.setDate(ab.getDate() - (abDow === 0 ? 6 : abDow - 1))
-    var bis = new Date(abMon)
-    bis.setDate(abMon.getDate() + 6)
-    if (montagHeute >= localDateStr(abMon) && montagHeute <= localDateStr(bis)) return w
-  }
-  return null
-}
-
-// ── Display rendern ──
-function renderDisplay(content) {
-  if (!content) return
-  currentContent = content
-  var todayKey = getTodayKey()
-
-  // Fallback: ersten verfügbaren Tag nehmen
-  if (todayKey && content.gerichte && !content.gerichte[todayKey]) {
-    var tage = ['dienstag','mittwoch','donnerstag','freitag']
-    for (var t = 0; t < tage.length; t++) {
-      if (content.gerichte[tage[t]]) { overrideLayout = tage[t]; todayKey = tage[t]; break }
-    }
-  }
-
-  if (!todayKey) { document.getElementById('no-content').className = 'show'; return }
-  document.getElementById('no-content').className = ''
+  // Layout-Config für heute
+  var lCfg=CONFIG[todayKey];
 
   // Hintergrundbild
-  var bgImg = document.getElementById('bg-image')
-  var newSrc = LAYOUTS[todayKey]
-  if (newSrc && bgImg.getAttribute('data-src') !== newSrc) {
-    bgImg.style.opacity = '0'
-    var tmp = new Image()
-    tmp.onload = function(){ bgImg.src = newSrc; bgImg.style.opacity='1'; bgImg.setAttribute('data-src',newSrc) }
-    tmp.src = newSrc
+  var bgImg=document.getElementById('bg-image');
+  var newSrc=LAYOUTS[todayKey];
+  if(bgImg.getAttribute('data-src')!==newSrc){
+    bgImg.style.opacity='0';
+    var tmp=new Image();
+    tmp.onload=function(){bgImg.src=newSrc;bgImg.style.opacity='1';bgImg.setAttribute('data-src',newSrc)};
+    tmp.src=newSrc;
   }
 
   // Datum
-  document.getElementById('datum-overlay').textContent = content.woche || ''
+  var dc=lCfg.datum;
+  var datEl=document.getElementById('datum-overlay');
+  datEl.textContent=content.woche||'';
+  datEl.style.cssText='position:absolute;left:'+dc.x+'%;top:'+dc.y+'%;transform:translateX(-50%);font-size:'+dc.size+'vw;font-weight:700;color:'+dc.color+';font-family:'+(FONTS[dc.font]||FONTS['Georgia'])+';white-space:nowrap;pointer-events:none;'+(IS_EDITOR?'cursor:move;pointer-events:all;':'');
+  if(IS_EDITOR)attachDrag(datEl,'datum','datum');
 
   // Gerichte
-  var overlay = document.getElementById('gerichte-overlay')
-  overlay.innerHTML = ''
-  var gerichte = content.gerichte || {}
-  var screenEl = document.getElementById('screen'); var screenW = screenEl ? screenEl.offsetWidth : window.innerWidth
+  var overlay=document.getElementById('gerichte-overlay');
+  overlay.innerHTML='';
+  var gerichte=content.gerichte||{};
+  var days=['dienstag','mittwoch','donnerstag','freitag'];
+  for(var i=0;i<days.length;i++){
+    var day=days[i];
+    var arr=gerichte[day];
+    var m=arr&&arr[0]?arr[0]:null;
+    if(!m||!m.name)continue;
+    var cfg=lCfg[day];
+    var ec=IS_EDITOR?' drag-handle':'';
+    var sz=(cfg.img.r/100)*document.getElementById('screen').offsetWidth*2;
+    var tf=FONTS[cfg.text.font]||FONTS['Georgia'];
+    var pf=FONTS[cfg.preis.font]||FONTS['Georgia'];
 
-  console.log('forEach start', Object.keys(gerichte)); ['dienstag','mittwoch','donnerstag','freitag'].forEach(function(day) { console.log('day:', day, 'append to:', overlay.id);
-    var m = gerichte[day] && gerichte[day][0]
-    if (!m || !m.name) return
-    var cfg = CONFIG[day]
-    var isToday = day === todayKey
-    var edClass = IS_EDITOR ? ' drag-handle' : ''
+    var imgEl=document.createElement('div');
+    imgEl.className='day-circle'+(IS_EDITOR?'':' fade-in')+ec;
+    imgEl.setAttribute('data-layout',todayKey);imgEl.setAttribute('data-day',day);imgEl.setAttribute('data-type','img');
+    imgEl.style.cssText='left:'+cfg.img.x+'%;top:'+cfg.img.y+'%;width:'+sz+'px;height:'+sz+'px;';
+    imgEl.innerHTML=m.bild?'<img src="../../'+m.bild+'" onerror="this.parentNode.innerHTML=\'<div class=ph>\uD83C\uDF7D\uFE0F</div>\'">':'<div class="ph">\uD83C\uDF7D\uFE0F</div>';
+    if(IS_EDITOR)attachDrag(imgEl,day,'img');
+    overlay.appendChild(imgEl);
 
-    var imgSize = (cfg.img.r/100) * screenW * 2
-    var imgEl = document.createElement('div')
-    imgEl.className = 'day-circle fade-in' + edClass
-    imgEl.setAttribute('data-day', day)
-    imgEl.setAttribute('data-type', 'img')
-    imgEl.style.cssText = 'left:'+cfg.img.x+'%;top:'+cfg.img.y+'%;width:'+imgSize+'px;height:'+imgSize+'px;'
-    if (m.bild) {
-      var bildSrc = m.bild && m.bild.startsWith('/') ? m.bild : '../../' + m.bild
-      imgEl.innerHTML = '<img src="' + bildSrc + '" onerror="this.parentNode.innerHTML=\'<div class=placeholder>🍽️</div>\'">'
-    } else {
-      imgEl.innerHTML = '<div class="placeholder">🍽️</div>'
+    var txtEl=document.createElement('div');
+    txtEl.className='day-text'+(IS_EDITOR?'':' fade-in')+ec;
+    txtEl.setAttribute('data-layout',todayKey);txtEl.setAttribute('data-day',day);txtEl.setAttribute('data-type','text');
+    txtEl.style.cssText='left:'+cfg.text.x+'%;top:'+cfg.text.y+'%;width:'+cfg.text.w+'%;font-size:'+cfg.text.size+'vw;font-weight:600;color:'+cfg.text.color+';font-family:'+tf+';';
+    txtEl.textContent=m.name;
+    if(IS_EDITOR)attachDrag(txtEl,day,'text');
+    overlay.appendChild(txtEl);
+
+    if(m.preis){
+      var prEl=document.createElement('div');
+      prEl.className='day-price'+(IS_EDITOR?'':' fade-in')+ec;
+      prEl.setAttribute('data-layout',todayKey);prEl.setAttribute('data-day',day);prEl.setAttribute('data-type','preis');
+      prEl.style.cssText='left:'+cfg.preis.x+'%;top:'+cfg.preis.y+'%;font-size:'+cfg.preis.size+'vw;color:'+cfg.preis.color+';font-family:'+pf+';';
+      prEl.textContent=m.preis;
+      if(IS_EDITOR)attachDrag(prEl,day,'preis');
+      overlay.appendChild(prEl);
     }
-    overlay.appendChild(imgEl)
-
-    var txtEl = document.createElement('div')
-    txtEl.className = 'day-text fade-in' + edClass
-    txtEl.setAttribute('data-day', day)
-    txtEl.setAttribute('data-type', 'text')
-    txtEl.style.cssText = 'left:'+cfg.text.x+'%;top:'+cfg.text.y+'%;width:'+cfg.text.w+'%;font-size:'+(isToday?cfg.text.size*1.3:cfg.text.size)+'vw;font-weight:'+(isToday?800:600)+';color:#1a1a1a;'
-    txtEl.textContent = m.name
-    overlay.appendChild(txtEl)
-
-    if (m.preis) {
-      var prEl = document.createElement('div')
-      prEl.className = 'day-price fade-in' + edClass
-      prEl.setAttribute('data-day', day)
-      prEl.setAttribute('data-type', 'preis')
-      prEl.style.cssText = 'left:'+cfg.preis.x+'%;top:'+cfg.preis.y+'%;font-size:'+(isToday?cfg.preis.size*1.2:cfg.preis.size)+'vw;color:'+cfg.preis.color+';'
-      prEl.textContent = m.preis
-      overlay.appendChild(prEl)
-    }
-  })
-
-  document.getElementById('s-text').textContent = 'Live · KW ' + getKW() + ' · ' + (DAY_LABELS[todayKey]||'Heute')
+  }
 }
 
-// ── Hauptlade-Funktion ──
-function loadContent() {
-  if (!sb) { showNoContent(); return }
 
-  Promise.all([
-    sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1),
-    sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','sonder_configs').limit(1),
-    sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','mt_settings').limit(1),
-    sb.from('wochen').select('*').eq('kunde_id',KUNDE_ID).order('gueltig_ab',{ascending:false}).limit(20)
-  ]).then(function(res) {
-    var dispContent = res[0].data && res[0].data[0] ? res[0].data[0].content : null
-    var sonderContent = res[1].data && res[1].data[0] ? res[1].data[0].content : null
-    var mtContent = res[2].data && res[2].data[0] ? res[2].data[0].content : null
-    var wochen = res[3].data || []
-
-    // Editor-Modus: nur Mittagstisch, keine Rotation
-    if (IS_EDITOR) {
-      var aktiv = findAktiveWoche(wochen)
-      if (aktiv) renderDisplay({woche:aktiv.woche_label||'',gerichte:aktiv.gerichte||{}})
-      else showDemo()
-      return
-    }
-
-    // Manueller Override
-    if (dispContent && dispContent.manualDay) {
-      overrideLayout = DAY_MAP[dispContent.manualDay] || null
-      renderDisplay(dispContent)
-      return
-    }
-    overrideLayout = null
-
-    // MT-Tage
-    var mtTage = mtContent && mtContent.tage ? mtContent.tage : [2,3,4,5]
-    var heute = new Date().getDay()
-    var istMtTag = mtTage.indexOf(heute) >= 0
-
-    // Sonderlayouts für heute
-    var sonder = []
-    if (sonderContent && sonderContent.layouts) {
-      var heuteDatum = localDateStr()
-      var layouts = sonderContent.layouts
-      for (var i = 0; i < layouts.length; i++) {
-        var lay = layouts[i]
-        if (lay.type === 'datum' && lay.datum === heuteDatum) sonder.unshift(lay)
-        else if (lay.type === 'wochentage' && lay.wochentage && lay.wochentage.indexOf(heute) >= 0) sonder.push(lay)
+function loadWarmeTheke(){
+  if(!sb)return;
+  sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','warme_theke').limit(1)
+    .then(function(r){
+      var d=r&&r.data&&r.data[0];
+      if(d&&d.content&&d.content.bild){
+        var bg=document.getElementById('bg-image');
+        bg.src=d.content.bild+'?t='+Date.now();bg.style.opacity='1';
+        document.getElementById('gerichte-overlay').innerHTML='';
+        document.getElementById('datum-overlay').textContent='';
+        document.getElementById('no-content').className='';
+      } else {
+        document.getElementById('no-content').className='show';
       }
-    }
-
-    // Alle Inhalte sammeln
-    var items = []
-    if (istMtTag) {
-      var aktiv2 = findAktiveWoche(wochen)
-      if (aktiv2) items.push({type:'mittagstisch', data: aktiv2})
-    }
-    for (var j = 0; j < sonder.length; j++) items.push({type:'sonder', data: sonder[j]})
-
-    if (items.length > 0) startRotation(items, 10)
-    else showNoContent()
-
-  }).catch(function(e) { console.error(e); showDemo() })
+    }).catch(function(){document.getElementById('no-content').className='show'});
 }
 
-function showNoContent() {
-  document.getElementById('no-content').className = 'show'
-  document.getElementById('sonder-overlay').className = ''
-  document.getElementById('gerichte-overlay').innerHTML = ''
+
+var sonderSlideIdx=0;
+var sonderSlideTimer=null;
+
+function checkSonderLayouts(callback){
+  if(!sb){callback(false);return}
+  sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','sonder_configs').limit(1)
+    .then(function(r){
+      var d=r&&r.data&&r.data[0];
+      if(!d||!d.content||!d.content.layouts){callback(false);return}
+      var heute=new Date();
+      var heuteTag=heute.getDay();
+      // Lokales Datum (nicht UTC) fuer Zeitzone-Korrektheit
+      var heuteDatum=heute.getFullYear()+'-'+String(heute.getMonth()+1).padStart(2,'0')+'-'+String(heute.getDate()).padStart(2,'0');
+      var layouts=d.content.layouts;
+      var matches=[];
+      // Datum-Layouts zuerst (höhere Priorität)
+      for(var i=0;i<layouts.length;i++){
+        if(layouts[i].type==='datum'&&layouts[i].datum===heuteDatum) matches.unshift(layouts[i]);
+        else if(layouts[i].type==='wochentage'&&layouts[i].wochentage&&layouts[i].wochentage.indexOf(heuteTag)>=0) matches.push(layouts[i]);
+      }
+      if(!matches.length){callback(false);return}
+      // Timer stoppen falls schon läuft
+      if(sonderSlideTimer)clearInterval(sonderSlideTimer);
+      // Erstes Bild sofort zeigen
+      showSonderSlide(matches,0);
+      // Mehrere: rotieren
+      if(matches.length>1){
+        sonderSlideIdx=0;
+        var sonderTimer=(d.content&&d.content.sonder_timer)||8;
+        sonderSlideTimer=setInterval(function(){
+          sonderSlideIdx=(sonderSlideIdx+1)%matches.length;
+          showSonderSlide(matches,sonderSlideIdx);
+        },sonderTimer*1000);
+      }
+      callback(true);
+    }).catch(function(){callback(false)});
 }
 
-function showDemo() {
+function showSonderSlide(layouts,idx){
+  var lay=layouts[idx];
+  var bg=document.getElementById('bg-image');
+  // Bild vorladen dann einblenden
+  var tmp=new Image();
+  tmp.onload=function(){
+    bg.style.opacity='0';
+    setTimeout(function(){
+      bg.src=lay.bild;
+      bg.style.opacity='1';
+    },200);
+  };
+  tmp.src=lay.bild;
+  document.getElementById('gerichte-overlay').innerHTML='';
+  document.getElementById('datum-overlay').textContent='';
+  document.getElementById('no-content').className='';
+}
+
+function showDemo(){
+  // Sonderlayouts prüfen
+  checkSonderLayouts(function(found){
+    if(!found){
+      document.getElementById('no-content').className='show';
+    }
+  });
+}
+
+var _mtTageCache=null;
+function getMtTage(callback){
+  if(_mtTageCache){callback(_mtTageCache);return}
+  if(!sb){callback([2,3,4,5]);return}
+  sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','mt_settings').limit(1)
+    .then(function(r){
+      var d=r&&r.data&&r.data[0];
+      _mtTageCache=d&&d.content&&d.content.tage?d.content.tage:[2,3,4,5];
+      callback(_mtTageCache);
+    }).catch(function(){callback([2,3,4,5])});
+}
+function _showDemoOld(){
   renderDisplay({
-    woche: '28.04. - 02.05.2026',
-    gerichte: {
-      dienstag:   [{name:'Schäufele mit Knödel', preis:'8,50 €', bild:null}],
-      mittwoch:   [{name:'Gulasch mit Spätzle',  preis:'6,80 €', bild:null}],
-      donnerstag: [{name:'Cordon Bleu',           preis:'6,80 €', bild:null}],
-      freitag:    [{name:'Backfisch',             preis:'6,80 €', bild:null}]
+    woche:'28.04. - 02.05.2026',
+    gerichte:{
+      dienstag:  [{name:'Sch\u00e4ufele mit Kn\u00f6del',preis:'8,50 \u20ac'}],
+      mittwoch:  [{name:'Gulasch mit Sp\u00e4tzle',      preis:'6,80 \u20ac'}],
+      donnerstag:[{name:'Cordon Bleu',                   preis:'6,80 \u20ac'}],
+      freitag:   [{name:'Backfisch',                     preis:'6,80 \u20ac'}]
     }
-  })
-  document.getElementById('s-text').textContent = 'Demo-Modus'
+  });
 }
 
-// ── Reload-Trigger ──
-var _lastUpdatedAt = null
-function startReloadTrigger() {
-  if (!sb) return
-  setInterval(function(){
-    sb.from('displays').select('updated_at').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1)
-      .then(function(r){
-        var d = r && r.data && r.data[0]
-        if (!d) return
-        if (_lastUpdatedAt && d.updated_at !== _lastUpdatedAt) { loadContent() }
-        _lastUpdatedAt = d.updated_at
-      }).catch(function(){})
-  }, 30000)
+/* Drag & Drop */
+var dragState=null;
+function attachDrag(el,day,type){
+  el._dragDay=day;el._dragType=type;
+  el.addEventListener('mousedown',startDrag);
+  el.addEventListener('touchstart',startDrag,{passive:false});
+}
+function startDrag(e){
+  e.preventDefault();
+  var el=e.currentTarget;
+  var r=document.getElementById('screen').getBoundingClientRect();
+  el.classList.add('dragging');
+  dragState={el:el,day:el._dragDay,type:el._dragType,rect:r,layout:activeLayout};
+  document.addEventListener('mousemove',onDrag);
+  document.addEventListener('touchmove',onDrag,{passive:false});
+  document.addEventListener('mouseup',stopDrag);
+  document.addEventListener('touchend',stopDrag);
+}
+function onDrag(e){
+  if(!dragState)return;
+  e.preventDefault();
+  var cx=e.touches?e.touches[0].clientX:e.clientX;
+  var cy=e.touches?e.touches[0].clientY:e.clientY;
+  var r=dragState.rect;
+  var xp=Math.round(((cx-r.left)/r.width)*1000)/10;
+  var yp=Math.round(((cy-r.top)/r.height)*1000)/10;
+  xp=Math.max(0,Math.min(100,xp));yp=Math.max(0,Math.min(100,yp));
+
+  var lay=dragState.layout,d=dragState.day,t=dragState.type;
+  if(d==='datum'){CONFIG[lay].datum.x=xp;CONFIG[lay].datum.y=yp}
+  else if(t==='img'){CONFIG[lay][d].img.x=xp;CONFIG[lay][d].img.y=yp}
+  else if(t==='text'){CONFIG[lay][d].text.x=xp;CONFIG[lay][d].text.y=yp}
+  else if(t==='preis'){CONFIG[lay][d].preis.x=xp;CONFIG[lay][d].preis.y=yp}
+
+  dragState.el.style.left=xp+'%';
+  dragState.el.style.top=yp+'%';
+
+  var xi=document.getElementById('f_x'),yi=document.getElementById('f_y');
+  if(xi)xi.value=xp;if(yi)yi.value=yp;
+}
+function stopDrag(){
+  if(!dragState)return;
+  dragState.el.classList.remove('dragging');
+  document.removeEventListener('mousemove',onDrag);
+  document.removeEventListener('touchmove',onDrag);
+  document.removeEventListener('mouseup',stopDrag);
+  document.removeEventListener('touchend',stopDrag);
+  dragState=null;
 }
 
-// ── Config ──
-async function loadConfig() {
-  try {
-    var r = await sb.from('display_configs').select('config').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1)
-    if (r.data && r.data[0] && r.data[0].config) {
-      var c = r.data[0].config
-      // Nur laden wenn Struktur stimmt (hat img/text/preis)
-      if (c.dienstag && c.dienstag.img && c.dienstag.text) {
-        CONFIG = Object.assign(CONFIG, c)
-      }
-    }
-  } catch(e) {}
-}
-
-async function saveConfig() {
-  var days = ['dienstag','mittwoch','donnerstag','freitag']
-  days.forEach(function(day) {
-    var v = function(id, fallback){ var el=document.getElementById(id); return el?parseFloat(el.value)||fallback:fallback }
-    CONFIG[day].img.x    = v(day+'_img_x', CONFIG[day].img.x)
-    CONFIG[day].img.y    = v(day+'_img_y', CONFIG[day].img.y)
-    CONFIG[day].img.r    = v(day+'_img_r', CONFIG[day].img.r)
-    CONFIG[day].text.x   = v(day+'_text_x', CONFIG[day].text.x)
-    CONFIG[day].text.y   = v(day+'_text_y', CONFIG[day].text.y)
-    CONFIG[day].text.size= v(day+'_text_size', CONFIG[day].text.size)
-    CONFIG[day].preis.x  = v(day+'_preis_x', CONFIG[day].preis.x)
-    CONFIG[day].preis.y  = v(day+'_preis_y', CONFIG[day].preis.y)
-    CONFIG[day].preis.size= v(day+'_preis_size', CONFIG[day].preis.size)
-    var pc = document.getElementById(day+'_preis_color'); if(pc) CONFIG[day].preis.color = pc.value
-  })
-  try {
-    await sb.from('display_configs').upsert({kunde_id:KUNDE_ID,screen_id:SCREEN_ID,config:CONFIG},{onConflict:'kunde_id,screen_id'})
-    document.getElementById('s-text').textContent = '✓ Gespeichert!'
-    if (currentContent) renderDisplay(currentContent)
-  } catch(e) { document.getElementById('s-text').textContent = 'Fehler' }
-}
-
-// ── Realtime ──
-function subscribeRealtime() {
-  if (!sb) return
-  try {
-    sb.channel('disp-'+SCREEN_ID)
-      .on('postgres_changes',{event:'*',schema:'public',table:'displays',filter:'kunde_id=eq.'+KUNDE_ID},
-        function(p){ if(p.new && p.new.content) loadContent() })
-      .subscribe(function(s){ if(s==='SUBSCRIBED') document.getElementById('s-text').textContent='● Live' })
-  } catch(e) {}
-}
-
-// ── Editor ──
-function toggleEditor() {
-  var ep = document.getElementById('editor-panel')
-  var btn = document.getElementById('editor-open-btn')
-  ep.classList.toggle('open')
-  if (btn) btn.style.display = ep.classList.contains('open') ? 'none' : 'block'
-  if (ep.classList.contains('open')) buildEditorUI()
-}
-
-function livePreview() {
-  var days = ['dienstag','mittwoch','donnerstag','freitag']
-  days.forEach(function(day) {
-    var g = function(id){ var el=document.getElementById(id); return el?parseFloat(el.value):null }
-    if(g(day+'_img_x')!==null) CONFIG[day].img.x = g(day+'_img_x')
-    if(g(day+'_img_y')!==null) CONFIG[day].img.y = g(day+'_img_y')
-    if(g(day+'_img_r')!==null) CONFIG[day].img.r = g(day+'_img_r')
-    if(g(day+'_text_x')!==null) CONFIG[day].text.x = g(day+'_text_x')
-    if(g(day+'_text_y')!==null) CONFIG[day].text.y = g(day+'_text_y')
-    if(g(day+'_preis_x')!==null) CONFIG[day].preis.x = g(day+'_preis_x')
-    if(g(day+'_preis_y')!==null) CONFIG[day].preis.y = g(day+'_preis_y')
-  })
-  if (currentContent) renderDisplay(currentContent); else showDemo()
-}
-
-function buildEditorUI() {
-  var el = document.getElementById('ep-positions')
-  var days = ['dienstag','mittwoch','donnerstag','freitag']
-  var DAY_LBL = {dienstag:'Dienstag',mittwoch:'Mittwoch',donnerstag:'Donnerstag',freitag:'Freitag'}
-  el.innerHTML = days.map(function(day){
-    var c = CONFIG[day]
-    return '<div class="ep-day"><div class="ep-day-name">'+DAY_LBL[day]+'</div>'+
-      '<div class="ep-row"><label>Bild X %</label><input type="number" id="'+day+'_img_x" value="'+c.img.x+'" step="0.5" oninput="livePreview()"></div>'+
-      '<div class="ep-row"><label>Bild Y %</label><input type="number" id="'+day+'_img_y" value="'+c.img.y+'" step="0.5" oninput="livePreview()"></div>'+
-      '<div class="ep-row"><label>Bild Radius</label><input type="number" id="'+day+'_img_r" value="'+c.img.r+'" step="0.1" oninput="livePreview()"></div>'+
-      '<div class="ep-row"><label>Text X %</label><input type="number" id="'+day+'_text_x" value="'+c.text.x+'" step="0.5" oninput="livePreview()"></div>'+
-      '<div class="ep-row"><label>Text Y %</label><input type="number" id="'+day+'_text_y" value="'+c.text.y+'" step="0.5" oninput="livePreview()"></div>'+
-      '<div class="ep-row"><label>Text Größe</label><input type="number" id="'+day+'_text_size" value="'+c.text.size+'" step="0.1"></div>'+
-      '<div class="ep-row"><label>Preis X %</label><input type="number" id="'+day+'_preis_x" value="'+c.preis.x+'" step="0.5" oninput="livePreview()"></div>'+
-      '<div class="ep-row"><label>Preis Y %</label><input type="number" id="'+day+'_preis_y" value="'+c.preis.y+'" step="0.5" oninput="livePreview()"></div>'+
-      '<div class="ep-row"><label>Preis Größe</label><input type="number" id="'+day+'_preis_size" value="'+c.preis.size+'" step="0.1"></div>'+
-      '<div class="ep-row"><label>Preis Farbe</label><select id="'+day+'_preis_color">'+
-        '<option value="#1a1a1a"'+(c.preis.color==='#1a1a1a'?' selected':'')+'>Dunkel</option>'+
-        '<option value="#ffffff"'+(c.preis.color==='#ffffff'?' selected':'')+'>Weiß</option>'+
-      '</select></div></div>'
-  }).join('')
-}
-
-function setTestDay(day, btn) {
-  overrideLayout = DAY_MAP[day] || null
-  document.querySelectorAll('.ep-day-btn').forEach(function(b){ b.classList.remove('active') })
-  btn.classList.add('active')
-  if (currentContent) renderDisplay(currentContent); else showDemo()
-}
-
-// ── Start ──
-window.addEventListener('DOMContentLoaded', async function() {
-  // Uhr
-  setInterval(function(){
-    var n = new Date()
-    document.getElementById('s-time').textContent = n.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}) + ' · KW ' + getKW()
-  }, 1000)
-
-  // Supabase
-  if (window.supabase) {
-    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
-    await loadConfig()
-    loadContent()
-    subscribeRealtime()
-    startReloadTrigger()
+/* Editor */
+function toggleEditor(){
+  var p=document.getElementById('ep');
+  var fs=document.getElementById('fs-btn');
+  var eb=document.getElementById('editor-open-btn');
+  if(p.className==='open'){
+    p.className='';fs.className='';
+    if(eb)eb.className='';
   } else {
-    showDemo()
+    p.className='open';fs.className='hidden';
+    if(eb)eb.className='hidden';
+    buildEditorFields();
+  }
+}
+
+function switchLayout(lay,btn){
+  activeLayout=lay;
+  // Alle Layout-Tabs deaktivieren
+  var lt=document.querySelectorAll('.layout-tab');
+  for(var i=0;i<lt.length;i++)lt[i].className='ep-tab layout-tab';
+  btn.className='ep-tab layout-tab active';
+  // testday auf Layout setzen damit das richtige PNG gezeigt wird
+  // Wir manipulieren getTodayKey via overrideLayout
+  overrideLayout=lay;
+  buildEditorFields();
+  if(currentContent)renderDisplay(currentContent);else showDemo();
+}
+
+var overrideLayout=null;
+// Override getTodayKey im Editor-Modus
+var _origGetTodayKey=getTodayKey;
+getTodayKey=function(){
+  if(IS_EDITOR&&overrideLayout)return overrideLayout;
+  return _origGetTodayKey();
+};
+
+function switchSlot(slot,btn){
+  activeSlot=slot;
+  var st=document.querySelectorAll('#slot-tabs .ep-tab');
+  for(var i=0;i<st.length;i++)st[i].className='ep-tab';
+  btn.className='ep-tab active';
+  buildEditorFields();
+}
+
+function buildEditorFields(){
+  var lay=activeLayout,slot=activeSlot;
+  var cfg=CONFIG[lay];
+  var c=slot==='datum'?cfg.datum:cfg[slot];
+  var fk=Object.keys(FONTS);
+  var h='';
+  var currentFont=slot==='datum'?c.font:(c.text?c.text.font:'Georgia');
+
+  if(slot==='datum'){
+    h+='<div class="ep-sec">Datum-Zeile</div>';
+    h+=row('X %','f_x',c.x,'x');
+    h+=row('Y %','f_y',c.y,'y');
+    h+=row('Schriftgr.','f_size',c.size,'size',0.1);
+    h+=fontRow('f_font',c.font,'font');
+    h+=colorRow(c.color);
+  } else {
+    h+='<div class="ep-sec">Bild-Kreis &mdash; '+LABELS[slot]+' auf '+LABELS[lay]+'-Layout</div>';
+    h+=row('X %','f_x',c.img.x,'imgx');
+    h+=row('Y %','f_y',c.img.y,'imgy');
+    h+=row('Radius','f_r',c.img.r,'imgr',0.1);
+    h+='<div class="ep-sec">Gerichtsname</div>';
+    h+=row('X %','ft_x',c.text.x,'tx');
+    h+=row('Y %','ft_y',c.text.y,'ty');
+    h+=row('Breite %','ft_w',c.text.w,'tw');
+    h+=row('Schriftgr.','ft_size',c.text.size,'tsize',0.1);
+    h+=fontRow('ft_font',c.text.font,'tfont');
+    h+='<div class="ep-sec">Preis</div>';
+    h+=row('X %','fp_x',c.preis.x,'px');
+    h+=row('Y %','fp_y',c.preis.y,'py');
+    h+=row('Schriftgr.','fp_size',c.preis.size,'psize',0.1);
+    h+=fontRow('fp_font',c.preis.font,'pfont');
+    h+=colorRowPreis(c.preis.color);
+  }
+  document.getElementById('ep-fields').innerHTML=h;
+}
+
+function row(lbl,id,val,key,step){
+  step=step||0.5;
+  return '<div class="ep-r"><label>'+lbl+'</label><input type="number" id="'+id+'" value="'+val+'" step="'+step+'" oninput="onFI(\''+key+'\',this.value)"></div>';
+}
+function fontRow(id,val,key){
+  var fk=Object.keys(FONTS),o='';
+  for(var i=0;i<fk.length;i++)o+='<option value="'+fk[i]+'"'+(val===fk[i]?' selected':'')+'>'+fk[i]+'</option>';
+  return '<div class="ep-r"><label>Schriftart</label><select id="'+id+'" onchange="onFI(\''+key+'\',this.value)">'+o+'</select></div>';
+}
+function colorRow(val){
+  return '<div class="ep-r"><label>Farbe</label><input type="color" value="'+val+'" oninput="onFI(\'color\',this.value)" style="flex:1;height:28px;border:none;background:none;cursor:pointer"></div>';
+}
+function colorRowPreis(val){
+  var d=val==='#1a1a1a';
+  return '<div class="ep-r"><label>Farbe</label><div class="ep-clr"><button class="ep-cb dark'+(d?' sel':'')+'" onclick="onFI(\'pcolor\',\'#1a1a1a\')">Dunkel</button><button class="ep-cb white'+(!d?' sel':'')+'" onclick="onFI(\'pcolor\',\'#ffffff\')">Wei&szlig;</button></div></div>';
+}
+
+function onFI(key,val){
+  var lay=activeLayout,slot=activeSlot;
+  var cfg=CONFIG[lay];
+  var v=parseFloat(val);
+  if(slot==='datum'){
+    if(key==='x')cfg.datum.x=v;
+    else if(key==='y')cfg.datum.y=v;
+    else if(key==='size')cfg.datum.size=v;
+    else if(key==='font')cfg.datum.font=val;
+    else if(key==='color')cfg.datum.color=val;
+  } else {
+    var c=cfg[slot];
+    if(key==='imgx')c.img.x=v;else if(key==='imgy')c.img.y=v;else if(key==='imgr'){c.img.r=v;} 
+    else if(key==='tx')c.text.x=v;else if(key==='ty')c.text.y=v;else if(key==='tw')c.text.w=v;
+    else if(key==='tsize')c.text.size=v;else if(key==='tfont')c.text.font=val;
+    else if(key==='px')c.preis.x=v;else if(key==='py')c.preis.y=v;
+    else if(key==='psize')c.preis.size=v;else if(key==='pfont')c.preis.font=val;
+    else if(key==='pcolor'){c.preis.color=val;buildEditorFields();}
+  }
+  if(currentContent)renderDisplay(currentContent);else showDemo();
+}
+
+function resetSlot(){
+  var lay=activeLayout,slot=activeSlot;
+  if(slot==='datum')CONFIG[lay].datum=datumDefault();
+  else CONFIG[lay][slot]=JSON.parse(JSON.stringify(DEFAULT_CONFIG[lay][slot]));
+  buildEditorFields();
+  if(currentContent)renderDisplay(currentContent);else showDemo();
+}
+
+/* Supabase */
+function loadConfig(){
+  if(!sb)return Promise.resolve();
+  return sb.from('display_configs').select('config').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1)
+    .then(function(r){
+      var row=r&&r.data&&r.data[0];
+      if(row&&row.config){
+        // Deep merge
+        var lays=['dienstag','mittwoch','donnerstag','freitag'];
+        for(var i=0;i<lays.length;i++){
+          if(row.config[lays[i]])CONFIG[lays[i]]=row.config[lays[i]];
+        }
+      }
+    }).catch(function(){});
+}
+function getKWFromDate(d){
+  if(!d)d=new Date();
+  var dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  dt.setUTCDate(dt.getUTCDate()+4-(dt.getUTCDay()||7));
+  var y1=new Date(Date.UTC(dt.getUTCFullYear(),0,1));
+  return Math.ceil((((dt-y1)/86400000)+1)/7);
+}
+
+function findAktiveWoche(wochen){
+  var heute=new Date();
+  // Lokales Datum (kein UTC-Problem)
+  function localStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  // Montag der aktuellen Woche
+  var dow=heute.getDay();
+  var montagHeute=new Date(heute);
+  montagHeute.setDate(heute.getDate()-(dow===0?6:dow-1));
+  var heuteStr=localStr(montagHeute);
+
+  // 1. Suche Woche wo gueltig_ab in dieser Woche liegt
+  var best=null;
+  for(var i=0;i<wochen.length;i++){
+    var w=wochen[i];
+    if(!w.gueltig_ab) continue;
+    var ab=new Date(w.gueltig_ab+'T00:00:00');
+    // Montag der Woche von gueltig_ab
+    var abDow=ab.getDay();
+    var abMontag=new Date(ab);
+    abMontag.setDate(ab.getDate()-(abDow===0?6:abDow-1));
+    // Woche läuft Mo bis So
+    var bis=new Date(abMontag); bis.setDate(abMontag.getDate()+6);
+    var abStr=localStr(abMontag);
+    var bisStr=localStr(bis);
+    if(heuteStr>=abStr && heuteStr<=bisStr){
+      best=w; break;
+    }
   }
 
-  // Editor
-  if (IS_EDITOR) {
-    document.getElementById('editor-panel').classList.add('open')
-    document.getElementById('editor-open-btn').style.display = 'none'
-    buildEditorUI()
-  } // Editor-Button bleibt versteckt im normalen Modus
+  // 2. Fallback: KW+Jahr Match
+  if(!best){
+    for(var j=0;j<wochen.length;j++){
+      if(wochen[j].kw===heuteKW && wochen[j].jahr===heuteJahr){
+        best=wochen[j]; break;
+      }
+    }
+  }
 
-  // Mitternacht-Reload
-  var now = new Date(), midnight = new Date(now)
-  midnight.setHours(24,0,5,0)
-  setTimeout(function(){ loadContent(); setInterval(loadContent, 86400000) }, midnight-now)
-})
+  // 3. Fallback: neueste Woche
+  if(!best && wochen.length>0) best=wochen[0];
+  return best;
+}
+
+function loadContent(){
+  if(!sb){showDemo();return}
+  var alleInhalte=[];
+  // Manueller Override prüfen
+  sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id',SCREEN_ID).limit(1)
+    .then(function(r){
+      var d=r&&r.data&&r.data[0];
+      if(d&&d.content&&d.content.manualDay){
+        overrideLayout=DAY_MAP[d.content.manualDay]||null;
+        renderDisplay(d.content);
+        return;
+      }
+      overrideLayout=null;
+      // Sonderlayouts + Mittagstisch zusammen laden
+      loadSonderFuerHeute(function(sonder){
+        getMtTage(function(tage){
+          if(isMtTagHeute(tage)){
+            sb.from('wochen').select('*').eq('kunde_id',KUNDE_ID).order('gueltig_ab',{ascending:false}).limit(20)
+              .then(function(r2){
+                var wochen=r2&&r2.data?r2.data:[];
+                var aktiv=findAktiveWoche(wochen);
+                if(aktiv) alleInhalte.push({type:'mittagstisch',data:aktiv});
+                for(var i=0;i<sonder.length;i++) alleInhalte.push({type:'sonder',data:sonder[i]});
+                if(alleInhalte.length>0) startKombinierteRotation(alleInhalte);
+                else showDemo();
+              });
+          } else {
+            for(var i=0;i<sonder.length;i++) alleInhalte.push({type:'sonder',data:sonder[i]});
+            if(alleInhalte.length>0) startKombinierteRotation(alleInhalte);
+            else showDemo();
+          }
+        });
+      });
+    }).catch(function(){showDemo()});
+}
+
+function loadSonderFuerHeute(callback){
+  if(!sb){callback([]);return}
+  sb.from('displays').select('content').eq('kunde_id',KUNDE_ID).eq('screen_id','sonder_configs').limit(1)
+    .then(function(r){
+      var d=r&&r.data&&r.data[0];
+      if(!d||!d.content||!d.content.layouts){callback([]);return}
+      var heute=new Date();
+      var heuteTag=heute.getDay();
+      var heuteDatum=heute.getFullYear()+'-'+String(heute.getMonth()+1).padStart(2,'0')+'-'+String(heute.getDate()).padStart(2,'0');
+      var matches=[];
+      for(var i=0;i<d.content.layouts.length;i++){
+        var lay=d.content.layouts[i];
+        if(lay.type==='datum'&&lay.datum===heuteDatum) matches.unshift(lay);
+        else if(lay.type==='wochentage'&&lay.wochentage&&lay.wochentage.indexOf(heuteTag)>=0) matches.push(lay);
+      }
+      callback(matches);
+    }).catch(function(){callback([])});
+}
+
+var _rotationTimer=null;
+var _rotationIdx=0;
+function startKombinierteRotation(inhalte){
+  if(_rotationTimer)clearInterval(_rotationTimer);
+  _rotationIdx=0;
+  zeigeInhalt(inhalte,0);
+  if(inhalte.length>1){
+    _rotationTimer=setInterval(function(){
+      _rotationIdx=(_rotationIdx+1)%inhalte.length;
+      zeigeInhalt(inhalte,_rotationIdx);
+    },8000);
+  }
+}
+
+function zeigeInhalt(inhalte,idx){
+  var item=inhalte[idx];
+  if(item.type==='mittagstisch'){
+    renderDisplay({woche:item.data.woche_label||'',gerichte:item.data.gerichte||{}});
+  } else if(item.type==='sonder'){
+    var bg=document.getElementById('bg-image');
+    bg.style.opacity='0';
+    setTimeout(function(){
+      bg.src=item.data.bild+'?t='+Date.now();
+      bg.style.opacity='1';
+    },200);
+    document.getElementById('gerichte-overlay').innerHTML='';
+    document.getElementById('datum-overlay').textContent='';
+    document.getElementById('no-content').className='';
+  }
+}
+
+
+var _lastReloadAt = null;
+function startReloadTrigger(kId, sId, sb) {
+  if (!sb) return;
+  sb.from('displays').select('updated_at').eq('kunde_id',kId).eq('screen_id',sId).limit(1)
+    .then(function(r){var d=r&&r.data&&r.data[0];if(d)_lastReloadAt=d.updated_at;});
+  setInterval(function(){
+    sb.from('displays').select('updated_at').eq('kunde_id',kId).eq('screen_id',sId).limit(1)
+      .then(function(r){
+        var d=r&&r.data&&r.data[0];if(!d)return;
+        if(_lastReloadAt&&d.updated_at!==_lastReloadAt){
+          _lastReloadAt=d.updated_at;
+          if(typeof loadContent==='function')loadContent();
+          else window.location.reload();
+        }else if(!_lastReloadAt){_lastReloadAt=d.updated_at;}
+      }).catch(function(){});
+  },30000);
+}
+
+function subscribeRealtime(){
+  if(!sb)return;
+  try{
+    // Auf neue Wochen horchen
+    sb.channel('wochen-'+KUNDE_ID)
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'wochen',filter:'kunde_id=eq.'+KUNDE_ID},
+        function(){loadContent()})
+      .subscribe(function(){});
+    // Auch auf displays horchen (manuelles Senden)
+    sb.channel('disp-'+SCREEN_ID)
+      .on('postgres_changes',{event:'*',schema:'public',table:'displays',filter:'kunde_id=eq.'+KUNDE_ID},
+        function(p){if(p&&p.new&&p.new.content)renderDisplay(p.new.content)})
+      .subscribe(function(){});
+  }catch(e){setInterval(loadContent,60000)}
+}
+function saveConfig(){
+  if(!sb){alert('Kein Supabase — Config nur lokal');return}
+  sb.from('display_configs').upsert({kunde_id:KUNDE_ID,screen_id:SCREEN_ID,config:CONFIG},{onConflict:'kunde_id,screen_id'})
+    .then(function(){var el=document.getElementById('ep-ok');el.style.display='block';setTimeout(function(){el.style.display='none'},2000)})
+    .catch(function(){});
+}
+
+window.addEventListener('DOMContentLoaded',function(){
+  if(!IS_EDITOR){
+    var eb=document.getElementById('editor-open-btn');if(eb)eb.parentNode.removeChild(eb);
+    var fb=document.getElementById('fs-btn');if(fb)fb.parentNode.removeChild(fb);
+    var bb=document.getElementById('back-btn');if(bb)bb.parentNode.removeChild(bb);
+  }
+  if(IS_EDITOR)overrideLayout='dienstag';
+  if(IS_DEMO&&!IS_EDITOR){
+    if(window.supabase){
+    
+var cursorTimer;
+function resetCursorTimer() {
+  document.body.classList.remove('hide-cursor');
+  clearTimeout(cursorTimer);
+  cursorTimer = setTimeout(function() {
+    if (!IS_EDITOR) document.body.classList.add('hide-cursor');
+  }, 3000);
+}
+document.addEventListener('mousemove', resetCursorTimer);
+document.addEventListener('touchstart', resetCursorTimer);
+resetCursorTimer();
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
+      loadContent();
+    } else { showDemo(); }
+    return;
+  }
+  if(IS_DEMO&&IS_EDITOR){
+    showDemo();
+    document.getElementById('ep').className='open';document.getElementById('fs-btn').className='hidden';buildEditorFields();
+    return;
+  }
+  if(!window.supabase){showDemo();return}
+
+var cursorTimer;
+function resetCursorTimer() {
+  document.body.classList.remove('hide-cursor');
+  clearTimeout(cursorTimer);
+  cursorTimer = setTimeout(function() {
+    if (!IS_EDITOR) document.body.classList.add('hide-cursor');
+  }, 3000);
+}
+document.addEventListener('mousemove', resetCursorTimer);
+document.addEventListener('touchstart', resetCursorTimer);
+resetCursorTimer();
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
+  var fb=setTimeout(function(){if(!currentContent)showDemo()},8000);
+  loadConfig().then(function(){return loadContent()}).then(function(){
+    clearTimeout(fb);subscribeRealtime();
+    if(IS_EDITOR){document.getElementById('ep').className='open';document.getElementById('fs-btn').className='hidden';buildEditorFields()}
+    // Jede Minute prüfen ob Tageswechsel (für automatisches Layout-Wechseln)
+    var lastDay=new Date().getDay();
+    setInterval(function(){
+      var today=new Date().getDay();
+      if(today!==lastDay){lastDay=today;loadContent();}
+    },60000);
+    // Exakter Mitternachts-Reload
+    var now=new Date(),mn=new Date(now);mn.setHours(24,0,5,0);
+    setTimeout(function(){loadContent();setInterval(loadContent,86400000)},mn-now);
+  });
+});
 </script>
 </body>
 </html>

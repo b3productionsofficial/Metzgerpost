@@ -56,9 +56,14 @@ var slides = [];
 var currentSlide = 0;
 var timerSek = 8;
 var slideInterval = null;
+var _slidesHash = null;
 
 function renderLayouts(data) {
-  slides = data.aktive_layouts || [];
+  var newSlides = data.aktive_layouts || [];
+  var newHash = JSON.stringify(newSlides.map(function(s){return s.bild;}));
+  if (newHash === _slidesHash) return;
+  _slidesHash = newHash;
+  slides = newSlides;
   timerSek = data.timer_sekunden || 8;
   var container = document.getElementById('slides-container');
   container.innerHTML = '';

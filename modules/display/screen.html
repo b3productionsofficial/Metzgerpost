@@ -572,6 +572,12 @@ var _rotItems=[];
 function startRotation(items){
   if(_rotTimer)clearInterval(_rotTimer);
   if(!items||!items.length)return;
+  // Cache-Buster einmal pro Ladezyklus generieren, nicht bei jedem Rotationsschritt
+  var ts=Date.now();
+  for(var k=0;k<items.length;k++){
+    if(items[k].type==='sonder'&&items[k].data.bild)
+      items[k]._bildSrc=items[k].data.bild+'?t='+ts;
+  }
   _rotItems=items;
   _rotIdx=0;
   zeigeRotItem(0);
@@ -609,7 +615,7 @@ function zeigeRotItem(idx){
         so.src=tmpImg.src;
         so.style.opacity='1';
       };
-      tmpImg.src=item.data.bild+'?t='+Date.now();
+      tmpImg.src=item._bildSrc||item.data.bild;
     }
   }
 }

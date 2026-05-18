@@ -151,7 +151,7 @@ var currentContent = null;
 var activeLayout = 'dienstag'; // welches PNG gerade im Editor
 var activeSlot   = 'dienstag'; // welcher Slot gerade bearbeitet
 
-var DAY_MAP  = {2:'dienstag',3:'mittwoch',4:'donnerstag',5:'freitag'};
+var DAY_MAP  = {1:'montag',2:'dienstag',3:'mittwoch',4:'donnerstag',5:'freitag'};
 var DAY_NUM  = {dienstag:2,mittwoch:3,donnerstag:4,freitag:5};
 var LABELS   = {dienstag:'Dienstag',mittwoch:'Mittwoch',donnerstag:'Donnerstag',freitag:'Freitag'};
 var FONTS    = {'Georgia':'Georgia, serif','Playfair':"'Playfair Display', Georgia, serif",'Lora':"'Lora', Georgia, serif",'Lato':"'Lato', Arial, sans-serif",'Open Sans':"'Open Sans', Arial, sans-serif"};
@@ -529,6 +529,8 @@ function findAktiveWoche(wochen){
   var montagHeute=new Date(heute);
   montagHeute.setDate(heute.getDate()-(dow===0?6:dow-1));
   var heuteStr=localStr(montagHeute);
+  var heuteKW=getKWFromDate(heute);
+  var heuteJahr=heute.getFullYear();
 
   // 1. Suche Woche wo gueltig_ab in dieser Woche liegt
   var best=null;
@@ -652,7 +654,7 @@ function loadContent(){
     overrideLayout=null;
 
     // MT-Tage prüfen
-    var mtTage=mtContent&&mtContent.tage?mtContent.tage:[2,3,4,5];
+    var mtTage=mtContent&&mtContent.tage?mtContent.tage:[1,2,3,4,5];
     var heute=new Date().getDay();
     var istMT=mtTage.indexOf(heute)>=0;
 

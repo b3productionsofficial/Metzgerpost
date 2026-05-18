@@ -116,23 +116,11 @@ function subscribeRealtime() {
       .on('postgres_changes',{event:'*',schema:'public',table:'screen2_config',filter:'kunde_id=eq.'+KUNDE_ID},
         function(){ loadConfig() })
       .subscribe(function(){});
+    sb.channel('disp-sc2-'+KUNDE_ID)
+      .on('postgres_changes',{event:'*',schema:'public',table:'displays',filter:'kunde_id=eq.'+KUNDE_ID},
+        function(){ window.location.reload() })
+      .subscribe(function(){});
   } catch(e) { setInterval(loadConfig, 60000) }
-}
-
-
-var _lastReloadAt = null;
-function startReloadTrigger(kId,sId,sb2){
-  if(!sb2)return;
-  sb2.from('displays').select('updated_at').eq('kunde_id',kId).eq('screen_id',sId).limit(1)
-    .then(function(r){var d=r&&r.data&&r.data[0];if(d)_lastReloadAt=d.updated_at;});
-  setInterval(function(){
-    sb2.from('displays').select('updated_at').eq('kunde_id',kId).eq('screen_id',sId).limit(1)
-      .then(function(r){
-        var d=r&&r.data&&r.data[0];if(!d)return;
-        if(_lastReloadAt&&d.updated_at!==_lastReloadAt){window.location.reload();}
-        else if(!_lastReloadAt){_lastReloadAt=d.updated_at;}
-      }).catch(function(){});
-  },30000);
 }
 
 window.addEventListener('DOMContentLoaded', function(){
@@ -140,7 +128,6 @@ window.addEventListener('DOMContentLoaded', function(){
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
   loadConfig();
   subscribeRealtime();
-  startReloadTrigger(KUNDE_ID,'screen2',sb);
 });
 </script>
 </body>

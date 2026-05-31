@@ -96,8 +96,10 @@ Admin und Kunde schreiben damit in **denselben Supabase-Datensatz** — kein Mis
 
 Dies gilt für alle Tabellen: `gerichte`, `wochenplaene`, `displays`, `wochen`, `screen2_config`, `screen3_config`.
 
-### Admin-Kunden-Selector (Display Manager)
-Admins sehen im Display Manager (`modules/display/index.html`) ganz oben ein Dropdown mit allen Kunden aus `config.js`. Bei Auswahl wird die ID in `localStorage('mp_admin_selected_kunde')` gespeichert und die Seite neu geladen. Alle Operationen (Wochen laden/senden, Screen 2/3 konfigurieren etc.) laufen dann unter der **Kunden-ID** — nicht der Admin-ID.
+### Admin-Kunden-Selector (Dashboard)
+Admins sehen auf `dashboard.html` direkt unter dem Willkommens-Banner ein Dropdown mit allen Kunden aus `config.js`. Bei Auswahl wird die ID in `localStorage('mp_admin_selected_kunde')` gespeichert — **kein Seiten-Reload**. Alle Module lesen die gewählte ID via `MP.getAktiveKundeId()`.
+
+Die Navigationsleiste zeigt für Admins zusätzlich `📍 KundenName` an (aus `window.kunden` + localStorage), damit immer sichtbar ist für welchen Kunden gearbeitet wird.
 
 ### Mittagstisch-Generator (Kernfunktion)
 ```
@@ -435,6 +437,14 @@ Neuer Kunde hinzufügen: Eintrag in `kunden`, `kundenGerichte`, `kundenLayouts` 
   - `loadGerichteFromSupabase`: liest `gerichte`-Tabelle, konvertiert Array → Objekt; Fallback auf config.js
   - `saveGerichte`, `addGericht`, `deleteGericht`: schreiben nun in Supabase + localStorage-Cache
   - DOMContentLoaded lädt Gerichte aus Supabase und befüllt localStorage-Cache (offline-Fallback)
+
+- **feat: Kunden-Selector ins Dashboard verlagert** (`dashboard.html`, `shared/components.js`)
+  - Selector unter Welcome-Banner, nur Admin sichtbar, kein Seiten-Reload
+  - Nav zeigt `📍 KundenName` für Admins (aus `window.kunden` + localStorage)
+  - Selector aus Display Manager entfernt
+
+- **fix: Admin-Erkennung aus user_metadata** (Rollback von kunden-Tabelle, 404-Fix)
+  - `loadUserPlan()`: `user.user_metadata?.plan ?? 'basis'` statt DB-Abfrage
 
 - **fix: Admin-Erkennung aus kunden-Tabelle** (`shared/supabase.js`, `shared/components.js`)
   - `loadUserPlan()`: `SELECT plan FROM kunden WHERE user_id = auth.uid()` → `MP.userPlan`

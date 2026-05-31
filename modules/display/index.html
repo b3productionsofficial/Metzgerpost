@@ -114,12 +114,6 @@
 <nav class="mp-nav" id="mp-nav"></nav>
 <div class="mp-main">
 
-  <!-- Admin: Kunden-Selector -->
-  <div id="admin-kunde-selector" style="display:none;align-items:center;gap:10px;margin-bottom:16px;padding:12px 16px;background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius)">
-    <label class="mp-label" style="margin:0;white-space:nowrap;color:var(--accent)">Verwalte Kunde:</label>
-    <select id="admin-kunde-select" class="mp-select" style="flex:1" onchange="onAdminKundeChange(this.value)"></select>
-  </div>
-
   <div style="margin-bottom:28px">
     <div class="mp-section-title mp-animate">📺 Display Manager</div>
     <div class="mp-section-sub">Steuere was auf deinen Bildschirmen im Laden läuft</div>
@@ -346,23 +340,10 @@ let pendingSonderFile = null
 let pendingSonderDays = [1,5,6]  // Mo, Fr, Sa default
 const BASE = window.location.origin
 
-function onAdminKundeChange(val) {
-  localStorage.setItem('mp_admin_selected_kunde', val)
-  location.reload()
-}
-
 window.addEventListener('DOMContentLoaded', async () => {
   const user = await mpInit({ nav:{ backUrl:'../../dashboard.html', backLabel:'Dashboard' }})
   if (!user) return
   kundeId = await MP.getAktiveKundeId()
-  if (MP.userPlan === 'admin' && window.kunden) {
-    const wrap = document.getElementById('admin-kunde-selector')
-    const sel = document.getElementById('admin-kunde-select')
-    sel.innerHTML = Object.entries(kunden).map(([id, k]) =>
-      `<option value="${id}"${id === kundeId ? ' selected' : ''}>${k.name}</option>`
-    ).join('')
-    wrap.style.display = 'flex'
-  }
   buildUrls()
   loadWeeks()
   checkStatus()

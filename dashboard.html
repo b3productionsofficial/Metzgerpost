@@ -21,6 +21,9 @@
     .activity-dot { width:8px; height:8px; border-radius:50%; background:var(--success); flex-shrink:0; }
     .activity-dot.old { background:var(--border2); }
     @media(max-width:640px){ .stats-row{grid-template-columns:1fr 1fr;} .welcome-banner{flex-direction:column;align-items:flex-start;} }
+    .admin-selector { display:none; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--accent); border-radius:var(--radius); padding:14px 20px; margin-bottom:24px; }
+    .admin-selector-label { font-size:13px; font-weight:600; color:var(--accent); white-space:nowrap; }
+    .admin-selector-name { font-size:13px; font-weight:700; color:var(--text); }
   </style>
 </head>
 <body class="mp-bg-glow">
@@ -32,6 +35,13 @@
       <div class="welcome-sub">Was möchtest du heute erstellen?</div>
     </div>
     <a href="modules/mittagstisch/index.html?kunde=sorgundseitz" class="mp-btn mp-btn-primary mp-btn-lg">+ Mittagstisch erstellen</a>
+  </div>
+
+  <!-- Admin: Kunden-Selector -->
+  <div id="admin-selector" class="admin-selector mp-animate">
+    <span class="admin-selector-label">Kunde verwalten:</span>
+    <select id="admin-kunde-select" class="mp-select" style="flex:1" onchange="onAdminKundeChange(this.value)"></select>
+    <span class="admin-selector-name" id="admin-kunde-name"></span>
   </div>
   <div class="stats-row">
     <div class="stat-card mp-animate mp-animate-d1"><div class="stat-val" id="stat-wochen">0</div><div class="stat-label">Erstellte Wochen</div></div>
@@ -76,7 +86,15 @@
 <div class="mp-toast" id="mp-toast"></div>
 <script src="shared/supabase.js"></script>
 <script src="shared/components.js"></script>
+<script src="modules/mittagstisch/config.js"></script>
 <script>
+function onAdminKundeChange(val) {
+  localStorage.setItem('mp_admin_selected_kunde', val)
+  if (window.kunden?.[val]) {
+    document.getElementById('admin-kunde-name').textContent = kunden[val].name
+  }
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
   const user = await mpInit()
   if (!user) return
@@ -86,6 +104,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (MP.userPlan === 'admin') {
     const adminCard = document.getElementById('admin-card')
     if (adminCard) adminCard.style.display = 'flex'
+    if (window.kunden) {
+      const sel = document.getElementById('admin-kunde-select')
+      const stored = localStorage.getItem('mp_admin_selected_kunde') || Object.keys(kunden)[0]
+      sel.innerHTML = Object.entries(kunden).map(([id, k]) =>
+        `<option value="${id}"${id === stored ? ' selected' : ''}>${k.name}</option>`
+      ).join('')
+      document.getElementById('admin-kunde-name').textContent = kunden[stored]?.name || stored
+      document.getElementById('admin-selector').style.display = 'flex'
+    }
   }
   const designs = JSON.parse(localStorage.getItem('mp_designs') || '[]')
   const weeks   = JSON.parse(localStorage.getItem('mp_weeks')   || '[]')

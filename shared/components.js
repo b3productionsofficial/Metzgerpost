@@ -12,12 +12,22 @@ function renderNav(options = {}) {
   const user = window._mpUser
   const name = user?.user_metadata?.betrieb_name || user?.email?.split('@')[0] || '…'
 
+  let kundeIndicator = ''
+  if (window.MP?.userPlan === 'admin') {
+    const selectedKey = localStorage.getItem('mp_admin_selected_kunde')
+    if (selectedKey) {
+      const kundeName = window.kunden?.[selectedKey]?.name || selectedKey
+      kundeIndicator = `<span style="font-size:12px;font-weight:600;color:var(--accent);padding:4px 10px;background:var(--accent-dim);border-radius:20px;white-space:nowrap">📍 ${kundeName}</span>`
+    }
+  }
+
   nav.innerHTML = `
     <div class="mp-flex" style="gap:16px;">
       <a class="mp-nav-logo" href="/dashboard.html">Metzger<span>Post</span></a>
       ${backUrl ? `<a href="${backUrl}" class="mp-btn mp-btn-secondary mp-btn-sm">← ${backLabel || 'Zurück'}</a>` : ''}
     </div>
     <div class="mp-nav-right">
+      ${kundeIndicator}
       ${actions.map(a => `<button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="${a.onclick}">${a.label}</button>`).join('')}
       <span class="mp-nav-user">${name}</span>
       <button class="mp-btn mp-btn-secondary mp-btn-sm" onclick="MP.signOut()">Abmelden</button>

@@ -80,7 +80,10 @@ Browser → Supabase Auth (Email+Passwort oder Magic Link)
         → requireAuth() / requireAdmin() in shared/supabase.js
 ```
 
-**Admin-Erkennung:** `user.user_metadata.plan === 'admin'` (gesetzt bei Registrierung)
+**Admin-Erkennung:** `MP.userPlan === 'admin'` — geladen aus `kunden.plan` (DB), nicht aus `user_metadata`
+- `MP.loadUserPlan()` lädt `SELECT plan FROM kunden WHERE user_id = auth.uid()` und setzt `window.MP.userPlan`
+- Wird in `mpInit()` aufgerufen → bei jedem Seitenstart automatisch gesetzt
+- Fallback: `'basis'`
 
 ### Kunden-ID-Konvention
 **Grundprinzip: Die Kunden-ID ist immer der Anker für alle Daten — nie die Admin-ID.**
@@ -147,14 +150,16 @@ Alle Module teilen sich `window.MP` (aus `shared/supabase.js`):
 window.MP = {
   getSB,             // Supabase Client (Singleton)
   requireAuth,       // → redirect zu auth.html wenn kein Login
-  requireAdmin,      // → redirect zu dashboard.html wenn kein Admin-Plan
+  requireAdmin,      // → redirect zu dashboard.html wenn MP.userPlan !== 'admin'
   getUser,
   signOut,
   getKundeData, saveKundeData,
   publishDisplay, getDisplayContent,
   getGerichte, saveGericht,
   saveWochenplan, getWochenplaene,
-  getAktiveKundeId   // Admin: aus localStorage; Kunde: user.id.substring(0,8)
+  loadUserPlan,      // SELECT plan FROM kunden WHERE user_id = auth.uid() → setzt MP.userPlan
+  getAktiveKundeId,  // Admin: aus localStorage; Kunde: user.id.substring(0,8)
+  userPlan: 'basis'  // gesetzt von loadUserPlan() — immer aus DB, nie user_metadata
 }
 ```
 `window.showToast`, `window.mpInit`, `window.formatDate`, `window.formatRelative` kommen aus `shared/components.js`.
@@ -430,6 +435,12 @@ Neuer Kunde hinzufügen: Eintrag in `kunden`, `kundenGerichte`, `kundenLayouts` 
   - `loadGerichteFromSupabase`: liest `gerichte`-Tabelle, konvertiert Array → Objekt; Fallback auf config.js
   - `saveGerichte`, `addGericht`, `deleteGericht`: schreiben nun in Supabase + localStorage-Cache
   - DOMContentLoaded lädt Gerichte aus Supabase und befüllt localStorage-Cache (offline-Fallback)
+
+- **fix: Admin-Erkennung aus kunden-Tabelle** (`shared/supabase.js`, `shared/components.js`)
+  - `loadUserPlan()`: `SELECT plan FROM kunden WHERE user_id = auth.uid()` → `MP.userPlan`
+  - `mpInit()` ruft `loadUserPlan()` auf — Plan bei jedem Seitenstart gesetzt
+  - `requireAdmin()`, `getAktiveKundeId()`, Display Manager Selector, Dashboard Admin-Karte nutzen jetzt `MP.userPlan`
+  - `user_metadata.plan` wird nicht mehr verwendet
 
 - **fix: Einmalige Datenmigration** — Admin-Daten (unter `057b6a13`) auf Kunden-ID (`6544d8e6`) migriert
   - TV-URL läuft jetzt korrekt auf `?kunde=6544d8e6`

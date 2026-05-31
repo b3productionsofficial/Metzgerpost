@@ -16,7 +16,7 @@ function renderNav(options = {}) {
   if (window.MP?.userPlan === 'admin') {
     const selectedKey = localStorage.getItem('mp_admin_selected_kunde')
     if (selectedKey) {
-      const kundeName = window.kunden?.[selectedKey]?.name || selectedKey
+      const kundeName = (typeof kunden !== 'undefined' ? kunden[selectedKey]?.name : null) || selectedKey
       kundeIndicator = `<span style="font-size:12px;font-weight:600;color:var(--accent);padding:4px 10px;background:var(--accent-dim);border-radius:20px;white-space:nowrap">📍 ${kundeName}</span>`
     }
   }

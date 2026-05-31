@@ -141,7 +141,7 @@ async function getAktiveKundeId() {
   if (window.MP.userPlan === 'admin') {
     const stored = localStorage.getItem('mp_admin_selected_kunde')
     if (stored) return stored
-    if (window.kunden) return Object.keys(window.kunden)[0]
+    if (typeof kunden !== 'undefined') return Object.keys(kunden)[0]
     return ''
   }
   return user.id.substring(0, 8)

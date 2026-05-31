@@ -90,7 +90,7 @@
 <script>
 function onAdminKundeChange(val) {
   localStorage.setItem('mp_admin_selected_kunde', val)
-  if (window.kunden?.[val]) {
+  if (typeof kunden !== 'undefined' && kunden[val]) {
     document.getElementById('admin-kunde-name').textContent = kunden[val].name
   }
 }
@@ -104,7 +104,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (MP.userPlan === 'admin') {
     const adminCard = document.getElementById('admin-card')
     if (adminCard) adminCard.style.display = 'flex'
-    if (window.kunden) {
+    if (typeof kunden !== 'undefined') {
       const sel = document.getElementById('admin-kunde-select')
       const stored = localStorage.getItem('mp_admin_selected_kunde') || Object.keys(kunden)[0]
       sel.innerHTML = Object.entries(kunden).map(([id, k]) =>

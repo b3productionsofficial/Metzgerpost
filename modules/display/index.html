@@ -355,7 +355,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const user = await mpInit({ nav:{ backUrl:'../../dashboard.html', backLabel:'Dashboard' }})
   if (!user) return
   kundeId = await MP.getAktiveKundeId()
-  if (user.user_metadata?.plan === 'admin' && window.kunden) {
+  if (MP.userPlan === 'admin' && window.kunden) {
     const wrap = document.getElementById('admin-kunde-selector')
     const sel = document.getElementById('admin-kunde-select')
     sel.innerHTML = Object.entries(kunden).map(([id, k]) =>

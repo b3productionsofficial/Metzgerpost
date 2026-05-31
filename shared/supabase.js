@@ -24,8 +24,8 @@ async function requireAuth(redirectTo = '/auth.html') {
 async function requireAdmin(redirectTo = '/auth.html') {
   const user = await requireAuth(redirectTo)
   if (!user) return null
-  const plan = user.user_metadata?.plan || 'basis'
-  if (plan !== 'admin') { window.location.replace('/dashboard.html'); return null }
+  await loadUserPlan()
+  if (window.MP.userPlan !== 'admin') { window.location.replace('/dashboard.html'); return null }
   return user
 }
 
@@ -125,12 +125,26 @@ async function getWochenplaene(kundeId, limit = 10) {
   return data || []
 }
 
+/* ── Plan aus kunden-Tabelle laden ── */
+async function loadUserPlan() {
+  const user = await getUser()
+  if (!user) { window.MP.userPlan = 'basis'; return 'basis' }
+  const { data } = await getSB()
+    .from('kunden')
+    .select('plan')
+    .eq('user_id', user.id)
+    .single()
+  const plan = data?.plan || 'basis'
+  window.MP.userPlan = plan
+  return plan
+}
+
 /* ── Aktive Kunden-ID ── */
 async function getAktiveKundeId() {
   const user = await getUser()
   if (!user) return ''
-  const isAdmin = user.user_metadata?.plan === 'admin'
-  if (isAdmin) {
+  if (window.MP.userPlan === undefined) await loadUserPlan()
+  if (window.MP.userPlan === 'admin') {
     const stored = localStorage.getItem('mp_admin_selected_kunde')
     if (stored) return stored
     if (window.kunden) return Object.keys(window.kunden)[0]
@@ -145,5 +159,6 @@ window.MP = {
   publishDisplay, getDisplayContent,
   getGerichte, saveGericht,
   saveWochenplan, getWochenplaene,
-  getAktiveKundeId
+  loadUserPlan, getAktiveKundeId,
+  userPlan: 'basis'
 }

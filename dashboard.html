@@ -83,7 +83,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const name = user.user_metadata?.betrieb_name || user.email.split('@')[0]
   document.getElementById('dash-name').textContent = name.split(' ')[0]
   document.getElementById('stat-plan').textContent = (user.user_metadata?.plan || 'Basis').charAt(0).toUpperCase() + (user.user_metadata?.plan || 'basis').slice(1)
-  if (user.user_metadata?.plan === 'admin') {
+  if (MP.userPlan === 'admin') {
     const adminCard = document.getElementById('admin-card')
     if (adminCard) adminCard.style.display = 'flex'
   }

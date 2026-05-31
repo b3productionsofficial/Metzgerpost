@@ -93,6 +93,9 @@ async function mpInit(options = {}) {
   if (!user) return null
   window._mpUser = user
 
+  // Plan aus kunden-Tabelle laden (setzt MP.userPlan)
+  await MP.loadUserPlan()
+
   // Nav rendern
   renderNav(options.nav || {})
 

@@ -1,24 +1,34 @@
 
 async function saveGerichteToSupabase(gerichte) {
   if (typeof getSB === 'undefined') return false
-  const user = await MP.getUser()
-  if (!user) return false
-  const kundeId = user.id.substring(0, 8)
-  const { error } = await getSB().from('generator_configs').upsert({
+  const kundeId = await MP.getAktiveKundeId()
+  if (!kundeId) return false
+  const rows = Object.entries(gerichte).map(([key, g]) => ({
     kunde_id: kundeId,
-    gerichte: gerichte,
-    updated_at: new Date().toISOString()
-  }, { onConflict: 'kunde_id' })
+    key,
+    name: g.text,
+    preis: g.preis,
+    bild_url: g.bild
+  }))
+  const { error } = await getSB().from('gerichte').upsert(rows, { onConflict: 'kunde_id,key' })
   return !error
 }
 
 async function loadGerichteFromSupabase() {
   if (typeof getSB === 'undefined') return null
-  const user = await MP.getUser()
-  if (!user) return null
-  const kundeId = user.id.substring(0, 8)
-  const { data } = await getSB().from('generator_configs').select('gerichte').eq('kunde_id', kundeId).limit(1)
-  return data && data[0] && data[0].gerichte ? data[0].gerichte : null
+  const kundeId = await MP.getAktiveKundeId()
+  if (!kundeId) return null
+  const rows = await MP.getGerichte(kundeId)
+  if (!rows || rows.length === 0) {
+    const kunde = getAktuellerKunde()
+    const fallback = kundenGerichte[kunde] && Object.keys(kundenGerichte[kunde]).length > 0
+      ? structuredClone(kundenGerichte[kunde])
+      : structuredClone(standardGerichte)
+    return fallback
+  }
+  const result = {}
+  rows.forEach(row => { result[row.key] = { text: row.name, preis: row.preis, bild: row.bild_url } })
+  return result
 }
 
 async function savePositionsToSupabase(positions) {
@@ -365,6 +375,7 @@ async function saveGerichte() {
   })
 
   localStorage.setItem(getStorageKey("gerichte"), JSON.stringify(gerichte))
+  await saveGerichteToSupabase(gerichte)
   document.getElementById("status").textContent = "Änderungen gespeichert."
 }
 
@@ -374,7 +385,7 @@ function resetGerichte() {
   document.getElementById("status").textContent = "Auf Standard zurückgesetzt."
 }
 
-function addGericht() {
+async function addGericht() {
   const name = prompt("Name des Gerichts:")
   if (!name) return
 
@@ -401,16 +412,18 @@ function addGericht() {
   }
 
   localStorage.setItem(getStorageKey("gerichte"), JSON.stringify(gerichte))
+  await saveGerichteToSupabase(gerichte)
   renderGerichte()
 }
 
-function deleteGericht(id) {
+async function deleteGericht(id) {
   if (!confirm("Gericht wirklich löschen?")) return
 
   const gerichte = getGerichte()
   delete gerichte[id]
 
   localStorage.setItem(getStorageKey("gerichte"), JSON.stringify(gerichte))
+  await saveGerichteToSupabase(gerichte)
   renderGerichte()
 }
 
@@ -1126,7 +1139,7 @@ function endDrag() {
   dragTarget = null
 }
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
   try {
     const kunde = getAktuellerKunde()
     const kundeSelect = document.getElementById("kunde")
@@ -1135,6 +1148,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
     if (kundeSelect) {
       kundeSelect.value = kunde
+    }
+
+    // Gerichte aus Supabase laden und localStorage-Cache befüllen
+    const sbGerichte = await loadGerichteFromSupabase()
+    if (sbGerichte) {
+      localStorage.setItem(getStorageKey("gerichte"), JSON.stringify(sbGerichte))
     }
 
     gerichte = getGerichte()

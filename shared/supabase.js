@@ -125,10 +125,25 @@ async function getWochenplaene(kundeId, limit = 10) {
   return data || []
 }
 
+/* ── Aktive Kunden-ID ── */
+async function getAktiveKundeId() {
+  const user = await getUser()
+  if (!user) return ''
+  const isAdmin = user.user_metadata?.plan === 'admin'
+  if (isAdmin) {
+    const stored = localStorage.getItem('mp_admin_selected_kunde')
+    if (stored) return stored
+    if (window.kunden) return Object.keys(window.kunden)[0]
+    return ''
+  }
+  return user.id.substring(0, 8)
+}
+
 window.MP = {
   getSB, requireAuth, requireAdmin, getUser, signOut,
   getKundeData, saveKundeData,
   publishDisplay, getDisplayContent,
   getGerichte, saveGericht,
-  saveWochenplan, getWochenplaene
+  saveWochenplan, getWochenplaene,
+  getAktiveKundeId
 }

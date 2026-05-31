@@ -219,12 +219,6 @@ function updatePreisFeld(dayId) {
   const gerichtKey = select.value
   const gericht = gerichte?.[gerichtKey]
 
-  console.log("Preisfeld Test:", {
-    dayId,
-    gerichtKey,
-    gericht
-  })
-
   preisInput.value = gericht?.preis || ""
 }
 
@@ -593,7 +587,6 @@ function drawImageCover(ctx, img, cx, cy, radius) {
 }
 
 async function drawMeal(ctx, id, config) {
-  console.log('[DEBUG drawMeal]', { id, imageX: config.imageX, imageY: config.imageY, imageRadius: config.imageRadius, textX: config.textX, textY: config.textY })
   const value = document.getElementById(id)?.value
   const meal = gerichte[value]
 
@@ -640,10 +633,6 @@ async function drawMeal(ctx, id, config) {
 function getFinalLayout(layoutName, formatName) {
   const overrides = getLayoutOverrides()
   const kunde = getAktuellerKunde()
-
-  console.log('[DEBUG getFinalLayout]', { kunde, layoutName, formatName })
-  console.log('[DEBUG kundenLayouts keys]', typeof kundenLayouts !== 'undefined' ? Object.keys(kundenLayouts) : 'UNDEFINED')
-  console.log('[DEBUG kundenLayouts[kunde]]', typeof kundenLayouts !== 'undefined' ? kundenLayouts[kunde] : 'UNDEFINED')
 
   const layoutsFuerKunde = kundenLayouts[kunde]
   if (!layoutsFuerKunde || !layoutsFuerKunde[layoutName]) {
@@ -735,9 +724,7 @@ async function renderToCanvas(canvas, formatName) {
   }
 
   const layoutName = vorlageConfig.layout
-  console.log('[DEBUG renderToCanvas]', { formatName, layoutName, vorlageConfig })
   const layout = getFinalLayout(layoutName, formatName)
-  console.log('[DEBUG layout result]', JSON.stringify(layout).substring(0, 300))
 
   if (!layout) {
     throw new Error("Kein Layout/Format gefunden: " + layoutName + " / " + formatName)

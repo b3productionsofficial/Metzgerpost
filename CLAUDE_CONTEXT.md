@@ -86,11 +86,15 @@ Browser → Supabase Auth (Email+Passwort oder Magic Link)
 - Fallback: `'basis'`
 
 ### Kunden-ID-Konvention
-**Grundprinzip: Die Kunden-ID ist immer der Anker für alle Daten — nie die Admin-ID.**
+**Zwei separate Funktionen — nie vermischen:**
 
-Alle Daten werden mit einer `kundeId` verknüpft, die über `MP.getAktiveKundeId()` ermittelt wird:
-- **Normaler Kunde:** `user.id.substring(0, 8)` (erste 8 Zeichen der UUID)
-- **Admin:** liest `localStorage('mp_admin_selected_kunde')` (Key aus `config.js kunden`-Objekt); Fallback: erster Eintrag in `kunden`
+| Funktion | Rückgabe | Verwendung |
+|---|---|---|
+| `MP.getAktiveKundeId()` | `"6544d8e6"` (supabaseId) | Supabase DB-Abfragen (`WHERE kunde_id = ...`) |
+| `MP.getAktiveKundeKey()` | `"sorgundseitz"` (config-Key) | `kundenLayouts[key]`, `kundenGerichte[key]`, `generatorVorlagen[key]` |
+
+- **Normaler Kunde:** `getAktiveKundeId()` → `user.id.substring(0, 8)` | `getAktiveKundeKey()` → erster Key aus `kunden`
+- **Admin:** beide lesen `localStorage('mp_admin_selected_kunde')`; ID löst dann über `kunden[key].supabaseId` auf
 
 Admin und Kunde schreiben damit in **denselben Supabase-Datensatz** — kein Mismatch.
 
@@ -159,9 +163,10 @@ window.MP = {
   publishDisplay, getDisplayContent,
   getGerichte, saveGericht,
   saveWochenplan, getWochenplaene,
-  loadUserPlan,      // SELECT plan FROM kunden WHERE user_id = auth.uid() → setzt MP.userPlan
-  getAktiveKundeId,  // Admin: aus localStorage; Kunde: user.id.substring(0,8)
-  userPlan: 'basis'  // gesetzt von loadUserPlan() — immer aus DB, nie user_metadata
+  loadUserPlan,      // user_metadata.plan → setzt MP.userPlan
+  getAktiveKundeId,  // → supabaseId ("6544d8e6") — NUR für Supabase DB-Abfragen
+  getAktiveKundeKey, // → config-Key ("sorgundseitz") — NUR für config.js Lookups
+  userPlan: 'basis'  // gesetzt von loadUserPlan()
 }
 ```
 `window.showToast`, `window.mpInit`, `window.formatDate`, `window.formatRelative` kommen aus `shared/components.js`.
@@ -330,7 +335,7 @@ Fonts: `Syne` (Display/Überschriften), `DM Sans` (Body).
 ### D) TV-Screens (kein Login erforderlich)
 URL-Muster: `/modules/display/screen.html?kunde={kundeId8}&screen=screen1`
 - Laden Inhalt per Supabase Realtime (kein Polling)
-- Screen 1: Zeigt Gerichts-Overlay auf Hintergrundbild (Canvas-ähnliche Darstellung mit CSS-Positionierung)
+- Screen 1: CSS-Positionierung (%, vw) — **KEIN Bezug zu `kundenLayouts`/config.js**, eigenes `CONFIG`-Objekt + `display_configs` Tabelle
 - Screen 2: Slideshow mit Preislisten
 - Screen 3: Bilder-Rotation
 
@@ -348,7 +353,8 @@ URL-Muster: `/modules/display/screen.html?kunde={kundeId8}&screen=screen1`
 - ~~Primär localStorage statt Supabase-DB für Gerichte~~ **Erledigt (2026-05-31):** Gerichte schreiben/lesen Supabase; localStorage ist jetzt nur noch offline Cache
 - Wochenpläne (script.js): noch in localStorage — synchronisiert nicht zwischen Geräten
 - `supabase-schema.sql` ist unvollständig — die Tabellen `wochen`, `screen2_config`, `screen3_config` fehlen
-- Doppelte/redundante Tabellen: `wochenplaene` (altes Schema) vs. `wochen` (neue Tabelle, wird im Display Manager genutzt) — unklar welche wirklich befüllt wird
+- **Tabellenkonflikt:** `wochenplaene` (Generator schreibt hier via `saveWochenplan()`) vs. `wochen` (screen.html liest von hier). screen.html bekommt daher NIE die vom Generator gespeicherten Wochen. Felder unterscheiden sich: `wochenplaene` hat `{woche, gerichte, format}`, `wochen` hat `{woche_label, kw, jahr, gueltig_ab, gerichte}`
+- **screen.html Gerichte-Format:** erwartet `{dienstag: [{name, bild, preis}]}` (Arrays), Generator speichert `{dienstag: {text, preis, bild}}` (Objekte) — Feldnamen unterscheiden sich (`name` vs. `text`)
 - `tv.html` / `tv1.html` / `tv2.html` / `tv3.html` sind ältere Varianten — vermutlich Legacy
 
 ### Geplant / Coming Soon (aus `dashboard.html`)
@@ -455,3 +461,18 @@ Neuer Kunde hinzufügen: Eintrag in `kunden`, `kundenGerichte`, `kundenLayouts` 
 - **fix: Einmalige Datenmigration** — Admin-Daten (unter `057b6a13`) auf Kunden-ID (`6544d8e6`) migriert
   - TV-URL läuft jetzt korrekt auf `?kunde=6544d8e6`
   - Admin und Kunde schreiben seither in denselben Supabase-Datensatz
+
+- **feat: `MP.getAktiveKundeKey()`** (`shared/supabase.js`)
+  - Neue Funktion neben `getAktiveKundeId()` — trennt config-Key von supabaseId
+  - `getAktiveKundeKey()` → `"sorgundseitz"` — für alle `kundenLayouts`/`kundenGerichte`/`generatorVorlagen` Lookups
+  - `getAktiveKundeId()` → `"6544d8e6"` — nur für Supabase DB-Abfragen
+  - Beide in `window.MP` exportiert
+
+- **analyse: screen.html Positionssystem** (`modules/display/screen.html`)
+  - screen.html lädt **kein** `config.js` und nutzt **nicht** `kundenLayouts`
+  - Eigenes `CONFIG`-Objekt mit %-Positionen (nicht Pixel), Defaults aus `makeLayout()`/`slotSmall()`/`slotBig()`
+  - Gespeichert in Supabase-Tabelle `display_configs` (nicht `displays`)
+  - **Tabellenkonflikt entdeckt:** Generator schreibt Wochen nach `wochenplaene`, screen.html liest aus `wochen` — unterschiedliche Tabellen und Feldnamen
+
+- **chore: temporäre Debug-Logs entfernt** (`modules/mittagstisch/script.js`)
+  - Alle `[DEBUG ...]` console.logs und „Preisfeld Test:" entfernt

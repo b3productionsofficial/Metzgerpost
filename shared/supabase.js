@@ -125,16 +125,10 @@ async function getWochenplaene(kundeId, limit = 10) {
   return data || []
 }
 
-/* ── Plan aus kunden-Tabelle laden ── */
+/* ── Plan aus user_metadata laden ── */
 async function loadUserPlan() {
   const user = await getUser()
-  if (!user) { window.MP.userPlan = 'basis'; return 'basis' }
-  const { data } = await getSB()
-    .from('kunden')
-    .select('plan')
-    .eq('user_id', user.id)
-    .single()
-  const plan = data?.plan || 'basis'
+  const plan = user?.user_metadata?.plan ?? 'basis'
   window.MP.userPlan = plan
   return plan
 }

@@ -133,6 +133,17 @@ async function loadUserPlan() {
   return plan
 }
 
+/* ── Aktive Kunden-Key (config.js-Key, z.B. 'sorgundseitz') ── */
+function getAktiveKundeKey() {
+  if (window.MP.userPlan === 'admin') {
+    const key = localStorage.getItem('mp_admin_selected_kunde')
+    if (key && typeof kunden !== 'undefined' && kunden[key]) return key
+    if (typeof kunden !== 'undefined') return Object.keys(kunden)[0]
+    return ''
+  }
+  return typeof kunden !== 'undefined' ? Object.keys(kunden)[0] : ''
+}
+
 /* ── Aktive Kunden-ID (synchron — liest localStorage + config.js) ── */
 function getAktiveKundeId() {
   if (window.MP.userPlan === 'admin') {
@@ -155,6 +166,6 @@ window.MP = {
   publishDisplay, getDisplayContent,
   getGerichte, saveGericht,
   saveWochenplan, getWochenplaene,
-  loadUserPlan, getAktiveKundeId,
+  loadUserPlan, getAktiveKundeId, getAktiveKundeKey,
   userPlan: 'basis'
 }

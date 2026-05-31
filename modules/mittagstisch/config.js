@@ -31,24 +31,24 @@ const standardGerichte = {
 const kunden = {
   sorgundseitz: {
     name: "Metzgerei Sorg & Seitz",
-    kundeId: "6544d8e6",
+    supabaseId: "6544d8e6",
     layouts: ["mittagstisch", "catering"]
   },
 
   schilling: {
     name: "Motorrad Schilling",
-    kundeId: "",
+    supabaseId: "",
     layouts: ["event"]
   },
 
   erkenbrecher: {
     name: "Schreinerei Erkenbrecher",
-    kundeId: "",
+    supabaseId: "",
     layouts: ["referenzen"]
   },
   metzgereigoetz: {
     name: "Metzgerei Götz",
-    kundeId: "",
+    supabaseId: "",
     layouts: ["mittagstisch"]
   }
 }

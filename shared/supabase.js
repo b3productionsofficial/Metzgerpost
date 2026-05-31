@@ -133,14 +133,15 @@ async function loadUserPlan() {
   return plan
 }
 
-/* ── Aktive Kunden-ID (synchron — liest nur localStorage + _mpUser) ── */
+/* ── Aktive Kunden-ID (synchron — liest localStorage + config.js) ── */
 function getAktiveKundeId() {
   if (window.MP.userPlan === 'admin') {
-    const stored = localStorage.getItem('mp_admin_selected_kunde')
-    if (stored) return stored
     if (typeof kunden !== 'undefined') {
-      const first = Object.values(kunden).find(k => k.kundeId)
-      if (first) return first.kundeId
+      const key = localStorage.getItem('mp_admin_selected_kunde')
+      if (key && kunden[key]?.supabaseId) return kunden[key].supabaseId
+      // Fallback: erster Eintrag mit supabaseId
+      const first = Object.values(kunden).find(k => k.supabaseId)
+      if (first) return first.supabaseId
     }
     return ''
   }

@@ -83,14 +83,18 @@ Browser → Supabase Auth (Email+Passwort oder Magic Link)
 **Admin-Erkennung:** `user.user_metadata.plan === 'admin'` (gesetzt bei Registrierung)
 
 ### Kunden-ID-Konvention
+**Grundprinzip: Die Kunden-ID ist immer der Anker für alle Daten — nie die Admin-ID.**
+
 Alle Daten werden mit einer `kundeId` verknüpft, die über `MP.getAktiveKundeId()` ermittelt wird:
-- **Normaler Kunde:** `user.id.substring(0, 8)` (erste 8 Zeichen der UUID) — wie bisher
+- **Normaler Kunde:** `user.id.substring(0, 8)` (erste 8 Zeichen der UUID)
 - **Admin:** liest `localStorage('mp_admin_selected_kunde')` (Key aus `config.js kunden`-Objekt); Fallback: erster Eintrag in `kunden`
 
-Dies gilt für die Tabellen `gerichte`, `wochenplaene`, `displays`, `wochen`, `screen2_config`, `screen3_config`.
+Admin und Kunde schreiben damit in **denselben Supabase-Datensatz** — kein Mismatch.
+
+Dies gilt für alle Tabellen: `gerichte`, `wochenplaene`, `displays`, `wochen`, `screen2_config`, `screen3_config`.
 
 ### Admin-Kunden-Selector (Display Manager)
-Admins sehen im Display Manager (`modules/display/index.html`) ganz oben ein Dropdown mit allen Kunden aus `config.js`. Bei Auswahl wird die ID in `localStorage('mp_admin_selected_kunde')` gespeichert und die Seite neu geladen. Alle Operationen (Wochen laden/senden, Screen 2/3 konfigurieren etc.) laufen dann mit der gewählten Kunden-ID.
+Admins sehen im Display Manager (`modules/display/index.html`) ganz oben ein Dropdown mit allen Kunden aus `config.js`. Bei Auswahl wird die ID in `localStorage('mp_admin_selected_kunde')` gespeichert und die Seite neu geladen. Alle Operationen (Wochen laden/senden, Screen 2/3 konfigurieren etc.) laufen dann unter der **Kunden-ID** — nicht der Admin-ID.
 
 ### Mittagstisch-Generator (Kernfunktion)
 ```
@@ -334,7 +338,8 @@ URL-Muster: `/modules/display/screen.html?kunde={kundeId8}&screen=screen1`
 
 ### Technische Schulden
 - Sehr große Dateien: `script.js` (~1200 Zeilen), `admin.js` (~1150 Zeilen), `screen.html` (>700 Zeilen)
-- Primär localStorage statt Supabase-DB für Gerichte und Wochenpläne (synchronisiert nicht zwischen Geräten)
+- ~~Primär localStorage statt Supabase-DB für Gerichte~~ **Erledigt (2026-05-31):** Gerichte schreiben/lesen Supabase; localStorage ist jetzt nur noch offline Cache
+- Wochenpläne (script.js): noch in localStorage — synchronisiert nicht zwischen Geräten
 - `supabase-schema.sql` ist unvollständig — die Tabellen `wochen`, `screen2_config`, `screen3_config` fehlen
 - Doppelte/redundante Tabellen: `wochenplaene` (altes Schema) vs. `wochen` (neue Tabelle, wird im Display Manager genutzt) — unklar welche wirklich befüllt wird
 - `tv.html` / `tv1.html` / `tv2.html` / `tv3.html` sind ältere Varianten — vermutlich Legacy
@@ -342,7 +347,8 @@ URL-Muster: `/modules/display/screen.html?kunde={kundeId8}&screen=screen1`
 ### Geplant / Coming Soon (aus `dashboard.html`)
 - **Angebote**-Modul (Angebots-Karten erstellen)
 - **Schichtplan**-Modul
-- ~~Supabase-Integration für Admin.js (`saveGerichteToSupabase` / `loadGerichteFromSupabase` sind Stubs)~~ **Erledigt (2026-05-31):** Beide Funktionen schreiben/lesen jetzt die `gerichte`-Tabelle; localStorage bleibt als offline Cache
+- ~~Supabase-Integration für Admin.js (`saveGerichteToSupabase` / `loadGerichteFromSupabase` waren Stubs)~~ **Erledigt (2026-05-31)**
+- ~~`kunde_id` Mismatch: Admin schrieb unter eigener ID, Kunde unter Kunden-ID~~ **Erledigt (2026-05-31):** `MP.getAktiveKundeId()` stellt sicher dass Admin immer unter Kunden-ID arbeitet
 
 ### Bekannte Bugs (aus git log)
 - Screen 3: `startReloadTrigger` entfernt (war fälschlicherweise vorhanden)
@@ -381,11 +387,14 @@ Dann: http://localhost:8080/dashboard.html
 5. Credentials in `shared/supabase.js` eintragen
 
 ### Screen-URL für TV
+Die `kunde=`-Parameter trägt immer die **Kunden-ID** (nie die Admin-ID).
+Beispiel für den ersten produktiven Kunden (Metzgerei Sorg & Seitz, Kunden-ID `6544d8e6`):
 ```
-https://{domain}/modules/display/screen.html?kunde={user_id_first_8_chars}&screen=screen1
-https://{domain}/modules/display/screen2.html?kunde={user_id_first_8_chars}&screen=screen2
-https://{domain}/modules/display/screen3.html?kunde={user_id_first_8_chars}&screen=screen3
+https://{domain}/modules/display/screen.html?kunde=6544d8e6&screen=screen1
+https://{domain}/modules/display/screen2.html?kunde=6544d8e6&screen=screen2
+https://{domain}/modules/display/screen3.html?kunde=6544d8e6&screen=screen3
 ```
+Allgemeines Muster: `?kunde={kunden_user_id_first_8_chars}&screen=screen{N}`
 
 ---
 
@@ -421,3 +430,7 @@ Neuer Kunde hinzufügen: Eintrag in `kunden`, `kundenGerichte`, `kundenLayouts` 
   - `loadGerichteFromSupabase`: liest `gerichte`-Tabelle, konvertiert Array → Objekt; Fallback auf config.js
   - `saveGerichte`, `addGericht`, `deleteGericht`: schreiben nun in Supabase + localStorage-Cache
   - DOMContentLoaded lädt Gerichte aus Supabase und befüllt localStorage-Cache (offline-Fallback)
+
+- **fix: Einmalige Datenmigration** — Admin-Daten (unter `057b6a13`) auf Kunden-ID (`6544d8e6`) migriert
+  - TV-URL läuft jetzt korrekt auf `?kunde=6544d8e6`
+  - Admin und Kunde schreiben seither in denselben Supabase-Datensatz

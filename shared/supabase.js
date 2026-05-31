@@ -133,18 +133,19 @@ async function loadUserPlan() {
   return plan
 }
 
-/* ── Aktive Kunden-ID ── */
-async function getAktiveKundeId() {
-  const user = await getUser()
-  if (!user) return ''
-  if (window.MP.userPlan === undefined) await loadUserPlan()
+/* ── Aktive Kunden-ID (synchron — liest nur localStorage + _mpUser) ── */
+function getAktiveKundeId() {
   if (window.MP.userPlan === 'admin') {
     const stored = localStorage.getItem('mp_admin_selected_kunde')
     if (stored) return stored
-    if (typeof kunden !== 'undefined') return Object.keys(kunden)[0]
+    if (typeof kunden !== 'undefined') {
+      const first = Object.values(kunden).find(k => k.kundeId)
+      if (first) return first.kundeId
+    }
     return ''
   }
-  return user.id.substring(0, 8)
+  const user = window._mpUser
+  return user ? user.id.substring(0, 8) : ''
 }
 
 window.MP = {

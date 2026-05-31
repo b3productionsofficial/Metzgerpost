@@ -1,7 +1,7 @@
 
 async function saveGerichteToSupabase(gerichte) {
   if (typeof getSB === 'undefined') return false
-  const kundeId = await MP.getAktiveKundeId()
+  const kundeId = MP.getAktiveKundeId()
   if (!kundeId) return false
   const rows = Object.entries(gerichte).map(([key, g]) => ({
     kunde_id: kundeId,
@@ -16,7 +16,7 @@ async function saveGerichteToSupabase(gerichte) {
 
 async function loadGerichteFromSupabase() {
   if (typeof getSB === 'undefined') return null
-  const kundeId = await MP.getAktiveKundeId()
+  const kundeId = MP.getAktiveKundeId()
   if (!kundeId) return null
   const rows = await MP.getGerichte(kundeId)
   if (!rows || rows.length === 0) {

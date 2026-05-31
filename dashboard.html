@@ -90,8 +90,9 @@
 <script>
 function onAdminKundeChange(val) {
   localStorage.setItem('mp_admin_selected_kunde', val)
-  if (typeof kunden !== 'undefined' && kunden[val]) {
-    document.getElementById('admin-kunde-name').textContent = kunden[val].name
+  if (typeof kunden !== 'undefined') {
+    const k = Object.values(kunden).find(k => k.kundeId === val)
+    document.getElementById('admin-kunde-name').textContent = k?.name || val
   }
 }
 
@@ -106,11 +107,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (adminCard) adminCard.style.display = 'flex'
     if (typeof kunden !== 'undefined') {
       const sel = document.getElementById('admin-kunde-select')
-      const stored = localStorage.getItem('mp_admin_selected_kunde') || Object.keys(kunden)[0]
-      sel.innerHTML = Object.entries(kunden).map(([id, k]) =>
-        `<option value="${id}"${id === stored ? ' selected' : ''}>${k.name}</option>`
+      const stored = localStorage.getItem('mp_admin_selected_kunde') || Object.values(kunden).find(k => k.kundeId)?.kundeId || ''
+      sel.innerHTML = Object.values(kunden).filter(k => k.kundeId).map(k =>
+        `<option value="${k.kundeId}"${k.kundeId === stored ? ' selected' : ''}>${k.name}</option>`
       ).join('')
-      document.getElementById('admin-kunde-name').textContent = kunden[stored]?.name || stored
+      document.getElementById('admin-kunde-name').textContent = Object.values(kunden).find(k => k.kundeId === stored)?.name || stored
       document.getElementById('admin-selector').style.display = 'flex'
     }
   }

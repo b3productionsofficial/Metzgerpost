@@ -14,9 +14,11 @@ function renderNav(options = {}) {
 
   let kundeIndicator = ''
   if (window.MP?.userPlan === 'admin') {
-    const selectedKey = localStorage.getItem('mp_admin_selected_kunde')
-    if (selectedKey) {
-      const kundeName = (typeof kunden !== 'undefined' ? kunden[selectedKey]?.name : null) || selectedKey
+    const selectedKundeId = localStorage.getItem('mp_admin_selected_kunde')
+    if (selectedKundeId) {
+      const kundeName = typeof kunden !== 'undefined'
+        ? (Object.values(kunden).find(k => k.kundeId === selectedKundeId)?.name || selectedKundeId)
+        : selectedKundeId
       kundeIndicator = `<span style="font-size:12px;font-weight:600;color:var(--accent);padding:4px 10px;background:var(--accent-dim);border-radius:20px;white-space:nowrap">📍 ${kundeName}</span>`
     }
   }

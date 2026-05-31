@@ -343,7 +343,7 @@ const BASE = window.location.origin
 window.addEventListener('DOMContentLoaded', async () => {
   const user = await mpInit({ nav:{ backUrl:'../../dashboard.html', backLabel:'Dashboard' }})
   if (!user) return
-  kundeId = await MP.getAktiveKundeId()
+  kundeId = MP.getAktiveKundeId()
   buildUrls()
   loadWeeks()
   checkStatus()

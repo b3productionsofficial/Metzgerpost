@@ -255,6 +255,18 @@ function getLayoutOverrides() {
   return safeParseStorage(getStorageKey("layoutOverrides"), {})
 }
 
+async function loadPositionsFromSupabase() {
+  if (typeof getSB === 'undefined') return null
+  const kundeId = MP.getAktiveKundeId()
+  if (!kundeId) return null
+  const { data } = await getSB()
+    .from('generator_configs')
+    .select('layout_positions')
+    .eq('kunde_id', kundeId)
+    .single()
+  return data?.layout_positions || null
+}
+
 let gerichte = getGerichte()
 
 function getAlleGerichteSortiert() {
@@ -1170,7 +1182,7 @@ function handleKundeChange() {
   updatePreviews()
 }
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
   renderKundenDropdown()
 
   const kunde = getAktuellerKunde()
@@ -1182,6 +1194,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
   updateKundeSichtbarkeit()
   updateSeitenTitel()
+
+  // Layout-Overrides aus Supabase laden und localStorage-Cache befüllen
+  const sbPositions = await loadPositionsFromSupabase()
+  if (sbPositions) {
+    localStorage.setItem(getStorageKey("layoutOverrides"), JSON.stringify(sbPositions))
+  }
 
   gerichte = getGerichte()
 

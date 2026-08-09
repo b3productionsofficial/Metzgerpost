@@ -33,15 +33,26 @@ async function loadGerichteFromSupabase() {
 
 async function savePositionsToSupabase(positions) {
   if (typeof getSB === 'undefined') return false
-  const user = await MP.getUser()
-  if (!user) return false
-  const kundeId = user.id.substring(0, 8)
+  const kundeId = MP.getAktiveKundeId()
+  if (!kundeId) return false
   const { error } = await getSB().from('generator_configs').upsert({
     kunde_id: kundeId,
     layout_positions: positions,
     updated_at: new Date().toISOString()
   }, { onConflict: 'kunde_id' })
   return !error
+}
+
+async function loadPositionsFromSupabase() {
+  if (typeof getSB === 'undefined') return null
+  const kundeId = MP.getAktiveKundeId()
+  if (!kundeId) return null
+  const { data } = await getSB()
+    .from('generator_configs')
+    .select('layout_positions')
+    .eq('kunde_id', kundeId)
+    .single()
+  return data?.layout_positions || null
 }
 
 
@@ -268,8 +279,9 @@ function getLayoutOverrides() {
   return safeParseStorage(getStorageKey("layoutOverrides"), {})
 }
 
-function saveLayoutOverrides(data) {
+async function saveLayoutOverrides(data) {
   localStorage.setItem(getStorageKey("layoutOverrides"), JSON.stringify(data))
+  await savePositionsToSupabase(data)
 }
 
 function updateAdminEditorUI() {
@@ -563,7 +575,7 @@ function ladePositionsWerte() {
   renderAdminPreview()
 }
 
-function speicherePositionsWerte() {
+async function speicherePositionsWerte() {
   const layout = document.getElementById("layout-auswahl").value
   const format = document.getElementById("format-auswahl").value
   const tag = document.getElementById("tag-auswahl").value
@@ -612,7 +624,7 @@ function speicherePositionsWerte() {
     [`price${line}Y`]: Number(document.getElementById("priceY").value)
   }
 
-  saveLayoutOverrides(overrides)
+  await saveLayoutOverrides(overrides)
   document.getElementById("layout-status").textContent = "Positionswerte gespeichert."
   ladePositionsWerte()
   return
@@ -639,12 +651,12 @@ function speicherePositionsWerte() {
     overrides[layout][format][bereich].woche = weekData
   }
 
-  saveLayoutOverrides(overrides)
+  await saveLayoutOverrides(overrides)
   document.getElementById("layout-status").textContent = "Positionswerte gespeichert."
   ladePositionsWerte()
 }
 
-function resetPositionsWerte() {
+async function resetPositionsWerte() {
   const layout = document.getElementById("layout-auswahl").value
   const format = document.getElementById("format-auswahl").value
   const tag = document.getElementById("tag-auswahl").value
@@ -658,7 +670,7 @@ function resetPositionsWerte() {
     overrides[layout][format].meals[tag]
   ) {
     delete overrides[layout][format].meals[tag]
-    saveLayoutOverrides(overrides)
+    await saveLayoutOverrides(overrides)
   }
 
   ladePositionsWerte()
@@ -1154,6 +1166,12 @@ window.addEventListener("DOMContentLoaded", async () => {
     const sbGerichte = await loadGerichteFromSupabase()
     if (sbGerichte) {
       localStorage.setItem(getStorageKey("gerichte"), JSON.stringify(sbGerichte))
+    }
+
+    // Layout-Overrides aus Supabase laden und localStorage-Cache befüllen
+    const sbPositions = await loadPositionsFromSupabase()
+    if (sbPositions) {
+      localStorage.setItem(getStorageKey("layoutOverrides"), JSON.stringify(sbPositions))
     }
 
     gerichte = getGerichte()

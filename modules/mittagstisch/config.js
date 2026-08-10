@@ -171,7 +171,7 @@ const kundenLayouts = {
             },
             freitag: {
               imageX: 1310, imageY: 1335, imageRadius: 145,
-              textX: 1310, textY: 1700, textMaxWidth: 420, textLineHeight: 54,
+              textX: 1310, textY: 1700, textMaxWidth: 600, textLineHeight: 54,
               priceX: 1240, priceY: 2050, priceColor: "#ffffff",
               textFontSize: 56, priceFontSize: 60
             }
@@ -201,7 +201,7 @@ const kundenLayouts = {
             },
             freitag: {
               imageX: 3025, imageY: 1335, imageRadius: 145,
-              textX: 3015, textY: 1700, textMaxWidth: 420, textLineHeight: 54,
+              textX: 3015, textY: 1700, textMaxWidth: 600, textLineHeight: 54,
               priceX: 3020, priceY: 1970, priceColor: "#ffffff",
               textFontSize: 56, priceFontSize: 60
             }

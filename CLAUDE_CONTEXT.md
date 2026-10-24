@@ -428,6 +428,15 @@ Neuer Kunde hinzufügen: Eintrag in `kunden`, `kundenGerichte`, `kundenLayouts` 
 
 ## 12. Changelog
 
+### 2026-10-25 (Branch `staging`, noch nicht auf main)
+- **feat: Modul Angebote** (`modules/angebote/`): Übersicht, Editor mit Live-Vorschau, Produktbibliothek, Canvas-Renderer
+  für TV/Feed/Story, Vorlage aus Canva (`vorlagen/sorgundseitz/preis-angebot.json` + Hintergründe). Doku: `docs/ANGEBOTE.md`
+- **feat: `modules/display/screen3-v2.html`**: Aktionsbilder + laufende Angebote nach Datum, Polling-Fallback, Reconnect
+- **db: neue Tabellen** `angebots_produkte`, `angebote` (RLS: Lesen öffentlich, Schreiben eingeloggt; `supabase/angebote.sql`)
+- **Befund:** Realtime-Publikation war leer → bestehende Screens bekommen keine Realtime-Updates;
+  `generator_configs` hat RLS ohne Policy; `gerichte`/`kunden`/`wochenplaene` existieren nicht. Details: `docs/VERBESSERUNGEN.md`
+- Testkunde `test0001` (nur in den neuen Tabellen); Admins nutzen ihn mit `?kunde=test0001`
+
 ### 2026-05-31
 - **feat: Admin-Kunden-Selector im Display Manager** (`modules/display/index.html`)
   - Dropdown oben im Header, nur sichtbar für Admins (`user_metadata.plan === 'admin'`)

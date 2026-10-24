@@ -15,46 +15,224 @@
   },
   "formate": {
     "tv": {
-      "breite": 1920, "hoehe": 1080,
+      "breite": 1920,
+      "hoehe": 1080,
       "hintergrund": "bg-tv.jpg",
-      "grosserKreis":  { "x": 192, "y": 266, "d": 426 },
-      "preis":         { "x": 192, "y": 402, "w": 426, "maxW": 330, "groesse": 120, "gewicht": 800 },
-      "einheit":       { "x": 192, "y": 530, "w": 426, "groesse": 46,  "gewicht": 700 },
-      "kleinerSchatten": { "x": 498, "y": 217, "d": 240, "deckkraft": 0.4 },
-      "kleinerKreis":  { "x": 512, "y": 200, "d": 240 },
-      "statt":         { "x": 512, "y": 262, "w": 240, "groesse": 32, "gewicht": 700 },
-      "alterPreis":    { "x": 512, "y": 302, "w": 240, "maxW": 210, "groesse": 52, "gewicht": 700 },
-      "name":          { "x": 184, "y": 717, "w": 560, "groesse": 50, "minGroesse": 36, "zeilenhoehe": 1.4, "maxZeilen": 2 },
-      "zeitraum":      { "x": 184, "abstand": 3, "w": 600, "groesse": 33, "zeilenhoehe": 1.4 },
-      "foto":          { "x": 787, "y": 239, "d": 717.5, "rand": 9 }
+      "grosserKreis": {
+        "x": 192,
+        "y": 266,
+        "d": 426
+      },
+      "preis": {
+        "x": 192,
+        "y": 402,
+        "w": 426,
+        "maxW": 300,
+        "groesse": 120,
+        "gewicht": 800
+      },
+      "einheit": {
+        "x": 192,
+        "y": 530,
+        "w": 426,
+        "groesse": 46,
+        "gewicht": 700
+      },
+      "kleinerSchatten": {
+        "x": 498,
+        "y": 217,
+        "d": 240,
+        "deckkraft": 0.4
+      },
+      "kleinerKreis": {
+        "x": 512,
+        "y": 200,
+        "d": 240
+      },
+      "statt": {
+        "x": 512,
+        "y": 262,
+        "w": 240,
+        "groesse": 32,
+        "gewicht": 700
+      },
+      "alterPreis": {
+        "x": 512,
+        "y": 302,
+        "w": 240,
+        "maxW": 172,
+        "groesse": 52,
+        "gewicht": 700
+      },
+      "name": {
+        "x": 184,
+        "y": 717,
+        "w": 590,
+        "groesse": 50,
+        "minGroesse": 40,
+        "zeilenhoehe": 1.4,
+        "maxZeilen": 3
+      },
+      "zeitraum": {
+        "x": 184,
+        "abstand": 3,
+        "w": 600,
+        "groesse": 33,
+        "zeilenhoehe": 1.4
+      },
+      "foto": {
+        "x": 787,
+        "y": 239,
+        "d": 717.5,
+        "rand": 9
+      }
     },
     "feed": {
-      "breite": 1080, "hoehe": 1350,
+      "breite": 1080,
+      "hoehe": 1350,
       "hintergrund": "bg-feed.jpg",
-      "grosserKreis":  { "x": 40, "y": 420, "d": 330 },
-      "preis":         { "x": 40, "y": 525, "w": 330, "maxW": 255, "groesse": 92, "gewicht": 800 },
-      "einheit":       { "x": 40, "y": 623, "w": 330, "groesse": 36, "gewicht": 700 },
-      "kleinerSchatten": { "x": 279, "y": 359, "d": 190, "deckkraft": 0.4 },
-      "kleinerKreis":  { "x": 290, "y": 345, "d": 190 },
-      "statt":         { "x": 290, "y": 392, "w": 190, "groesse": 26, "gewicht": 700 },
-      "alterPreis":    { "x": 290, "y": 424, "w": 190, "maxW": 166, "groesse": 40, "gewicht": 700 },
-      "name":          { "x": 50, "y": 965, "w": 980, "groesse": 58, "minGroesse": 40, "zeilenhoehe": 1.4, "maxZeilen": 2 },
-      "zeitraum":      { "x": 50, "abstand": 4, "w": 980, "groesse": 36, "zeilenhoehe": 1.4 },
-      "foto":          { "x": 475, "y": 335, "d": 560, "rand": 9 }
+      "grosserKreis": {
+        "x": 40,
+        "y": 420,
+        "d": 330
+      },
+      "preis": {
+        "x": 40,
+        "y": 525,
+        "w": 330,
+        "maxW": 235,
+        "groesse": 92,
+        "gewicht": 800
+      },
+      "einheit": {
+        "x": 40,
+        "y": 623,
+        "w": 330,
+        "groesse": 36,
+        "gewicht": 700
+      },
+      "kleinerSchatten": {
+        "x": 279,
+        "y": 359,
+        "d": 190,
+        "deckkraft": 0.4
+      },
+      "kleinerKreis": {
+        "x": 290,
+        "y": 345,
+        "d": 190
+      },
+      "statt": {
+        "x": 290,
+        "y": 392,
+        "w": 190,
+        "groesse": 26,
+        "gewicht": 700
+      },
+      "alterPreis": {
+        "x": 290,
+        "y": 424,
+        "w": 190,
+        "maxW": 134,
+        "groesse": 40,
+        "gewicht": 700
+      },
+      "name": {
+        "x": 50,
+        "y": 965,
+        "w": 980,
+        "groesse": 58,
+        "minGroesse": 40,
+        "zeilenhoehe": 1.4,
+        "maxZeilen": 2
+      },
+      "zeitraum": {
+        "x": 50,
+        "abstand": 4,
+        "w": 980,
+        "groesse": 36,
+        "zeilenhoehe": 1.4
+      },
+      "foto": {
+        "x": 475,
+        "y": 335,
+        "d": 560,
+        "rand": 9
+      }
     },
     "story": {
-      "breite": 1080, "hoehe": 1920,
+      "breite": 1080,
+      "hoehe": 1920,
       "hintergrund": "bg-story.jpg",
-      "grosserKreis":  { "x": 60, "y": 520, "d": 400 },
-      "preis":         { "x": 60, "y": 652, "w": 400, "maxW": 310, "groesse": 110, "gewicht": 800 },
-      "einheit":       { "x": 60, "y": 770, "w": 400, "groesse": 44, "gewicht": 700 },
-      "kleinerSchatten": { "x": 362, "y": 462, "d": 230, "deckkraft": 0.4 },
-      "kleinerKreis":  { "x": 375, "y": 445, "d": 230 },
-      "statt":         { "x": 375, "y": 502, "w": 230, "groesse": 30, "gewicht": 700 },
-      "alterPreis":    { "x": 375, "y": 540, "w": 230, "maxW": 200, "groesse": 48, "gewicht": 700 },
-      "name":          { "x": 640, "y": 600, "w": 410, "groesse": 60, "minGroesse": 42, "zeilenhoehe": 1.4, "maxZeilen": 3 },
-      "zeitraum":      { "x": 640, "abstand": 12, "w": 410, "groesse": 36, "zeilenhoehe": 1.4, "maxZeilen": 2 },
-      "foto":          { "x": 190, "y": 965, "d": 700, "rand": 10 }
+      "grosserKreis": {
+        "x": 60,
+        "y": 520,
+        "d": 400
+      },
+      "preis": {
+        "x": 60,
+        "y": 652,
+        "w": 400,
+        "maxW": 290,
+        "groesse": 110,
+        "gewicht": 800
+      },
+      "einheit": {
+        "x": 60,
+        "y": 770,
+        "w": 400,
+        "groesse": 44,
+        "gewicht": 700
+      },
+      "kleinerSchatten": {
+        "x": 362,
+        "y": 462,
+        "d": 230,
+        "deckkraft": 0.4
+      },
+      "kleinerKreis": {
+        "x": 375,
+        "y": 445,
+        "d": 230
+      },
+      "statt": {
+        "x": 375,
+        "y": 502,
+        "w": 230,
+        "groesse": 30,
+        "gewicht": 700
+      },
+      "alterPreis": {
+        "x": 375,
+        "y": 540,
+        "w": 230,
+        "maxW": 162,
+        "groesse": 48,
+        "gewicht": 700
+      },
+      "name": {
+        "x": 640,
+        "y": 600,
+        "w": 410,
+        "groesse": 60,
+        "minGroesse": 42,
+        "zeilenhoehe": 1.4,
+        "maxZeilen": 3
+      },
+      "zeitraum": {
+        "x": 640,
+        "abstand": 12,
+        "w": 410,
+        "groesse": 36,
+        "zeilenhoehe": 1.4,
+        "maxZeilen": 1
+      },
+      "foto": {
+        "x": 190,
+        "y": 965,
+        "d": 700,
+        "rand": 10
+      }
     }
   }
 }

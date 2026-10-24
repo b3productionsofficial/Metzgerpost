@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetzgerPost — Angebot bearbeiten</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=IBM+Plex+Serif:wght@700&display=swap" />
+  <link rel="stylesheet" href="../../shared/style.css" />
+  <link rel="stylesheet" href="angebote.css" />
+</head>
+<body class="mp-bg-glow">
+<nav class="mp-nav" id="mp-nav"></nav>
+
+<main class="ag-main">
+  <div class="ag-crumbs"><a href="index.html" data-link="index.html">Angebote</a> › <span id="crumb-titel">Neues Angebot</span></div>
+  <div class="ag-head"><h1 id="seiten-titel">Neues Angebot</h1></div>
+
+  <div class="ag-split">
+    <form class="ag-form" id="form" novalidate>
+
+      <!-- 1 Produkt -->
+      <section class="ag-card ag-step" aria-labelledby="s1">
+        <div class="ag-step-head"><span class="ag-step-num">1</span><h2 id="s1">Produkt</h2></div>
+        <div id="produkt-gewaehlt" class="ag-produkt-gewaehlt" hidden>
+          <img id="produkt-thumb" class="ag-thumb" alt="" />
+          <div style="flex:1 1 auto;min-width:0">
+            <div id="produkt-name" style="font-weight:600"></div>
+            <div id="produkt-meta" class="ag-hint"></div>
+          </div>
+          <button type="button" class="mp-btn mp-btn-secondary mp-btn-sm" id="produkt-aendern" style="min-height:44px">Ändern</button>
+        </div>
+        <div id="produkt-auswahl">
+          <div class="ag-row" style="margin-bottom:10px">
+            <div class="ag-field" style="flex:1 1 240px">
+              <label for="produkt-suche" class="ag-sr">Produkt suchen</label>
+              <input id="produkt-suche" class="ag-input" placeholder="Produkt suchen …" autocomplete="off" />
+            </div>
+            <button type="button" class="mp-btn mp-btn-ghost" id="produkt-neu" style="min-height:46px">+ Neues Produkt</button>
+          </div>
+          <div id="produktliste" class="ag-produktliste" role="list"></div>
+        </div>
+        <div class="ag-field" id="titel-feld" hidden>
+          <label for="titel">Text auf der Folie</label>
+          <input id="titel" class="ag-input" maxlength="80" />
+          <span class="ag-hint">Vorbelegt mit dem Produktnamen, z. B. „Frische Rinderlende“.</span>
+        </div>
+      </section>
+
+      <!-- 2 Preis -->
+      <section class="ag-card ag-step" aria-labelledby="s2">
+        <div class="ag-step-head"><span class="ag-step-num">2</span><h2 id="s2">Preis</h2></div>
+        <div class="ag-row">
+          <div class="ag-field">
+            <label for="preis">Angebotspreis</label>
+            <div class="ag-input-wrap"><input id="preis" class="ag-input-big" inputmode="decimal" placeholder="0,00" autocomplete="off" /><span class="ag-suffix">€</span></div>
+          </div>
+          <div class="ag-field" style="flex:1 1 220px">
+            <span class="ag-label" id="einheit-label">pro</span>
+            <div class="ag-seg" role="group" aria-labelledby="einheit-label" id="einheit">
+              <button type="button" data-wert="kg" aria-pressed="true">kg</button>
+              <button type="button" data-wert="100g" aria-pressed="false">100 g</button>
+              <button type="button" data-wert="stueck" aria-pressed="false">Stück</button>
+            </div>
+          </div>
+        </div>
+        <div class="ag-field">
+          <label for="streichpreis">Vorher-Preis (optional)</label>
+          <div class="ag-input-wrap" style="max-width:260px"><input id="streichpreis" inputmode="decimal" placeholder="leer lassen" autocomplete="off" /><span class="ag-suffix">€</span></div>
+          <span class="ag-hint">Leer lassen = kein Streichpreis, der kleine Kreis entfällt.</span>
+          <label class="ag-check" id="bestaetigt-zeile" hidden style="margin-top:6px">
+            <input type="checkbox" id="bestaetigt" />
+            <span>Das war der niedrigste Preis der letzten 30 Tage (gesetzliche Pflicht bei Streichpreisen)</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- 3 Zeitraum -->
+      <section class="ag-card ag-step" aria-labelledby="s3">
+        <div class="ag-step-head"><span class="ag-step-num">3</span><h2 id="s3">Zeitraum</h2></div>
+        <div class="ag-chips" id="zeit-chips">
+          <button type="button" class="ag-chip" data-zeit="diese" aria-pressed="false">Diese Woche</button>
+          <button type="button" class="ag-chip" data-zeit="naechste" aria-pressed="false">Nächste Woche</button>
+          <button type="button" class="ag-chip" data-zeit="eigen" aria-pressed="false">Eigener Zeitraum</button>
+        </div>
+        <div class="ag-row">
+          <div class="ag-field"><label for="von">von</label><input type="date" id="von" class="ag-input" /></div>
+          <div class="ag-field"><label for="bis">bis</label><input type="date" id="bis" class="ag-input" /></div>
+        </div>
+        <div class="ag-hint" id="zeit-info"></div>
+      </section>
+
+      <!-- 4 Bildschirme -->
+      <section class="ag-card ag-step" aria-labelledby="s4">
+        <div class="ag-step-head"><span class="ag-step-num">4</span><h2 id="s4">Bildschirme</h2></div>
+        <label class="ag-screen"><input type="checkbox" id="screen3" checked /><span><strong>Screen 3</strong> <span class="ag-hint">· läuft in der Rotation mit den Aktionsbildern</span></span></label>
+        <label class="ag-screen disabled"><input type="checkbox" disabled /><span>Screen 1 – Mittagstisch</span><span class="ag-tag">folgt</span></label>
+        <label class="ag-screen disabled"><input type="checkbox" disabled /><span>Screen 2 – Preislisten</span><span class="ag-tag">folgt</span></label>
+      </section>
+
+      <div id="fehler" class="ag-error" role="alert"></div>
+      <div class="ag-actions">
+        <button type="submit" class="mp-btn mp-btn-primary ag-btn-big" id="btn-speichern"><span class="mp-btn-text">Speichern &amp; auf Bildschirm planen</span></button>
+        <button type="button" class="mp-btn mp-btn-secondary ag-btn-big" id="btn-entwurf"><span class="mp-btn-text">Als Entwurf speichern</span></button>
+      </div>
+    </form>
+
+    <aside class="ag-preview" aria-label="Vorschau">
+      <div class="ag-row" style="align-items:center;gap:8px">
+        <h2 style="font-family:var(--font-b);font-size:16px;font-weight:600;flex:1 1 auto">Live-Vorschau</h2>
+        <div class="ag-seg" role="tablist" aria-label="Format" id="format-tabs" style="min-height:44px">
+          <button type="button" role="tab" data-format="tv" aria-selected="true">TV</button>
+          <button type="button" role="tab" data-format="feed" aria-selected="false">Feed</button>
+          <button type="button" role="tab" data-format="story" aria-selected="false">Story</button>
+        </div>
+      </div>
+      <div class="ag-canvas-wrap" id="canvas-wrap"><canvas id="vorschau" width="1920" height="1080" aria-label="Vorschau der Angebotsfolie"></canvas></div>
+      <div class="ag-row" style="align-items:center;gap:10px">
+        <span class="ag-hint" style="flex:1 1 240px">So erscheint es auf dem Bildschirm. Feed und Story werden beim Speichern mit erzeugt.</span>
+        <button type="button" class="mp-btn mp-btn-secondary mp-btn-sm" data-download="feed" style="min-height:44px">Feed herunterladen</button>
+        <button type="button" class="mp-btn mp-btn-secondary mp-btn-sm" data-download="story" style="min-height:44px">Story herunterladen</button>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<!-- Neues Produkt -->
+<div class="mp-modal-overlay" id="modal-produkt" onclick="closeModalOnOverlay(event)">
+  <div class="mp-modal" role="dialog" aria-modal="true" aria-labelledby="mp-titel">
+    <div class="mp-modal-title" id="mp-titel">Neues Produkt</div>
+    <div class="ag-step">
+      <div class="ag-fotofeld">
+        <img id="np-thumb" class="ag-thumb ag-thumb-leer" alt="" />
+        <label class="mp-btn mp-btn-ghost ag-file">Foto wählen<input type="file" id="np-foto" accept="image/*" /></label>
+      </div>
+      <div class="ag-field"><label for="np-name">Produktname</label><input id="np-name" class="ag-input" maxlength="80" placeholder="z. B. Frische Rinderlende" /></div>
+      <div class="ag-field">
+        <span class="ag-label" id="np-einheit-label">Standard-Einheit</span>
+        <div class="ag-seg" role="group" aria-labelledby="np-einheit-label" id="np-einheit">
+          <button type="button" data-wert="kg" aria-pressed="true">kg</button>
+          <button type="button" data-wert="100g" aria-pressed="false">100 g</button>
+          <button type="button" data-wert="stueck" aria-pressed="false">Stück</button>
+        </div>
+      </div>
+      <div id="np-fehler" class="ag-error" role="alert"></div>
+    </div>
+    <div class="mp-modal-actions">
+      <button type="button" class="mp-btn mp-btn-secondary" onclick="closeModal('modal-produkt')">Abbrechen</button>
+      <button type="button" class="mp-btn mp-btn-primary" id="np-speichern"><span class="mp-btn-text">Speichern</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="mp-toast" id="mp-toast"></div>
+<script src="../../shared/supabase.js"></script>
+<script src="../../shared/components.js"></script>
+<script src="../mittagstisch/config.js"></script>
+<script src="renderer.js"></script>
+<script src="angebote.js"></script>
+<script>
+(function () {
+  const A = window.MPAngebote, R = window.MPAngebotRenderer
+  const $ = id => document.getElementById(id)
+
+  let vorlage = null, produkte = [], format = 'tv', dirty = false, speichert = false
+  const st = {
+    id: null, produkt_id: null, titel: '', bild_url: null, preis: '', einheit: 'kg',
+    streichpreis: '', bestaetigt: false, von: '', bis: '', screens: ['screen3'], status: 'aktiv',
+    alt: {} // vorherige Render-URLs (zum Aufräumen)
+  }
+
+  /* ── Hilfen ── */
+  function setSeg(container, wert) {
+    container.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.wert === wert)))
+  }
+  function produktById(id) { return produkte.find(p => p.id === id) }
+  function angebotFuerRender() {
+    const sp = A.parsePreis(st.streichpreis)
+    return {
+      titel: st.titel || 'Produktname',
+      preis: A.parsePreis(st.preis),
+      einheit: st.einheit,
+      streichpreis: Number.isNaN(sp) ? null : sp,
+      gueltig_von: st.von, gueltig_bis: st.bis,
+      bild_url: st.bild_url
+    }
+  }
+  function markiereDirty() {
+    dirty = true
+    // Fehlermeldungen aktualisieren, sobald nachgebessert wird
+    if ($('fehler').textContent) $('fehler').innerHTML = pruefe(false).map(A.esc).join('<br>')
+  }
+
+  /* ── Vorschau ── */
+  let renderTimer = null, renderNr = 0
+  function vorschau() {
+    clearTimeout(renderTimer)
+    renderTimer = setTimeout(async () => {
+      if (!vorlage) return
+      const nr = ++renderNr
+      const tmp = document.createElement('canvas')
+      try {
+        await R.render(tmp, vorlage.daten, format, angebotFuerRender(), vorlage.basis)
+      } catch (e) { console.error(e); return }
+      if (nr !== renderNr) return
+      const cv = $('vorschau')
+      cv.width = tmp.width; cv.height = tmp.height
+      cv.getContext('2d').drawImage(tmp, 0, 0)
+      $('canvas-wrap').classList.toggle('hoch', format !== 'tv')
+    }, 120)
+  }
+
+  /* ── Produktauswahl ── */
+  function zeigeProduktliste() {
+    const q = $('produkt-suche').value.trim().toLowerCase()
+    const liste = produkte.filter(p => !q || p.name.toLowerCase().includes(q))
+    const box = $('produktliste')
+    if (!produkte.length) {
+      box.innerHTML = '<div class="ag-empty" style="grid-column:1/-1">Noch keine Produkte. Lege mit „+ Neues Produkt“ das erste an.</div>'
+      return
+    }
+    if (!liste.length) {
+      box.innerHTML = '<div class="ag-empty" style="grid-column:1/-1">Kein Produkt gefunden.</div>'
+      return
+    }
+    box.innerHTML = liste.map(p => `
+      <button type="button" class="ag-produkt-btn" role="listitem" data-id="${A.esc(p.id)}">
+        ${p.bild_url ? `<img class="ag-thumb" src="${A.esc(p.bild_url)}" alt="" loading="lazy">` : '<span class="ag-thumb ag-thumb-leer">kein Foto</span>'}
+        <span>${A.esc(p.name)}</span><small>pro ${A.esc(A.einheitLang(p.einheit))}</small>
+      </button>`).join('')
+  }
+  function waehleProdukt(p, uebernehmeWerte) {
+    st.produkt_id = p.id
+    st.bild_url = p.bild_url || null
+    if (uebernehmeWerte) {
+      st.titel = p.name
+      st.einheit = p.einheit || 'kg'
+      $('titel').value = st.titel
+      setSeg($('einheit'), st.einheit)
+    }
+    zeigeGewaehlt()
+    vorschau()
+  }
+  function zeigeGewaehlt() {
+    const hat = !!st.produkt_id || !!st.titel
+    $('produkt-gewaehlt').hidden = !hat
+    $('produkt-auswahl').hidden = hat
+    $('titel-feld').hidden = !hat
+    if (!hat) return
+    const p = produktById(st.produkt_id)
+    const thumb = $('produkt-thumb')
+    if (st.bild_url) { thumb.src = st.bild_url; thumb.classList.remove('ag-thumb-leer') }
+    else { thumb.removeAttribute('src'); thumb.classList.add('ag-thumb-leer') }
+    $('produkt-name').textContent = p ? p.name : st.titel
+    $('produkt-meta').textContent = p ? 'aus der Bibliothek · Einheit ' + A.einheitLang(p.einheit) : 'Produkt nicht mehr in der Bibliothek'
+  }
+
+  /* ── Zeitraum ── */
+  function setzeZeit(z) {
+    st.von = z.von; st.bis = z.bis
+    $('von').value = st.von; $('bis').value = st.bis
+    zeitInfo()
+  }
+  function zeitInfo() {
+    const d = A.dieseWoche(), n = A.naechsteWoche()
+    const art = (st.von === d.von && st.bis === d.bis) ? 'diese' : (st.von === n.von && st.bis === n.bis) ? 'naechste' : 'eigen'
+    document.querySelectorAll('#zeit-chips .ag-chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.zeit === art)))
+    const info = $('zeit-info')
+    if (!st.von || !st.bis) { info.textContent = ''; return }
+    if (st.bis < st.von) { info.textContent = '„bis“ liegt vor „von“.'; return }
+    const kw1 = A.kalenderwoche(st.von), kw2 = A.kalenderwoche(st.bis)
+    const kw = kw1 === kw2 ? 'KW ' + kw1 : 'KW ' + kw1 + '–' + kw2
+    const t = A.isoDatum(A.heute())
+    const lauf = st.bis < t ? 'liegt in der Vergangenheit' : st.von <= t ? 'läuft sofort nach dem Speichern' : 'erscheint am ' + A.datumKurz(st.von) + ' automatisch und verschwindet nach dem ' + A.datumKurz(st.bis)
+    info.textContent = kw + ' · ' + lauf
+  }
+
+  /* ── Formular befüllen ── */
+  function fuelleFormular() {
+    $('titel').value = st.titel
+    $('preis').value = st.preis === '' || st.preis === null ? '' : R.formatPreis(st.preis)
+    $('streichpreis').value = st.streichpreis === '' || st.streichpreis === null ? '' : R.formatPreis(st.streichpreis)
+    $('bestaetigt').checked = !!st.bestaetigt
+    $('bestaetigt-zeile').hidden = !$('streichpreis').value.trim()
+    setSeg($('einheit'), st.einheit)
+    $('von').value = st.von; $('bis').value = st.bis
+    $('screen3').checked = st.screens.includes('screen3')
+    zeigeGewaehlt(); zeitInfo(); vorschau()
+  }
+
+  /* ── Prüfen ── */
+  function pruefe(alsEntwurf) {
+    const f = []
+    if (!st.titel.trim()) f.push('Bitte ein Produkt wählen.')
+    const p = A.parsePreis(st.preis)
+    if (!alsEntwurf && (p === null || Number.isNaN(p) || p <= 0)) f.push('Bitte einen gültigen Angebotspreis eingeben, z. B. 39,90.')
+    else if (Number.isNaN(p)) f.push('Der Angebotspreis ist keine gültige Zahl.')
+    const sp = A.parsePreis(st.streichpreis)
+    if (Number.isNaN(sp)) f.push('Der Vorher-Preis ist keine gültige Zahl.')
+    if (sp !== null && !Number.isNaN(sp)) {
+      if (!st.bestaetigt) f.push('Bei einem Streichpreis bitte bestätigen, dass er der niedrigste Preis der letzten 30 Tage war.')
+      if (p && sp <= p) f.push('Der Vorher-Preis muss höher sein als der Angebotspreis.')
+    }
+    if (!st.von || !st.bis) f.push('Bitte einen Zeitraum wählen.')
+    else if (st.bis < st.von) f.push('„bis“ liegt vor „von“.')
+    if (!alsEntwurf && !st.screens.length) f.push('Bitte mindestens einen Bildschirm wählen.')
+    return f
+  }
+
+  /* ── Speichern ── */
+  async function speichern(alsEntwurf) {
+    if (speichert) return
+    const fehler = pruefe(alsEntwurf)
+    $('fehler').innerHTML = fehler.map(A.esc).join('<br>')
+    if (fehler.length) { $('fehler').scrollIntoView({ behavior: 'smooth', block: 'center' }); return }
+    speichert = true
+    const btn = alsEntwurf ? $('btn-entwurf') : $('btn-speichern')
+    btn.classList.add('loading'); btn.disabled = true
+    try {
+      const id = st.id || A.uuid()
+      const daten = angebotFuerRender()
+      const urls = {}
+      const ts = Date.now()
+      for (const f of ['tv', 'feed', 'story']) {
+        const cv = document.createElement('canvas')
+        await R.render(cv, vorlage.daten, f, daten, vorlage.basis)
+        const blob = await R.alsBlob(cv, 'image/jpeg', f === 'tv' ? 0.86 : 0.9)
+        urls[f] = await A.ladeHoch(blob, id + '-' + f + '-' + ts + '.jpg')
+      }
+      const sp = A.parsePreis(st.streichpreis)
+      await A.speichereAngebot({
+        id, typ: 'preis', vorlage: 'preis-angebot',
+        produkt_id: st.produkt_id, titel: st.titel.trim(), bild_url: st.bild_url,
+        preis: A.parsePreis(st.preis), einheit: st.einheit,
+        streichpreis: sp, streichpreis_bestaetigt: sp !== null && st.bestaetigt,
+        gueltig_von: st.von, gueltig_bis: st.bis, screens: st.screens,
+        status: alsEntwurf ? 'entwurf' : 'aktiv',
+        render_tv_url: urls.tv, render_feed_url: urls.feed, render_story_url: urls.story
+      })
+      await A.entferneDateien(Object.values(st.alt))
+      dirty = false
+      showToast(alsEntwurf ? 'Entwurf gespeichert ✓' : 'Angebot gespeichert ✓')
+      setTimeout(() => { location.href = A.link('index.html') }, 700)
+    } catch (e) {
+      console.error(e)
+      $('fehler').textContent = 'Speichern fehlgeschlagen: ' + (e.message || e) + ' – bitte erneut versuchen.'
+      btn.classList.remove('loading'); btn.disabled = false
+      speichert = false
+    }
+  }
+
+  /* ── Neues Produkt ── */
+  let npBlob = null, npEinheit = 'kg'
+  function oeffneNeuesProdukt() {
+    npBlob = null; npEinheit = 'kg'
+    $('np-name').value = $('produkt-suche').value.trim()
+    $('np-thumb').removeAttribute('src'); $('np-thumb').classList.add('ag-thumb-leer')
+    $('np-foto').value = ''; $('np-fehler').textContent = ''
+    setSeg($('np-einheit'), 'kg')
+    openModal('modal-produkt')
+    setTimeout(() => $('np-name').focus(), 50)
+  }
+  async function speichereNeuesProdukt() {
+    const name = $('np-name').value.trim()
+    if (!name) { $('np-fehler').textContent = 'Bitte einen Produktnamen eingeben.'; return }
+    const btn = $('np-speichern')
+    btn.classList.add('loading'); btn.disabled = true
+    try {
+      let bild_url = null
+      if (npBlob) bild_url = await A.ladeHoch(npBlob, 'produkte/' + A.slug(name) + '-' + Date.now() + '.jpg')
+      const p = await A.speichereProdukt({ name, einheit: npEinheit, bild_url })
+      produkte.push(p)
+      produkte.sort((a, b) => a.name.localeCompare(b.name, 'de'))
+      closeModal('modal-produkt')
+      waehleProdukt(p, true)
+      markiereDirty()
+      showToast('Produkt angelegt ✓')
+    } catch (e) {
+      $('np-fehler').textContent = 'Speichern fehlgeschlagen: ' + (e.message || e)
+    } finally {
+      btn.classList.remove('loading'); btn.disabled = false
+    }
+  }
+
+  /* ── Events ── */
+  function verbinde() {
+    $('produktliste').addEventListener('click', e => {
+      const b = e.target.closest('.ag-produkt-btn'); if (!b) return
+      const p = produktById(b.dataset.id); if (p) { waehleProdukt(p, true); markiereDirty() }
+    })
+    $('produkt-suche').addEventListener('input', zeigeProduktliste)
+    $('produkt-aendern').addEventListener('click', () => {
+      $('produkt-gewaehlt').hidden = true; $('produkt-auswahl').hidden = false
+      zeigeProduktliste(); $('produkt-suche').focus()
+    })
+    $('produkt-neu').addEventListener('click', oeffneNeuesProdukt)
+    $('titel').addEventListener('input', e => { st.titel = e.target.value; markiereDirty(); vorschau() })
+    $('preis').addEventListener('input', e => { st.preis = e.target.value; markiereDirty(); vorschau() })
+    $('streichpreis').addEventListener('input', e => {
+      st.streichpreis = e.target.value
+      $('bestaetigt-zeile').hidden = !e.target.value.trim()
+      markiereDirty(); vorschau()
+    })
+    $('bestaetigt').addEventListener('change', e => { st.bestaetigt = e.target.checked; markiereDirty() })
+    $('einheit').addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return
+      st.einheit = b.dataset.wert; setSeg($('einheit'), st.einheit); markiereDirty(); vorschau()
+    })
+    $('zeit-chips').addEventListener('click', e => {
+      const b = e.target.closest('.ag-chip'); if (!b) return
+      if (b.dataset.zeit === 'diese') setzeZeit(A.dieseWoche())
+      else if (b.dataset.zeit === 'naechste') setzeZeit(A.naechsteWoche())
+      else { b.setAttribute('aria-pressed', 'true'); $('von').focus(); return }
+      markiereDirty(); vorschau()
+    })
+    $('von').addEventListener('change', e => {
+      st.von = e.target.value
+      if (st.von && (!st.bis || st.bis < st.von)) { st.bis = st.von; $('bis').value = st.bis }
+      zeitInfo(); markiereDirty(); vorschau()
+    })
+    $('bis').addEventListener('change', e => { st.bis = e.target.value; zeitInfo(); markiereDirty(); vorschau() })
+    $('screen3').addEventListener('change', e => { st.screens = e.target.checked ? ['screen3'] : []; markiereDirty() })
+    $('format-tabs').addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return
+      format = b.dataset.format
+      $('format-tabs').querySelectorAll('button').forEach(x => x.setAttribute('aria-selected', String(x === b)))
+      vorschau()
+    })
+    document.querySelectorAll('[data-download]').forEach(b => b.addEventListener('click', async () => {
+      const f = b.dataset.download
+      const cv = document.createElement('canvas')
+      await R.render(cv, vorlage.daten, f, angebotFuerRender(), vorlage.basis)
+      A.herunterladen(await R.alsBlob(cv, 'image/jpeg', 0.92), 'angebot-' + A.slug(st.titel) + '-' + f + '.jpg')
+    }))
+    $('form').addEventListener('submit', e => { e.preventDefault(); speichern(false) })
+    $('btn-entwurf').addEventListener('click', () => speichern(true))
+    $('np-foto').addEventListener('change', async e => {
+      const datei = e.target.files && e.target.files[0]; if (!datei) return
+      try {
+        npBlob = await A.komprimiereFoto(datei, 1200)
+        const t = $('np-thumb'); t.src = URL.createObjectURL(npBlob); t.classList.remove('ag-thumb-leer')
+        $('np-fehler').textContent = ''
+      } catch (err) { npBlob = null; $('np-fehler').textContent = err.message }
+    })
+    $('np-einheit').addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return
+      npEinheit = b.dataset.wert; setSeg($('np-einheit'), npEinheit)
+    })
+    $('np-speichern').addEventListener('click', speichereNeuesProdukt)
+    document.querySelectorAll('[data-link]').forEach(a => { a.href = A.link(a.dataset.link) })
+    window.addEventListener('beforeunload', e => { if (dirty && !speichert) { e.preventDefault(); e.returnValue = '' } })
+  }
+
+  /* ── Start ── */
+  window.addEventListener('DOMContentLoaded', async () => {
+    const user = await mpInit({ nav: { backUrl: A.link('index.html'), backLabel: 'Angebote' } })
+    if (!user) return
+    verbinde()
+    try {
+      ;[vorlage, produkte] = await Promise.all([A.ladeVorlage('preis-angebot'), A.ladeProdukte()])
+    } catch (e) {
+      $('fehler').textContent = 'Laden fehlgeschlagen: ' + (e.message || e)
+      return
+    }
+    const q = new URLSearchParams(location.search)
+    const id = q.get('id'), copy = q.get('copy'), pid = q.get('produkt')
+    if (id || copy) {
+      const a = await A.ladeAngebot(id || copy).catch(() => null)
+      if (!a) { $('fehler').textContent = 'Angebot nicht gefunden.' }
+      else {
+        Object.assign(st, {
+          id: id ? a.id : null, produkt_id: a.produkt_id, titel: a.titel, bild_url: a.bild_url,
+          preis: a.preis, einheit: a.einheit || 'kg', streichpreis: a.streichpreis ?? '',
+          bestaetigt: !!a.streichpreis_bestaetigt, von: a.gueltig_von, bis: a.gueltig_bis,
+          screens: a.screens && a.screens.length ? a.screens : ['screen3'], status: a.status
+        })
+        if (id) {
+          st.alt = { tv: a.render_tv_url, feed: a.render_feed_url, story: a.render_story_url }
+          $('seiten-titel').textContent = 'Angebot bearbeiten'
+          $('crumb-titel').textContent = a.titel
+          document.title = 'MetzgerPost — ' + a.titel
+        } else {
+          // Duplizieren: Woche nach dem Original (frühestens nächste Woche), Bestätigung neu einholen
+          const n = A.naechsteWoche()
+          const danach = A.wocheVon(A.plusTage(R.parseDatum(a.gueltig_bis), 2))
+          const z = danach.von > n.von ? danach : n
+          st.von = z.von; st.bis = z.bis; st.bestaetigt = false
+          $('seiten-titel').textContent = 'Angebot duplizieren'
+        }
+      }
+    } else {
+      setzeZeit(A.naechsteWoche())
+      const p = pid && produktById(pid)
+      if (p) waehleProdukt(p, true)
+    }
+    fuelleFormular()
+    zeigeProduktliste()
+    dirty = false
+  })
+})()
+</script>
+</body>
+</html>

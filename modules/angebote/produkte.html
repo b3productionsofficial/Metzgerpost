@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetzgerPost — Produktbibliothek</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="../../shared/style.css" />
+  <link rel="stylesheet" href="angebote.css" />
+</head>
+<body class="mp-bg-glow">
+<nav class="mp-nav" id="mp-nav"></nav>
+
+<main class="ag-main">
+  <div class="ag-crumbs"><a href="index.html" data-link="index.html">Angebote</a> › Produktbibliothek</div>
+  <div class="ag-head">
+    <h1>Produktbibliothek</h1>
+    <label for="suche" class="ag-sr">Produkt suchen</label>
+    <input id="suche" class="ag-input" placeholder="Produkt suchen …" style="width:260px;max-width:100%" autocomplete="off" />
+  </div>
+  <p class="ag-sub">Nur für Angebote – getrennt von den Mittagstisch-Gerichten. Fotos werden beim Hochladen automatisch quadratisch zugeschnitten und verkleinert.</p>
+  <div class="ag-grid" id="grid" aria-live="polite"><div class="ag-empty" style="grid-column:1/-1">Lade Produkte …</div></div>
+</main>
+
+<!-- Produkt anlegen / bearbeiten -->
+<div class="mp-modal-overlay" id="modal-produkt" onclick="closeModalOnOverlay(event)">
+  <div class="mp-modal" role="dialog" aria-modal="true" aria-labelledby="mp-titel">
+    <div class="mp-modal-title" id="mp-titel">Neues Produkt</div>
+    <div class="ag-step">
+      <div class="ag-fotofeld">
+        <img id="p-thumb" class="ag-thumb ag-thumb-leer" alt="" />
+        <label class="mp-btn mp-btn-ghost ag-file">Foto wählen<input type="file" id="p-foto" accept="image/*" /></label>
+      </div>
+      <div class="ag-field"><label for="p-name">Produktname</label><input id="p-name" class="ag-input" maxlength="80" placeholder="z. B. Frische Rinderlende" /></div>
+      <div class="ag-field">
+        <span class="ag-label" id="p-einheit-label">Standard-Einheit</span>
+        <div class="ag-seg" role="group" aria-labelledby="p-einheit-label" id="p-einheit">
+          <button type="button" data-wert="kg" aria-pressed="true">kg</button>
+          <button type="button" data-wert="100g" aria-pressed="false">100 g</button>
+          <button type="button" data-wert="stueck" aria-pressed="false">Stück</button>
+        </div>
+      </div>
+      <div id="p-fehler" class="ag-error" role="alert"></div>
+    </div>
+    <div class="mp-modal-actions">
+      <button type="button" class="mp-btn mp-btn-danger" id="p-entfernen" style="margin-right:auto" hidden>Entfernen</button>
+      <button type="button" class="mp-btn mp-btn-secondary" onclick="closeModal('modal-produkt')">Abbrechen</button>
+      <button type="button" class="mp-btn mp-btn-primary" id="p-speichern"><span class="mp-btn-text">Speichern</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="mp-toast" id="mp-toast"></div>
+<script src="../../shared/supabase.js"></script>
+<script src="../../shared/components.js"></script>
+<script src="../mittagstisch/config.js"></script>
+<script src="renderer.js"></script>
+<script src="angebote.js"></script>
+<script>
+(function () {
+  const A = window.MPAngebote
+  const $ = id => document.getElementById(id)
+  let produkte = [], bearbeitet = null, blob = null, einheit = 'kg', fotoGeaendert = false
+
+  function setSeg(wert) {
+    $('p-einheit').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.wert === wert)))
+  }
+
+  function zeige() {
+    const q = $('suche').value.trim().toLowerCase()
+    const liste = produkte.filter(p => !q || p.name.toLowerCase().includes(q))
+    const neu = '<button type="button" class="ag-pnew" id="neu"><span aria-hidden="true">+</span>Neues Produkt</button>'
+    $('grid').innerHTML = neu + liste.map(p => `
+      <div class="ag-pcard" data-id="${A.esc(p.id)}">
+        ${p.bild_url ? `<img class="ag-thumb" src="${A.esc(p.bild_url)}" alt="" loading="lazy">` : '<span class="ag-thumb ag-thumb-leer">kein Foto</span>'}
+        <div class="ag-pcard-name">${A.esc(p.name)}</div>
+        <div class="ag-pcard-meta">Einheit ${A.esc(A.einheitLang(p.einheit))}</div>
+        <div class="ag-pcard-actions">
+          <a class="mp-btn mp-btn-primary mp-btn-sm" style="min-height:40px" href="${A.esc(A.link('bearbeiten.html', { produkt: p.id }))}">Angebot erstellen</a>
+          <button type="button" class="mp-btn mp-btn-secondary mp-btn-sm" style="min-height:40px" data-aktion="bearbeiten">${p.bild_url ? 'Bearbeiten' : 'Foto hinzufügen'}</button>
+        </div>
+      </div>`).join('') +
+      (q && !liste.length ? '<div class="ag-empty" style="grid-column:1/-1">Kein Produkt gefunden.</div>' : '')
+  }
+
+  function oeffne(p) {
+    bearbeitet = p || null; blob = null; fotoGeaendert = false
+    einheit = p ? p.einheit : 'kg'
+    $('mp-titel').textContent = p ? 'Produkt bearbeiten' : 'Neues Produkt'
+    $('p-name').value = p ? p.name : $('suche').value.trim()
+    const t = $('p-thumb')
+    if (p && p.bild_url) { t.src = p.bild_url; t.classList.remove('ag-thumb-leer') }
+    else { t.removeAttribute('src'); t.classList.add('ag-thumb-leer') }
+    $('p-foto').value = ''; $('p-fehler').textContent = ''
+    $('p-entfernen').hidden = !p
+    setSeg(einheit)
+    openModal('modal-produkt')
+    setTimeout(() => $('p-name').focus(), 50)
+  }
+
+  async function speichern() {
+    const name = $('p-name').value.trim()
+    if (!name) { $('p-fehler').textContent = 'Bitte einen Produktnamen eingeben.'; return }
+    const btn = $('p-speichern')
+    btn.classList.add('loading'); btn.disabled = true
+    try {
+      let bild_url = bearbeitet ? bearbeitet.bild_url : null
+      if (fotoGeaendert && blob) bild_url = await A.ladeHoch(blob, 'produkte/' + A.slug(name) + '-' + Date.now() + '.jpg')
+      const p = await A.speichereProdukt({ id: bearbeitet && bearbeitet.id, name, einheit, bild_url })
+      if (fotoGeaendert && bearbeitet && bearbeitet.bild_url && bearbeitet.bild_url !== bild_url) A.entferneDateien([bearbeitet.bild_url])
+      produkte = produkte.filter(x => x.id !== p.id).concat(p).sort((a, b) => a.name.localeCompare(b.name, 'de'))
+      closeModal('modal-produkt')
+      zeige()
+      showToast('Gespeichert ✓')
+    } catch (e) {
+      $('p-fehler').textContent = 'Speichern fehlgeschlagen: ' + (e.message || e)
+    } finally {
+      btn.classList.remove('loading'); btn.disabled = false
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    const user = await mpInit({ nav: { backUrl: A.link('index.html'), backLabel: 'Angebote' } })
+    if (!user) return
+    document.querySelectorAll('[data-link]').forEach(a => { a.href = A.link(a.dataset.link) })
+    $('suche').addEventListener('input', zeige)
+    $('grid').addEventListener('click', e => {
+      if (e.target.closest('#neu')) return oeffne(null)
+      const b = e.target.closest('[data-aktion="bearbeiten"]'); if (!b) return
+      oeffne(produkte.find(p => p.id === b.closest('.ag-pcard').dataset.id))
+    })
+    $('p-einheit').addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return
+      einheit = b.dataset.wert; setSeg(einheit)
+    })
+    $('p-foto').addEventListener('change', async e => {
+      const datei = e.target.files && e.target.files[0]; if (!datei) return
+      try {
+        blob = await A.komprimiereFoto(datei, 1200); fotoGeaendert = true
+        const t = $('p-thumb'); t.src = URL.createObjectURL(blob); t.classList.remove('ag-thumb-leer')
+        $('p-fehler').textContent = ''
+      } catch (err) { blob = null; $('p-fehler').textContent = err.message }
+    })
+    $('p-speichern').addEventListener('click', speichern)
+    $('p-entfernen').addEventListener('click', async () => {
+      if (!bearbeitet) return
+      if (!await mpConfirm('„' + A.esc(bearbeitet.name) + '“ aus der Bibliothek entfernen? Bestehende Angebote bleiben erhalten.')) return
+      try {
+        await A.entferneProdukt(bearbeitet.id)
+        produkte = produkte.filter(p => p.id !== bearbeitet.id)
+        closeModal('modal-produkt'); zeige(); showToast('Entfernt')
+      } catch (err) { $('p-fehler').textContent = 'Fehler: ' + err.message }
+    })
+    try { produkte = await A.ladeProdukte() }
+    catch (e) { $('grid').innerHTML = `<div class="ag-empty" style="grid-column:1/-1">Produkte konnten nicht geladen werden: ${A.esc(e.message || e)}</div>`; return }
+    zeige()
+  })
+})()
+</script>
+</body>
+</html>

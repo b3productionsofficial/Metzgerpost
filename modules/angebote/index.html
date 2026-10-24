@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetzgerPost — Angebote</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="../../shared/style.css" />
+  <link rel="stylesheet" href="angebote.css" />
+</head>
+<body class="mp-bg-glow">
+<nav class="mp-nav" id="mp-nav"></nav>
+
+<main class="ag-main">
+  <div class="ag-head">
+    <h1>Angebote</h1>
+    <a class="mp-btn mp-btn-secondary" data-link="produkte.html" href="produkte.html" style="min-height:44px">Produktbibliothek</a>
+    <a class="mp-btn mp-btn-primary" data-link="bearbeiten.html" href="bearbeiten.html" style="min-height:44px">+ Neues Angebot</a>
+  </div>
+  <p class="ag-sub" id="kunde-hinweis"></p>
+
+  <div class="ag-tabs" role="tablist" aria-label="Filter" id="filter">
+    <button type="button" class="ag-tab" role="tab" data-kat="laeuft" aria-selected="true">Läuft gerade <span class="ag-count" data-count="laeuft"></span></button>
+    <button type="button" class="ag-tab" role="tab" data-kat="geplant" aria-selected="false">Geplant <span class="ag-count" data-count="geplant"></span></button>
+    <button type="button" class="ag-tab" role="tab" data-kat="vergangen" aria-selected="false">Vergangen <span class="ag-count" data-count="vergangen"></span></button>
+    <button type="button" class="ag-tab" role="tab" data-kat="entwurf" aria-selected="false">Entwürfe <span class="ag-count" data-count="entwurf"></span></button>
+  </div>
+
+  <div class="ag-list" id="liste" aria-live="polite"><div class="ag-empty">Lade Angebote …</div></div>
+  <p class="ag-hint" style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">Tipp: „Duplizieren“ übernimmt ein Angebot mit neuem Zeitraum – praktisch für wiederkehrende Aktionen. Laufende Angebote erscheinen auf Screen 3, sobald dort die neue Anzeige (screen3-v2) läuft.</p>
+</main>
+
+<!-- Bilder -->
+<div class="mp-modal-overlay" id="modal-bilder" onclick="closeModalOnOverlay(event)">
+  <div class="mp-modal ag-modal-wide" role="dialog" aria-modal="true" aria-labelledby="mb-titel">
+    <div class="mp-modal-title" id="mb-titel">Bilder</div>
+    <div class="ag-bilder" id="mb-bilder"></div>
+    <div class="mp-modal-actions"><button type="button" class="mp-btn mp-btn-secondary" onclick="closeModal('modal-bilder')">Schließen</button></div>
+  </div>
+</div>
+
+<div class="mp-toast" id="mp-toast"></div>
+<script src="../../shared/supabase.js"></script>
+<script src="../../shared/components.js"></script>
+<script src="../mittagstisch/config.js"></script>
+<script src="renderer.js"></script>
+<script src="angebote.js"></script>
+<script>
+(function () {
+  const A = window.MPAngebote, R = window.MPAngebotRenderer
+  const $ = id => document.getElementById(id)
+  let alle = [], aktiv = 'laeuft'
+
+  const STATUS = {
+    laeuft:    a => ['ag-status-laeuft', 'Läuft · noch ' + tageText(A.tageBis(a.gueltig_bis) + 1)],
+    geplant:   a => ['ag-status-geplant', 'Geplant · startet ' + startText(A.tageBis(a.gueltig_von))],
+    vergangen: a => ['ag-status-vergangen', a.status === 'beendet' ? 'Vorzeitig beendet' : 'Abgelaufen'],
+    entwurf:   () => ['ag-status-entwurf', 'Entwurf']
+  }
+  function tageText(n) { return n === 1 ? 'heute' : n + ' Tage' }
+  function startText(n) { return n === 1 ? 'morgen' : n === 0 ? 'heute' : 'in ' + n + ' Tagen' }
+
+  function sortiert(liste, kat) {
+    const s = liste.slice()
+    if (kat === 'geplant' || kat === 'laeuft') s.sort((a, b) => a.gueltig_von.localeCompare(b.gueltig_von))
+    else s.sort((a, b) => b.gueltig_von.localeCompare(a.gueltig_von))
+    return s
+  }
+
+  function zeige() {
+    const gruppen = { laeuft: [], geplant: [], vergangen: [], entwurf: [] }
+    alle.forEach(a => gruppen[A.kategorie(a)].push(a))
+    document.querySelectorAll('[data-count]').forEach(el => {
+      const n = gruppen[el.dataset.count].length
+      el.textContent = n ? '· ' + n : ''
+    })
+    document.querySelectorAll('#filter .ag-tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.kat === aktiv)))
+    const liste = sortiert(gruppen[aktiv], aktiv)
+    const box = $('liste')
+    if (!liste.length) {
+      const leer = {
+        laeuft: 'Gerade läuft kein Angebot.',
+        geplant: 'Keine geplanten Angebote.',
+        vergangen: 'Noch keine vergangenen Angebote.',
+        entwurf: 'Keine Entwürfe.'
+      }[aktiv]
+      box.innerHTML = `<div class="ag-empty">${leer} <a href="${A.esc(A.link('bearbeiten.html'))}" style="color:var(--accent)">Neues Angebot anlegen</a></div>`
+      return
+    }
+    box.innerHTML = liste.map(a => {
+      const kat = A.kategorie(a)
+      const [cls, txt] = STATUS[kat](a)
+      const preis = a.preis !== null ? R.formatPreis(a.preis) + ' € pro ' + A.einheitLang(a.einheit) : 'kein Preis'
+      const alt = a.streichpreis !== null ? ` · <span class="ag-strike">${R.formatPreis(a.streichpreis)} €</span>` : ''
+      const bild = a.render_tv_url || a.bild_url
+      const screens = (a.screens || []).map(s => s.replace('screen', 'Screen ')).join(', ') || 'kein Bildschirm'
+      const kw = A.kalenderwoche(a.gueltig_von)
+      return `
+      <article class="ag-item" data-id="${A.esc(a.id)}">
+        ${bild ? `<img class="ag-item-bild" src="${A.esc(bild)}" alt="" loading="lazy">` : '<div class="ag-item-bild"></div>'}
+        <div class="ag-item-main">
+          <div class="ag-item-title">${A.esc(a.titel)}</div>
+          <div class="ag-item-meta">${A.esc(preis)}${alt}</div>
+        </div>
+        <div class="ag-item-zeit">${A.esc(A.zeitraumKurz(a.gueltig_von, a.gueltig_bis))}<small>KW ${kw} · ${A.esc(screens)}</small></div>
+        <span class="ag-status ${cls}">${A.esc(txt)}</span>
+        <div class="ag-item-actions">
+          <a class="mp-btn mp-btn-secondary mp-btn-sm" style="min-height:44px" href="${A.esc(A.link('bearbeiten.html', { id: a.id }))}">Bearbeiten</a>
+          ${a.render_tv_url ? '<button type="button" class="mp-btn mp-btn-secondary mp-btn-sm" style="min-height:44px" data-aktion="bilder">Bilder</button>' : ''}
+          <a class="mp-btn mp-btn-secondary mp-btn-sm" style="min-height:44px" href="${A.esc(A.link('bearbeiten.html', { copy: a.id }))}">Duplizieren</a>
+          ${kat === 'laeuft' || kat === 'geplant' ? '<button type="button" class="mp-btn mp-btn-danger mp-btn-sm" style="min-height:44px" data-aktion="beenden">' + (kat === 'laeuft' ? 'Vorzeitig beenden' : 'Absagen') + '</button>' : ''}
+          ${kat === 'entwurf' || kat === 'vergangen' ? '<button type="button" class="mp-btn mp-btn-danger mp-btn-sm" style="min-height:44px" data-aktion="loeschen">Löschen</button>' : ''}
+        </div>
+      </article>`
+    }).join('')
+  }
+
+  function zeigeBilder(a) {
+    $('mb-titel').textContent = 'Bilder: ' + a.titel
+    const name = 'angebot-' + A.slug(a.titel)
+    const fig = (url, cls, titel, f) => `
+      <figure class="${cls}">
+        <img src="${A.esc(url)}" alt="${A.esc(titel)}">
+        <a class="mp-btn mp-btn-secondary mp-btn-sm" href="${A.esc(url)}" download="${A.esc(name + '-' + f + '.jpg')}" target="_blank" rel="noopener">${A.esc(titel)} herunterladen</a>
+      </figure>`
+    $('mb-bilder').innerHTML =
+      (a.render_tv_url ? fig(a.render_tv_url, 'tv', 'TV', 'tv') : '') +
+      (a.render_feed_url ? fig(a.render_feed_url, '', 'Instagram Feed', 'feed') : '') +
+      (a.render_story_url ? fig(a.render_story_url, '', 'Instagram Story', 'story') : '')
+    openModal('modal-bilder')
+  }
+
+  async function laden() {
+    try {
+      alle = await A.ladeAngebote()
+    } catch (e) {
+      $('liste').innerHTML = `<div class="ag-empty">Angebote konnten nicht geladen werden: ${A.esc(e.message || e)}</div>`
+      return
+    }
+    // Start-Tab: der erste, der etwas enthält
+    if (!alle.some(a => A.kategorie(a) === aktiv)) {
+      const erster = ['laeuft', 'geplant', 'entwurf', 'vergangen'].find(k => alle.some(a => A.kategorie(a) === k))
+      if (erster) aktiv = erster
+    }
+    zeige()
+  }
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    const user = await mpInit({ nav: { backUrl: '/dashboard.html', backLabel: 'Dashboard' } })
+    if (!user) return
+    document.querySelectorAll('[data-link]').forEach(a => { a.href = A.link(a.dataset.link) })
+    const k = new URLSearchParams(location.search).get('kunde')
+    if (k && A.kundeId() === k) $('kunde-hinweis').textContent = 'Testmodus: Du arbeitest mit dem Kunden „' + k + '“.'
+    $('filter').addEventListener('click', e => {
+      const t = e.target.closest('.ag-tab'); if (!t) return
+      aktiv = t.dataset.kat; zeige()
+    })
+    $('liste').addEventListener('click', async e => {
+      const b = e.target.closest('[data-aktion]'); if (!b) return
+      const a = alle.find(x => x.id === b.closest('.ag-item').dataset.id); if (!a) return
+      if (b.dataset.aktion === 'bilder') return zeigeBilder(a)
+      if (b.dataset.aktion === 'beenden') {
+        if (!await mpConfirm('„' + A.esc(a.titel) + '“ wirklich beenden? Es verschwindet sofort vom Bildschirm.')) return
+        try { await A.setzeStatus(a.id, 'beendet'); showToast('Angebot beendet'); laden() }
+        catch (err) { showToast('Fehler: ' + err.message, 'error') }
+      }
+      if (b.dataset.aktion === 'loeschen') {
+        if (!await mpConfirm('„' + A.esc(a.titel) + '“ endgültig löschen?')) return
+        try { await A.loescheAngebot(a); showToast('Gelöscht'); laden() }
+        catch (err) { showToast('Fehler: ' + err.message, 'error') }
+      }
+    })
+    laden()
+  })
+})()
+</script>
+</body>
+</html>

@@ -17,7 +17,7 @@ Das TV-Bild läuft im gewählten Zeitraum auf Screen 3 und verschwindet danach v
 | `modules/angebote/renderer.js` | Zeichnet die Folien auf ein Canvas (keine Abhängigkeiten) |
 | `modules/angebote/angebote.css` | Styles des Moduls (neue Designrichtung) |
 | `modules/angebote/vorlagen/<kunde>/preis-angebot.json` | Positionen, Größen, Farben, Schriften je Format |
-| `modules/angebote/vorlagen/<kunde>/bg-*.jpg` | Fester Hintergrund aus Canva (Papier, grüne Fläche, Logo, Würste, „Angebote“) |
+| `modules/angebote/vorlagen/<kunde>/bg-*.jpg` | Fester Hintergrund aus Canva (Papier, grüne Fläche, Logo, Würste, „Angebot“; aus Canva als PNG, gespeichert als JPG q95) |
 | `modules/display/screen3-v2.html` | Neuer Screen 3: Aktionsbilder + laufende Angebote |
 | `supabase/angebote.sql` | Tabellen `angebots_produkte`, `angebote` (bereits angewendet) |
 | `tests/angebote/` | Render- und Oberflächentests (lokal, ohne echte Datenbank) |

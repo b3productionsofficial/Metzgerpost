@@ -1,6 +1,6 @@
 # Bildschirme (TV) – neue Versionen
 
-Stand: 25.10.2026 · Branch `staging`
+Stand: 25.10.2026 abends · Screens v2 live; Display Manager 2.0 nur auf `staging`
 
 ## Überblick
 
@@ -10,7 +10,7 @@ Stand: 25.10.2026 · Branch `staging`
 | 2 | `modules/display/screen2-v2.html?kunde=<id>` | `screen2.html` | Bilder aus dem Display Manager + Angebote |
 | 3 | `modules/display/screen3-v2.html?kunde=<id>` | `screen3.html` | Aktionsbilder + Angebote |
 
-Alle neuen Screens nutzen `shared/screen-runtime.js` (Screen 3 v2 hat dieselbe Logik noch eingebaut):
+Alle neuen Screens nutzen `shared/screen-runtime.js` (Laufzeit) und `shared/screen-regeln.js` (Regeln, siehe `docs/REGELN.md`):
 
 - Abgleich beim Start, **alle 5 Minuten**, per Realtime, nach Mitternacht, wenn wieder online, wenn sichtbar
 - Realtime mit automatischer Wiederverbindung
@@ -19,6 +19,15 @@ Alle neuen Screens nutzen `shared/screen-runtime.js` (Screen 3 v2 hat dieselbe L
 - nächtlicher Neustart gegen 3 Uhr (nur wenn online)
 - Test: `&datum=2026-10-28` simuliert ein Datum, `&debug=1` zeigt eine Info-Box
 - Doppelklick = Vollbild, Mauszeiger verschwindet nach 3 s
+
+## Display Manager 2.0 (Testseite)
+
+`modules/display/index.html` – alte Ansicht bleibt unter `manager-alt.html`.
+- „So läuft Bildschirm X“: Folien in Reihenfolge, Rundendauer, angewandte Regeln, Warnungen – für jedes Datum (rechnet mit `screen-regeln.js` wie der TV)
+- Sonderlayouts: Tage/Datum ändern, umbenennen, pausieren, sortieren, hochladen
+- Bildschirm 2/3: Bilder pausieren, sortieren, ersetzen, Takt; Screen 3 mit Bibliothek „weitere hochgeladene Bilder“
+- „Bilder optimieren“: große Bilder → max. 1920 px JPG in `<kunde>/optimiert/`, Verweise werden umgestellt, `original` gemerkt
+- Speichert sofort, löscht nie Bilddateien
 
 ## Regeln Bildschirm 1
 
@@ -30,7 +39,8 @@ Alle neuen Screens nutzen `shared/screen-runtime.js` (Screen 3 v2 hat dieselbe L
 5. **Manueller Modus** (Display Manager) gilt nur am Tag, an dem gesendet wurde – danach automatisch zurück zur Automatik.
 6. **Sonderlayouts**: „bestimmtes Datum“ zuerst, dann die nach Wochentagen.
 7. **Angebote** mit Bildschirm 1 laufen abwechselnd mit: Mittagstisch → Angebot → Sonderlayout → Angebot …
-8. Takt: 10 Sekunden. Positionen/Schriften kommen weiterhin aus dem Editor (`screen.html?editor=true`).
+8. Pausierte Sonderlayouts (`aktiv: false`) laufen nicht.
+9. Takt: 10 Sekunden. Positionen/Schriften kommen weiterhin aus dem Editor (`screen.html?editor=true`).
 
 ## Regeln Bildschirm 2 und 3
 
@@ -54,5 +64,5 @@ Takt aus dem Display Manager.
 
 ## Tests
 
-`python3 tests/bildschirme/screens_test.py` – prüft Wochenwahl (So/Mo/Mi/Fr/Sa/ohne Woche), manuellen Modus,
+`python3 tests/regeln/run_all.py` – alle Regeltests (41 Prüfungen). Einzeln: `python3 tests/bildschirme/screens_test.py` – prüft Wochenwahl (So/Mo/Mi/Fr/Sa/ohne Woche), manuellen Modus,
 Live-Änderung, Mischung mit Angeboten, Screen 2 und vergleicht die Darstellung alt/neu (Screenshots in `tests/bildschirme/out/`).

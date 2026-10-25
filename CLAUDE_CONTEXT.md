@@ -428,7 +428,23 @@ Neuer Kunde hinzufügen: Eintrag in `kunden`, `kundenGerichte`, `kundenLayouts` 
 
 ## 12. Changelog
 
-### 2026-10-25 (Branch `staging`, noch nicht auf main)
+### 2026-10-25 abends / Nacht (nur `staging`, noch NICHT live)
+- **Regeln an einer Stelle:** `shared/screen-regeln.js` (Wochenwahl, Sonderlayouts, Angebote, Mischung) – genutzt von
+  `screen-v2`, `screen2-v2`, `screen3-v2` und der Vorschau im Display Manager. Regelkatalog: `docs/REGELN.md`.
+- **Regressionstests:** `python3 tests/regeln/run_all.py` (41 Prüfungen) – nach JEDER Änderung laufen lassen.
+- **Display Manager 2.0** (`modules/display/index.html`, alt: `manager-alt.html`): „So läuft Bildschirm X“ für jedes Datum,
+  Sonderlayouts/Bilder bearbeiten, pausieren (`aktiv: false`), sortieren, Takt; „Bilder optimieren“ (→ `<kunde>/optimiert/`,
+  `original` wird gemerkt); speichert sofort; löscht nie Bilddateien.
+- Mittagstisch-Layouts als JPG (`assets/Bildschirm_1_*.jpg`, 0,8 statt 6,6 MB) für `screen-v2` und Display Manager.
+- **Mandantenfähigkeit vorbereitet, NICHT angewendet:** `supabase/mandanten.sql`, Rückweg `mandanten_rueckgaengig.sql`,
+  Test `tests/regeln/mandanten_test.sh` (lokale Postgres, 23 Fälle). Plan: `docs/MANDANTEN.md`.
+
+### 2026-10-25 nachmittags (live auf `main`)
+- Angebote-Modul, `screen-v2`/`screen2-v2`/`screen3-v2` (gemeinsame Laufzeit `shared/screen-runtime.js`), Generator speichert
+  Woche beim gewählten Kunden + aktualisiert statt doppelt, Realtime für `wochen`, `display_configs`, `screen2_config`,
+  `screen3_config` eingeschaltet (NICHT `displays` – alte Screens reagieren falsch). Doku: `docs/BILDSCHIRME.md`.
+
+### 2026-10-25 (Angebote, Grundstein)
 - **feat: Modul Angebote** (`modules/angebote/`): Übersicht, Editor mit Live-Vorschau, Produktbibliothek, Canvas-Renderer
   für TV/Feed/Story, Vorlage aus Canva (`vorlagen/sorgundseitz/preis-angebot.json` + Hintergründe). Doku: `docs/ANGEBOTE.md`
 - **feat: `modules/display/screen3-v2.html`**: Aktionsbilder + laufende Angebote nach Datum, Polling-Fallback, Reconnect

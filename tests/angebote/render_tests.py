@@ -22,7 +22,7 @@ with sync_playwright() as pw:
       for(const c of cases){ for(const f of (c.formate||['tv','feed','story'])){
         const cv=document.createElement('canvas');
         await MPAngebotRenderer.render(cv,v,f,c.angebot,'/modules/angebote/vorlagen/sorgundseitz/');
-        out[c.name+'_'+f]=cv.toDataURL('image/jpeg',0.85);
+        out[c.name+'_'+f]=cv.toDataURL('image/jpeg',0.95);
       }}
       return out}""", CASES)
     for k,v in res.items():

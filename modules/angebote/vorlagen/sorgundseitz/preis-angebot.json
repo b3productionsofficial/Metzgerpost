@@ -1,6 +1,6 @@
 {
   "id": "preis-angebot",
-  "name": "Preis-Angebot (Layout Folie 24)",
+  "name": "Preis-Angebot (Layout Folie 24, Stand 25.10.)",
   "quelle": "Canva: 'Angebot KW44 – Rinderlende – TV (Layout Folie 24)', '… Instagram Feed', '… Instagram Story'",
   "farben": {
     "kreis": "#b5d6a8",
@@ -19,70 +19,72 @@
       "hoehe": 1080,
       "hintergrund": "bg-tv.jpg",
       "grosserKreis": {
-        "x": 192,
-        "y": 266,
-        "d": 426
+        "x": 420,
+        "y": 337,
+        "d": 389
       },
       "preis": {
-        "x": 192,
-        "y": 402,
-        "w": 426,
-        "maxW": 300,
-        "groesse": 120,
+        "x": 420,
+        "y": 461,
+        "w": 389,
+        "maxW": 274,
+        "groesse": 110,
         "gewicht": 800
       },
       "einheit": {
-        "x": 192,
-        "y": 530,
-        "w": 426,
-        "groesse": 46,
+        "x": 420,
+        "y": 578,
+        "w": 389,
+        "groesse": 42,
         "gewicht": 700
       },
       "kleinerSchatten": {
-        "x": 498,
-        "y": 217,
-        "d": 240,
+        "x": 699,
+        "y": 293,
+        "d": 219,
         "deckkraft": 0.4
       },
       "kleinerKreis": {
-        "x": 512,
-        "y": 200,
-        "d": 240
+        "x": 712,
+        "y": 277,
+        "d": 219
       },
       "statt": {
-        "x": 512,
-        "y": 262,
-        "w": 240,
-        "groesse": 32,
+        "x": 712,
+        "y": 334,
+        "w": 219,
+        "groesse": 29,
         "gewicht": 700
       },
       "alterPreis": {
-        "x": 512,
-        "y": 302,
-        "w": 240,
-        "maxW": 172,
-        "groesse": 52,
+        "x": 712,
+        "y": 370,
+        "w": 219,
+        "maxW": 157,
+        "groesse": 47,
         "gewicht": 700
       },
       "name": {
         "x": 184,
-        "y": 717,
-        "w": 590,
-        "groesse": 50,
-        "minGroesse": 40,
+        "y": 786,
+        "w": 770,
+        "groesse": 90,
+        "minGroesse": 50,
         "zeilenhoehe": 1.4,
-        "maxZeilen": 3
+        "maxZeilen": 2,
+        "maxUnten": 1040,
+        "einzeiligMin": 70
       },
       "zeitraum": {
         "x": 184,
-        "abstand": 3,
-        "w": 600,
-        "groesse": 33,
+        "abstand": 12,
+        "w": 770,
+        "groesse": 43.6,
         "zeilenhoehe": 1.4
       },
       "foto": {
-        "x": 787,
-        "y": 239,
+        "x": 976.6,
+        "y": 239.3,
         "d": 717.5,
         "rand": 9
       }
@@ -141,16 +143,18 @@
         "x": 50,
         "y": 965,
         "w": 980,
-        "groesse": 58,
-        "minGroesse": 40,
+        "groesse": 76,
+        "minGroesse": 48,
         "zeilenhoehe": 1.4,
-        "maxZeilen": 2
+        "maxZeilen": 2,
+        "maxUnten": 1300,
+        "einzeiligMin": 58
       },
       "zeitraum": {
         "x": 50,
-        "abstand": 4,
+        "abstand": 6,
         "w": 980,
-        "groesse": 36,
+        "groesse": 44,
         "zeilenhoehe": 1.4
       },
       "foto": {
@@ -165,73 +169,74 @@
       "hoehe": 1920,
       "hintergrund": "bg-story.jpg",
       "grosserKreis": {
-        "x": 60,
-        "y": 520,
-        "d": 400
+        "x": 40,
+        "y": 570,
+        "d": 330
       },
       "preis": {
-        "x": 60,
-        "y": 652,
-        "w": 400,
-        "maxW": 290,
-        "groesse": 110,
+        "x": 40,
+        "y": 675,
+        "w": 330,
+        "maxW": 235,
+        "groesse": 92,
         "gewicht": 800
       },
       "einheit": {
-        "x": 60,
-        "y": 770,
-        "w": 400,
-        "groesse": 44,
+        "x": 40,
+        "y": 773,
+        "w": 330,
+        "groesse": 36,
         "gewicht": 700
       },
       "kleinerSchatten": {
-        "x": 362,
-        "y": 462,
-        "d": 230,
+        "x": 279,
+        "y": 509,
+        "d": 190,
         "deckkraft": 0.4
       },
       "kleinerKreis": {
-        "x": 375,
-        "y": 445,
-        "d": 230
+        "x": 290,
+        "y": 495,
+        "d": 190
       },
       "statt": {
-        "x": 375,
-        "y": 502,
-        "w": 230,
-        "groesse": 30,
+        "x": 290,
+        "y": 542,
+        "w": 190,
+        "groesse": 26,
         "gewicht": 700
       },
       "alterPreis": {
-        "x": 375,
-        "y": 540,
-        "w": 230,
-        "maxW": 162,
-        "groesse": 48,
+        "x": 290,
+        "y": 574,
+        "w": 190,
+        "maxW": 134,
+        "groesse": 40,
         "gewicht": 700
       },
       "name": {
-        "x": 640,
-        "y": 600,
-        "w": 410,
-        "groesse": 60,
-        "minGroesse": 42,
+        "x": 50,
+        "y": 1115,
+        "w": 980,
+        "groesse": 76,
+        "minGroesse": 48,
         "zeilenhoehe": 1.4,
-        "maxZeilen": 3
+        "maxZeilen": 2,
+        "maxUnten": 1450,
+        "einzeiligMin": 58
       },
       "zeitraum": {
-        "x": 640,
-        "abstand": 12,
-        "w": 410,
-        "groesse": 36,
-        "zeilenhoehe": 1.4,
-        "maxZeilen": 1
+        "x": 50,
+        "abstand": 6,
+        "w": 980,
+        "groesse": 44,
+        "zeilenhoehe": 1.4
       },
       "foto": {
-        "x": 190,
-        "y": 965,
-        "d": 700,
-        "rand": 10
+        "x": 475,
+        "y": 485,
+        "d": 560,
+        "rand": 9
       }
     }
   }

@@ -325,7 +325,8 @@
       for (const f of ['tv', 'feed', 'story']) {
         const cv = document.createElement('canvas')
         await R.render(cv, vorlage.daten, f, daten, vorlage.basis)
-        const blob = await R.alsBlob(cv, 'image/jpeg', f === 'tv' ? 0.86 : 0.9)
+        // hohe Qualität: das Bild wird nur einmal pro Angebot geladen, Schärfe ist wichtiger als ein paar KB
+        const blob = await R.alsBlob(cv, 'image/jpeg', 0.95)
         urls[f] = await A.ladeHoch(blob, id + '-' + f + '-' + ts + '.jpg')
       }
       const sp = A.parsePreis(st.streichpreis)
@@ -431,7 +432,7 @@
       const f = b.dataset.download
       const cv = document.createElement('canvas')
       await R.render(cv, vorlage.daten, f, angebotFuerRender(), vorlage.basis)
-      A.herunterladen(await R.alsBlob(cv, 'image/jpeg', 0.92), 'angebot-' + A.slug(st.titel) + '-' + f + '.jpg')
+      A.herunterladen(await R.alsBlob(cv, 'image/jpeg', 0.95), 'angebot-' + A.slug(st.titel) + '-' + f + '.jpg')
     }))
     $('form').addEventListener('submit', e => { e.preventDefault(); speichern(false) })
     $('btn-entwurf').addEventListener('click', () => speichern(true))

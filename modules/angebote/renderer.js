@@ -129,16 +129,28 @@
     return zeilen
   }
 
-  // Text mit max. Zeilen; verkleinert die Schrift, bis es passt
-  function textBlock(ctx, text, box, familie, farbe) {
+  // Text mit max. Zeilen; verkleinert die Schrift, bis es passt.
+  // reserve: Platz, der darunter noch frei bleiben muss (z. B. für den Zeitraum),
+  // box.maxUnten: unterste erlaubte Kante des ganzen Blocks.
+  function textBlock(ctx, text, box, familie, farbe, reserve) {
     let g = box.groesse
     const maxZ = box.maxZeilen || 2
+    const zh = box.zeilenhoehe || 1.4
     let zeilen
-    for (;;) {
+    // Zuerst versuchen, den Text einzeilig zu halten (bis box.einzeiligMin), erst dann umbrechen
+    if (box.einzeiligMin) {
+      for (let e = box.groesse; e >= box.einzeiligMin; e -= 2) {
+        ctx.font = font(700, e, familie)
+        if (ctx.measureText(String(text).trim()).width <= box.w) { g = e; zeilen = [String(text).trim()]; break }
+      }
+    }
+    if (!zeilen) for (;;) {
       ctx.font = font(700, g, familie)
       zeilen = umbrechen(ctx, text, box.w)
       const zuBreit = zeilen.some(z => ctx.measureText(z).width > box.w)
-      if ((zeilen.length <= maxZ && !zuBreit) || g <= (box.minGroesse || 24)) break
+      const zuHoch = box.maxUnten !== undefined &&
+        box.y + zeilen.length * g * zh + (reserve || 0) > box.maxUnten
+      if ((zeilen.length <= maxZ && !zuBreit && !zuHoch) || g <= (box.minGroesse || 24)) break
       g -= 2
     }
     if (zeilen.length > maxZ) {
@@ -247,8 +259,9 @@
     }
 
     // 5. Produktname + Zeitraum
-    const nameEnde = textBlock(ctx, angebot.titel || '', L.name, S.text, F.text)
     const zr = formatZeitraum(angebot.gueltig_von, angebot.gueltig_bis)
+    const reserve = zr ? (L.zeitraum.abstand || 0) + L.zeitraum.groesse * (L.zeitraum.zeilenhoehe || 1.4) : 0
+    const nameEnde = textBlock(ctx, angebot.titel || '', L.name, S.text, F.text, reserve)
     if (zr) {
       textBlock(ctx, zr, {
         x: L.zeitraum.x, y: nameEnde + (L.zeitraum.abstand || 0), w: L.zeitraum.w,
@@ -260,7 +273,7 @@
   }
 
   function alsBlob(canvas, typ, qualitaet) {
-    return new Promise(resolve => canvas.toBlob(resolve, typ || 'image/jpeg', qualitaet || 0.88))
+    return new Promise(resolve => canvas.toBlob(resolve, typ || 'image/jpeg', qualitaet || 0.95))
   }
 
   window.MPAngebotRenderer = { render, alsBlob, formatPreis, formatZeitraum, einheitText, parseDatum, ladeBild }

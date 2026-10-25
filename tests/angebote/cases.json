@@ -1,7 +1,77 @@
 [
- {"name":"01_rinderlende","angebot":{"titel":"Frische Rinderlende","preis":39.9,"einheit":"kg","streichpreis":46.2,"gueltig_von":"2026-10-26","gueltig_bis":"2026-10-31","bild_url":"/modules/mittagstisch/Gerichte/lende.jpg"}},
- {"name":"02_ohne_streichpreis","angebot":{"titel":"Schweinekotelett","preis":2.49,"einheit":"100g","streichpreis":null,"gueltig_von":"2026-11-02","gueltig_bis":"2026-11-07","bild_url":"/modules/mittagstisch/Gerichte/kotelett.jpg"}},
- {"name":"03_langer_preis","angebot":{"titel":"Fränkisches Schäufele","preis":139.9,"einheit":"stueck","streichpreis":149.9,"gueltig_von":"2026-12-28","gueltig_bis":"2027-01-02","bild_url":"/modules/mittagstisch/Gerichte/schaeufele.jpg"}},
- {"name":"04_langer_name","angebot":{"titel":"Schwarzwälder Bauernschinken, geräuchert und hauchdünn geschnitten","preis":1.99,"einheit":"100g","streichpreis":2.49,"gueltig_von":"2026-10-26","gueltig_bis":"2026-10-31","bild_url":"/modules/mittagstisch/Gerichte/backschinken.jpg"}},
- {"name":"05_kein_foto","angebot":{"titel":"Hausmacher Leberwurst","preis":1.29,"einheit":"100g","streichpreis":null,"gueltig_von":"2026-10-26","gueltig_bis":"2026-10-31","bild_url":null},"formate":["tv"]}
+ {
+  "name": "01_rinderlende",
+  "angebot": {
+   "titel": "Frische Rinderlende",
+   "preis": 39.9,
+   "einheit": "kg",
+   "streichpreis": 46.2,
+   "gueltig_von": "2026-10-26",
+   "gueltig_bis": "2026-10-31",
+   "bild_url": "/modules/mittagstisch/Gerichte/lende.jpg"
+  }
+ },
+ {
+  "name": "01b_rinderleber",
+  "angebot": {
+   "titel": "Rinderleber",
+   "preis": 12.9,
+   "einheit": "kg",
+   "streichpreis": 15.9,
+   "gueltig_von": "2026-10-26",
+   "gueltig_bis": "2026-10-31",
+   "bild_url": "/modules/mittagstisch/Gerichte/lende.jpg"
+  }
+ },
+ {
+  "name": "02_ohne_streichpreis",
+  "angebot": {
+   "titel": "Schweinekotelett",
+   "preis": 2.49,
+   "einheit": "100g",
+   "streichpreis": null,
+   "gueltig_von": "2026-11-02",
+   "gueltig_bis": "2026-11-07",
+   "bild_url": "/modules/mittagstisch/Gerichte/kotelett.jpg"
+  }
+ },
+ {
+  "name": "03_langer_preis",
+  "angebot": {
+   "titel": "Fränkisches Schäufele",
+   "preis": 139.9,
+   "einheit": "stueck",
+   "streichpreis": 149.9,
+   "gueltig_von": "2026-12-28",
+   "gueltig_bis": "2027-01-02",
+   "bild_url": "/modules/mittagstisch/Gerichte/schaeufele.jpg"
+  }
+ },
+ {
+  "name": "04_langer_name",
+  "angebot": {
+   "titel": "Schwarzwälder Bauernschinken, geräuchert und hauchdünn geschnitten",
+   "preis": 1.99,
+   "einheit": "100g",
+   "streichpreis": 2.49,
+   "gueltig_von": "2026-10-26",
+   "gueltig_bis": "2026-10-31",
+   "bild_url": "/modules/mittagstisch/Gerichte/backschinken.jpg"
+  }
+ },
+ {
+  "name": "05_kein_foto",
+  "angebot": {
+   "titel": "Hausmacher Leberwurst",
+   "preis": 1.29,
+   "einheit": "100g",
+   "streichpreis": null,
+   "gueltig_von": "2026-10-26",
+   "gueltig_bis": "2026-10-31",
+   "bild_url": null
+  },
+  "formate": [
+   "tv"
+  ]
+ }
 ]

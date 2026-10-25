@@ -160,11 +160,6 @@
 
   <!-- Haupt-Panel -->
   <div class="panel mp-animate">
-    <div class="panel-tabs">
-      <div class="panel-tab active" id="tab-s1" onclick="switchScreen('s1')">📺 Bildschirm 1</div>
-      <div class="panel-tab" id="tab-s2" onclick="switchScreen('s2')">📋 Bildschirm 2</div>
-      <div class="panel-tab" id="tab-s3" onclick="switchScreen('s3')">🏷️ Bildschirm 3</div>
-    </div>
 
     <!-- ══ S1 ══ -->
     <div class="tab-content show" id="tc-s1">
@@ -396,7 +391,6 @@ async function zeigeAngeboteHinweis() {
 function switchScreen(id) {
   ['s1','s2','s3'].forEach(s => {
     document.getElementById('card-'+s).classList.toggle('active', s===id)
-    document.getElementById('tab-'+s).classList.toggle('active', s===id)
     document.getElementById('tc-'+s).classList.toggle('show', s===id)
   })
 }
@@ -550,7 +544,7 @@ function buildSonderGrid() {
   grid.innerHTML = sonderLayouts.map((sl,i) => {
     const tag = sl.type === 'datum' ? sl.datum : sl.wochentage.map(d => dayNames[d]).join('/')
     return `<div class="sonder-card">
-      <img src="${sl.bild}?t=${Date.now()}" onerror="this.style.background='var(--surface)'">
+      <img src="${sl.bild}" loading="lazy" decoding="async" onerror="this.style.background='var(--surface)'">
       <div class="sonder-card-body">
         <div class="sonder-label">${sl.label}</div>
         <div class="sonder-tag">${tag}</div>
@@ -662,7 +656,7 @@ function buildS2UI() {
   document.getElementById('s2-ui').innerHTML = s2Data.slides.map((slide, si) => `
     <div class="slide-block">
       <div class="slide-lbl">📋 ${slide.label}</div>
-      ${slide.bild ? `<div style="position:relative"><img src="${slide.bild}?t=${Date.now()}" class="prev-img"><button onclick="delS2Bg(${si})" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer">✕</button></div>` : ''}
+      ${slide.bild ? `<div style="position:relative"><img src="${slide.bild}" class="prev-img" loading="lazy" decoding="async"><button onclick="delS2Bg(${si})" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer">✕</button></div>` : ''}
       <div class="upload-area">
         <input type="file" accept="image/*" onchange="uploadS2Bg(${si},this.files[0])">
         <strong>${slide.bild ? '🔄 Hintergrundbild ändern' : '📁 Hintergrundbild hochladen'}</strong>
@@ -677,7 +671,7 @@ function buildS2UI() {
       <button class="btn-xs" style="margin-top:4px" onclick="addSek(${si})">+ Sektion</button>
     </div>`).join('')
   document.getElementById('s2-prev-grid').innerHTML = s2Data.slides.filter(s=>s.bild).map(s=>
-    `<div class="prev-card"><img src="${s.bild}?t=${Date.now()}"><div class="prev-card-label">${s.label}<span class="badge-active">aktiv</span></div></div>`
+    `<div class="prev-card"><img src="${s.bild}" loading="lazy" decoding="async"><div class="prev-card-label">${s.label}<span class="badge-active">aktiv</span></div></div>`
   ).join('') || '<div class="empty-hint">Noch keine Bilder</div>'
 }
 
@@ -742,12 +736,12 @@ function buildS3UI() {
   const grid = document.getElementById('s3-grid')
   grid.innerHTML = s3Layouts.length ? s3Layouts.map(lay => `
     <div class="lay-card ${s3Selected.includes(lay.id)?'sel':''}" onclick="toggleS3('${lay.id}',this)">
-      <img src="${lay.bild}" onerror="this.style.background='var(--surface)'">
+      <img src="${lay.bild}" loading="lazy" decoding="async" onerror="this.style.background='var(--surface)'">
       <div class="lay-card-body"><span class="lay-name">${lay.label}</span><div class="lay-check">✓</div><button class="lay-del" onclick="delS3Layout(event,'${lay.id}')">✕</button></div>
     </div>`).join('') : '<div class="empty-hint" style="grid-column:1/-1">Noch keine Layouts hochgeladen</div>'
   const active = s3Layouts.filter(l => s3Selected.includes(l.id))
   document.getElementById('s3-prev-grid').innerHTML = active.length ? active.map(l=>
-    `<div class="prev-card"><img src="${l.bild}"><div class="prev-card-label">${l.label}<span class="badge-active">aktiv</span></div></div>`
+    `<div class="prev-card"><img src="${l.bild}" loading="lazy" decoding="async"><div class="prev-card-label">${l.label}<span class="badge-active">aktiv</span></div></div>`
   ).join('') : '<div class="empty-hint">Keine Layouts ausgewählt</div>'
 }
 

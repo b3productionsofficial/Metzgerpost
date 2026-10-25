@@ -94,9 +94,9 @@
       <!-- 4 Bildschirme -->
       <section class="ag-card ag-step" aria-labelledby="s4">
         <div class="ag-step-head"><span class="ag-step-num">4</span><h2 id="s4">Bildschirme</h2></div>
-        <label class="ag-screen"><input type="checkbox" id="screen3" checked /><span><strong>Screen 3</strong> <span class="ag-hint">· läuft in der Rotation mit den Aktionsbildern</span></span></label>
-        <label class="ag-screen disabled"><input type="checkbox" disabled /><span>Screen 1 – Mittagstisch</span><span class="ag-tag">folgt</span></label>
-        <label class="ag-screen disabled"><input type="checkbox" disabled /><span>Screen 2 – Preislisten</span><span class="ag-tag">folgt</span></label>
+        <label class="ag-screen"><input type="checkbox" id="screen1" data-screen="screen1" /><span><strong>Screen 1</strong> <span class="ag-hint">· im Wechsel mit Mittagstisch und Sonderlayouts</span></span></label>
+        <label class="ag-screen"><input type="checkbox" id="screen2" data-screen="screen2" /><span><strong>Screen 2</strong> <span class="ag-hint">· im Wechsel mit den Preislisten</span></span></label>
+        <label class="ag-screen"><input type="checkbox" id="screen3" data-screen="screen3" checked /><span><strong>Screen 3</strong> <span class="ag-hint">· im Wechsel mit den Aktionsbildern</span></span></label>
       </section>
 
       <div id="fehler" class="ag-error" role="alert"></div>
@@ -285,7 +285,7 @@
     $('bestaetigt-zeile').hidden = !$('streichpreis').value.trim()
     setSeg($('einheit'), st.einheit)
     $('von').value = st.von; $('bis').value = st.bis
-    $('screen3').checked = st.screens.includes('screen3')
+    document.querySelectorAll('[data-screen]').forEach(c => { c.checked = st.screens.includes(c.dataset.screen) })
     zeigeGewaehlt(); zeitInfo(); vorschau()
   }
 
@@ -421,7 +421,10 @@
       zeitInfo(); markiereDirty(); vorschau()
     })
     $('bis').addEventListener('change', e => { st.bis = e.target.value; zeitInfo(); markiereDirty(); vorschau() })
-    $('screen3').addEventListener('change', e => { st.screens = e.target.checked ? ['screen3'] : []; markiereDirty() })
+    document.querySelectorAll('[data-screen]').forEach(c => c.addEventListener('change', () => {
+      st.screens = [...document.querySelectorAll('[data-screen]')].filter(x => x.checked).map(x => x.dataset.screen)
+      markiereDirty()
+    }))
     $('format-tabs').addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return
       format = b.dataset.format

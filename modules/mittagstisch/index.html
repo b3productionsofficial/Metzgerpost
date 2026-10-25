@@ -759,22 +759,35 @@ async function saveWocheToSupabase() {
 
   const sb = getSB();
 
-  // Kunde-ID aus Session
+  // Kunde-ID: gewählter Kunde (Admin) bzw. eigener Betrieb – nicht einfach die Login-ID,
+  // sonst landet eine vom Admin gespeicherte Woche beim Admin statt beim Kunden
   const user = await MP.getUser();
-  const kundeId = user ? user.id.substring(0, 8) : 'demo';
+  window._mpUser = window._mpUser || user;
+  try { await MP.loadUserPlan(); } catch (e) {}
+  const kundeId = MP.getAktiveKundeId() || (user ? user.id.substring(0, 8) : 'demo');
 
   btn.textContent = '⏳ Wird gespeichert…';
   btn.disabled = true;
 
   const parsed = parseDatumLabel(wocheLabel);
-  const { error } = await sb.from('wochen').insert({
+  const zeile = {
     kunde_id: kundeId,
     woche_label: wocheLabel,
     kw: parsed.kw || getKW(),
     jahr: parsed.jahr || new Date().getFullYear(),
     gueltig_ab: parsed.date,
     gerichte: gerichte
-  });
+  };
+  // Gleiche Woche nochmal gespeichert (z. B. korrigiert)? → vorhandenen Eintrag aktualisieren statt
+  // einen zweiten anzulegen (sonst ist Zufall, welcher am Bildschirm läuft)
+  let vorhanden = null;
+  if (parsed.date) {
+    const r = await sb.from('wochen').select('id').eq('kunde_id', kundeId).eq('gueltig_ab', parsed.date).limit(1);
+    vorhanden = r && r.data && r.data[0] ? r.data[0].id : null;
+  }
+  const { error } = vorhanden
+    ? await sb.from('wochen').update(zeile).eq('id', vorhanden)
+    : await sb.from('wochen').insert(zeile);
 
   btn.disabled = false;
   btn.innerHTML = '💾 Als Woche speichern (Display)';
@@ -784,7 +797,7 @@ async function saveWocheToSupabase() {
     statusEl.textContent = '❌ Fehler: ' + error.message;
   } else {
     statusEl.style.color = '#2d6a4f';
-    statusEl.textContent = '✅ Woche "' + wocheLabel + '" gespeichert! Im Display Manager auswählen und senden.';
+    statusEl.textContent = '✅ Woche "' + wocheLabel + '" ' + (vorhanden ? 'aktualisiert' : 'gespeichert') + ' – erscheint automatisch auf Bildschirm 1.';
   }
   statusEl.style.display = 'block';
   setTimeout(() => { statusEl.style.display = 'none'; }, 5000);

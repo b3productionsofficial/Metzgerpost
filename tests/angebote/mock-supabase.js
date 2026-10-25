@@ -20,7 +20,8 @@
     update(p){this.op='update';this.payload=p;return this}
     upsert(p){this.op='upsert';this.payload=p;return this}
     delete(){this.op='delete';return this}
-    then(res,rej){try{res(this.run())}catch(e){rej(e)}}
+    then(res,rej){return new Promise((ok,no)=>{try{ok(this.run())}catch(e){no(e)}}).then(res,rej)}
+    catch(rej){return this.then(null,rej)}
     run(){
       const db=load(); db[this.t]=db[this.t]||[]; let rows=db[this.t]; let out
       const now=new Date().toISOString()

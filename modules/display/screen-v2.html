@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MetzgerPost — Screen 1</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;800&family=Lora:wght@400;600;700&family=Lato:wght@400;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{background:#000;width:100vw;height:100vh;overflow:hidden}
+    body{display:flex;align-items:center;justify-content:center}
+    #screen{position:relative;width:100vw;height:calc(100vw * 9/16);max-height:100vh;max-width:calc(100vh * 16/9);overflow:hidden;background:#000}
+    #mt{position:absolute;inset:0;opacity:0;transition:opacity .6s}
+    #mt.active{opacity:1}
+    #bg-image{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
+    #overlay{position:absolute;inset:0;pointer-events:none}
+    #datum-overlay{position:absolute;pointer-events:none;white-space:nowrap}
+    .day-circle{position:absolute;border-radius:50%;overflow:hidden;border:3px solid #fff;box-shadow:0 3px 12px rgba(0,0,0,.25);transform:translate(-50%,-50%)}
+    .day-circle img{width:100%;height:100%;object-fit:cover}
+    .day-circle .ph{width:100%;height:100%;background:linear-gradient(135deg,#87CEEB,#90EE90);display:flex;align-items:center;justify-content:center;font-size:1.5em}
+    .day-text{position:absolute;text-align:center;transform:translateX(-50%);line-height:1.3}
+    .day-price{position:absolute;transform:translate(-50%,-50%);font-weight:700;text-align:center}
+    .bild{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s}
+    .bild.active{opacity:1}
+    #no-content{display:none;position:absolute;inset:0;background:#e8e4de;align-items:center;justify-content:center;flex-direction:column;gap:16px;font-family:Georgia,serif;color:#2d4a2d;text-align:center;z-index:20}
+    #no-content.show{display:flex}
+    #no-content h1{font-size:3.5vw}
+    #no-content p{font-size:1.6vw;color:#666}
+  </style>
+</head>
+<body>
+<div id="screen">
+  <div id="mt">
+    <img id="bg-image" alt="">
+    <div id="overlay"><div id="datum-overlay"></div><div id="gerichte-overlay"></div></div>
+  </div>
+  <div id="bilder"></div>
+  <div id="no-content"><h1>Gleich geht’s weiter</h1><p>Zurzeit sind keine Inhalte aktiv.</p></div>
+</div>
+
+<script src="../../shared/screen-runtime.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════
+   Screen 1 (v2): Mittagstisch + Sonderlayouts + Angebote
+   Gleiche Darstellung wie screen.html (Layouts + Positionen aus dem Editor),
+   aber mit stabiler Laufzeit und klaren Regeln:
+   - Mittagstisch nur an den eingestellten Tagen und nur, wenn für diese Woche
+     eine Woche gespeichert ist (Sa/So: schon die nächste Woche, falls vorhanden)
+   - Tage ohne eigenes Gericht (Mo/Sa/So) zeigen das Dienstag-Layout
+   - Manueller Modus gilt nur am Tag, an dem er gesendet wurde
+   - Angebote (Screen 1) laufen abwechselnd mit
+   Parameter: ?kunde=<id>[&screen=screen1]  optional: &datum=YYYY-MM-DD, &debug=1
+══════════════════════════════════════════════════════════════ */
+var SCREEN_ID = new URLSearchParams(location.search).get('screen') || 'screen1'
+var TAKT_SEK  = 10
+var TAGE      = ['dienstag', 'mittwoch', 'donnerstag', 'freitag']
+var DAY_MAP   = { 2: 'dienstag', 3: 'mittwoch', 4: 'donnerstag', 5: 'freitag' }
+var FONTS     = { 'Georgia': 'Georgia, serif', 'Playfair': "'Playfair Display', Georgia, serif", 'Lora': "'Lora', Georgia, serif", 'Lato': "'Lato', Arial, sans-serif", 'Open Sans': "'Open Sans', Arial, sans-serif" }
+var LAYOUTS   = { dienstag: 'assets/Bildschirm_1_Dienstag.png', mittwoch: 'assets/Bildschirm_1_Mittwoch.png', donnerstag: 'assets/Bildschirm_1_Donnerstag.png', freitag: 'assets/Bildschirm_1_Freitag.png' }
+
+/* Standard-Positionen (identisch zu screen.html) */
+function slotSmall (x) { return { img: { x: x, y: 32, r: 3.2 }, text: { x: x, y: 55, w: 14, size: 1.4, font: 'Georgia', color: '#1a1a1a' }, preis: { x: x, y: 68, size: 1.2, font: 'Georgia', color: '#1a1a1a' } } }
+function slotBig (x) { return { img: { x: x, y: 34, r: 5.0 }, text: { x: x, y: 60, w: 18, size: 2.0, font: 'Georgia', color: '#1a1a1a' }, preis: { x: x, y: 76, size: 1.6, font: 'Georgia', color: '#1a1a1a' } } }
+function makeLayout (big) {
+  var xs = { dienstag: 12.5, mittwoch: 37.5, donnerstag: 62.5, freitag: 87.5 }
+  var l = { datum: { x: 50, y: 5, size: 2.2, font: 'Georgia', color: '#2d2d2d' } }
+  TAGE.forEach(function (d) { l[d] = d === big ? slotBig(xs[d]) : slotSmall(xs[d]) })
+  return l
+}
+function standardConfig () { var c = {}; TAGE.forEach(function (d) { c[d] = makeLayout(d) }); return c }
+
+/* ── Datum-Helfer ── */
+function ohneZeit (d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()) }
+function montagVon (d) { var x = ohneZeit(d); var w = x.getDay(); x.setDate(x.getDate() - (w === 0 ? 6 : w - 1)); return x }
+function ausIso (s) { var p = String(s).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]) }
+function kwVon (d) {
+  var dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
+  dt.setUTCDate(dt.getUTCDate() + 4 - (dt.getUTCDay() || 7))
+  var y1 = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1))
+  return { kw: Math.ceil((((dt - y1) / 86400000) + 1) / 7), jahr: dt.getUTCFullYear() }
+}
+function wocheFuer (wochen, montag) {
+  var ziel = MPScreen.isoAus(montag)
+  for (var i = 0; i < wochen.length; i++) {
+    var w = wochen[i]
+    if (w.gueltig_ab && MPScreen.isoAus(montagVon(ausIso(w.gueltig_ab))) === ziel) return w
+  }
+  var k = kwVon(montag)
+  for (var j = 0; j < wochen.length; j++) {
+    if (!wochen[j].gueltig_ab && wochen[j].kw === k.kw && wochen[j].jahr === k.jahr) return wochen[j]
+  }
+  return null
+}
+/* Welche Woche gilt heute? Mo–Fr: diese Woche. Sa/So: nächste Woche, sonst diese. */
+function aktiveWoche (wochen, heute) {
+  var mo = montagVon(heute)
+  var tag = heute.getDay()
+  if (tag === 6 || tag === 0) {
+    var naechster = new Date(mo); naechster.setDate(mo.getDate() + 7)
+    var n = wocheFuer(wochen, naechster)
+    if (n) return { woche: n, naechste: true }
+  }
+  var w = wocheFuer(wochen, mo)
+  return w ? { woche: w, naechste: false } : null
+}
+/* Welches Layout (welcher Tag groß)? */
+function layoutTag (gerichte, tag, naechste) {
+  var key = naechste ? null : DAY_MAP[tag]
+  if (key && gerichte[key] && gerichte[key][0]) return key
+  for (var i = 0; i < TAGE.length; i++) if (gerichte[TAGE[i]] && gerichte[TAGE[i]][0]) return TAGE[i]
+  return 'dienstag'
+}
+function bildPfad (b) { return !b ? '' : (/^https?:|^\//.test(b) ? b : '../../' + b) }
+
+/* ── Mittagstisch zeichnen (wie screen.html, ohne Editor) ── */
+var aktuellesMt = null
+function zeichneMittagstisch (mt, config) {
+  aktuellesMt = { mt: mt, config: config }
+  var lCfg = config[mt.layout] || makeLayout(mt.layout)
+  var bg = document.getElementById('bg-image')
+  if (bg.getAttribute('src') !== LAYOUTS[mt.layout]) bg.src = LAYOUTS[mt.layout]
+
+  var dc = lCfg.datum || makeLayout(mt.layout).datum
+  var datEl = document.getElementById('datum-overlay')
+  datEl.textContent = mt.label || ''
+  datEl.style.cssText = 'position:absolute;left:' + dc.x + '%;top:' + dc.y + '%;transform:translateX(-50%);font-size:' + dc.size + 'vw;font-weight:700;color:' + dc.color + ';font-family:' + (FONTS[dc.font] || FONTS.Georgia) + ';white-space:nowrap'
+
+  var overlay = document.getElementById('gerichte-overlay')
+  overlay.innerHTML = ''
+  var breite = document.getElementById('screen').offsetWidth
+  TAGE.forEach(function (day) {
+    var arr = mt.gerichte[day]
+    var m = arr && arr[0]
+    if (!m || !m.name) return
+    var cfg = lCfg[day] || makeLayout(mt.layout)[day]
+    var sz = (cfg.img.r / 100) * breite * 2
+
+    var imgEl = document.createElement('div')
+    imgEl.className = 'day-circle'
+    imgEl.style.cssText = 'left:' + cfg.img.x + '%;top:' + cfg.img.y + '%;width:' + sz + 'px;height:' + sz + 'px'
+    if (m.bild) {
+      var im = document.createElement('img'); im.alt = ''; im.src = bildPfad(m.bild)
+      im.onerror = function () { imgEl.innerHTML = '<div class="ph">🍽️</div>' }
+      imgEl.appendChild(im)
+    } else imgEl.innerHTML = '<div class="ph">🍽️</div>'
+    overlay.appendChild(imgEl)
+
+    var txt = document.createElement('div')
+    txt.className = 'day-text'
+    txt.style.cssText = 'left:' + cfg.text.x + '%;top:' + cfg.text.y + '%;width:' + cfg.text.w + '%;font-size:' + cfg.text.size + 'vw;font-weight:600;color:' + cfg.text.color + ';font-family:' + (FONTS[cfg.text.font] || FONTS.Georgia)
+    txt.textContent = m.name
+    overlay.appendChild(txt)
+
+    if (m.preis) {
+      var pr = document.createElement('div')
+      pr.className = 'day-price'
+      pr.style.cssText = 'left:' + cfg.preis.x + '%;top:' + cfg.preis.y + '%;font-size:' + cfg.preis.size + 'vw;color:' + cfg.preis.color + ';font-family:' + (FONTS[cfg.preis.font] || FONTS.Georgia)
+      pr.textContent = m.preis
+      overlay.appendChild(pr)
+    }
+  })
+}
+window.addEventListener('resize', function () { if (aktuellesMt) zeichneMittagstisch(aktuellesMt.mt, aktuellesMt.config) })
+
+/* ── Rotation ── */
+var playlist = [], index = 0, timer = null, config = standardConfig()
+function zeigeLeer (an) { document.getElementById('no-content').className = an ? 'show' : '' }
+function zeige (i) {
+  var item = playlist[i]
+  if (!item) return
+  var bilder = document.querySelectorAll('#bilder .bild')
+  if (item.art === 'mt') {
+    zeichneMittagstisch(item.mt, config)
+    document.getElementById('mt').className = 'active'
+    for (var k = 0; k < bilder.length; k++) bilder[k].className = 'bild'
+  } else {
+    for (var j = 0; j < bilder.length; j++) bilder[j].className = 'bild' + (bilder[j].getAttribute('data-key') === item.key ? ' active' : '')
+    // Mittagstisch erst nach dem Überblenden ausblenden (kein Schwarzbild dazwischen)
+    setTimeout(function () { if (playlist[index] === item) document.getElementById('mt').className = '' }, 650)
+  }
+}
+function starteRotation () {
+  if (timer) clearInterval(timer)
+  timer = null
+  if (!playlist.length) { document.getElementById('mt').className = ''; zeigeLeer(true); return }
+  zeigeLeer(false)
+  zeige(index)
+  if (playlist.length > 1) timer = setInterval(function () { index = (index + 1) % playlist.length; zeige(index) }, TAKT_SEK * 1000)
+}
+
+function inhalt (r) { return r && r.data && r.data[0] ? (r.data[0].content || r.data[0].config) : null }
+
+MPScreen.start({
+  name: 'screen1',
+  // 'displays' bewusst nicht per Realtime (alte Screens reagieren falsch darauf) – kommt per 5-Minuten-Abgleich
+  tabellen: ['wochen', 'display_configs', 'angebote'],
+  holeDaten: function (sb, ctx) {
+    var K = ctx.kundeId
+    return Promise.all([
+      sb.from('displays').select('content,updated_at').eq('kunde_id', K).eq('screen_id', SCREEN_ID).limit(1),
+      sb.from('displays').select('content').eq('kunde_id', K).eq('screen_id', 'sonder_configs').limit(1),
+      sb.from('displays').select('content').eq('kunde_id', K).eq('screen_id', 'mt_settings').limit(1),
+      sb.from('wochen').select('id,kw,jahr,gueltig_ab,woche_label,gerichte').eq('kunde_id', K).order('gueltig_ab', { ascending: false }).limit(30),
+      sb.from('display_configs').select('config').eq('kunde_id', K).eq('screen_id', SCREEN_ID).limit(1),
+      MPScreen.holeAngebote(sb, 'screen1')
+    ]).then(function (r) {
+      for (var i = 0; i < 5; i++) if (r[i].error) throw r[i].error
+      var heute = ctx.heute(), tag = heute.getDay(), heuteIso = ctx.heuteIso()
+      var disp = inhalt(r[0]), sonderC = inhalt(r[1]), mtC = inhalt(r[2]), wochen = r[3].data || [], cfgRow = inhalt(r[4])
+
+      var cfg = standardConfig()
+      if (cfgRow) TAGE.forEach(function (d) { if (cfgRow[d]) cfg[d] = cfgRow[d] })
+
+      var info = []
+      var basis = []
+      // Manueller Modus: gilt nur am Tag, an dem gesendet wurde
+      var manuellAktiv = disp && disp.manualDay && disp.updatedAt && ctx.isoAus(new Date(disp.updatedAt)) === heuteIso
+      if (manuellAktiv) {
+        var mg = disp.gerichte || {}
+        var mKey = DAY_MAP[disp.manualDay] || layoutTag(mg, 0, true)
+        basis.push({ art: 'mt', key: 'mt:manuell:' + JSON.stringify(disp), mt: { layout: mKey, label: disp.woche || '', gerichte: mg } })
+        info.push('Manueller Modus (' + mKey + ')')
+        return { liste: basis, config: cfg, info: info }
+      }
+      if (disp && disp.manualDay) info.push('Manueller Modus abgelaufen → Automatik')
+
+      var mtTage = mtC && mtC.tage ? mtC.tage : [1, 2, 3, 4, 5]
+      if (mtTage.indexOf(tag) >= 0) {
+        var aw = aktiveWoche(wochen, heute)
+        if (aw) {
+          var g = aw.woche.gerichte || {}
+          var key = layoutTag(g, tag, aw.naechste)
+          basis.push({ art: 'mt', key: 'mt:' + aw.woche.id + ':' + key + ':' + JSON.stringify(g) + aw.woche.woche_label,
+            mt: { layout: key, label: aw.woche.woche_label || '', gerichte: g } })
+          info.push('Mittagstisch ' + (aw.woche.woche_label || '') + (aw.naechste ? ' (nächste Woche)' : '') + ' · ' + key)
+        } else info.push('⚠ Keine Woche für diese Woche gespeichert → kein Mittagstisch')
+      } else info.push('Heute kein Mittagstisch-Tag')
+
+      var sonder = []
+      ;((sonderC && sonderC.layouts) || []).forEach(function (l) {
+        if (!l || !l.bild) return
+        if (l.type === 'datum' && l.datum === heuteIso) sonder.unshift(l)
+        else if (l.type === 'wochentage' && l.wochentage && l.wochentage.indexOf(tag) >= 0) sonder.push(l)
+      })
+      sonder.forEach(function (l) { basis.push({ art: 'bild', key: 's:' + l.bild, src: l.bild }) })
+
+      var angebote = r[5].map(function (a) { return { art: 'bild', key: 'a:' + a.id + ':' + a.updated_at, src: a.render_tv_url } })
+      info.push(sonder.length + ' Sonderlayouts, ' + angebote.length + ' Angebote')
+      return { liste: MPScreen.mische(basis, angebote), config: cfg, info: info }
+    })
+  },
+  signatur: function (d) { return d.liste.map(function (x) { return x.key }).join('|') + '#' + JSON.stringify(d.config) },
+  anzeigen: function (d) {
+    // alle Bilder vorladen (Hintergrund-Layouts, Gerichtsfotos, Sonderbilder, Angebote)
+    var srcs = []
+    d.liste.forEach(function (x) {
+      if (x.art === 'bild') srcs.push(x.src)
+      else {
+        srcs.push(LAYOUTS[x.mt.layout])
+        TAGE.forEach(function (t) { var m = x.mt.gerichte[t] && x.mt.gerichte[t][0]; if (m && m.bild) srcs.push(bildPfad(m.bild)) })
+      }
+    })
+    return Promise.all(srcs.map(MPScreen.vorladen)).then(function (ok) {
+      var fehlend = {}
+      srcs.forEach(function (s, i) { if (!ok[i]) fehlend[s] = true })
+      // Folien mit fehlendem Bild weglassen; beim Mittagstisch nur fehlendes Layout-Bild ist kritisch
+      var neu = d.liste.filter(function (x) { return x.art === 'bild' ? !fehlend[x.src] : !fehlend[LAYOUTS[x.mt.layout]] })
+      var aktuell = playlist[index] && playlist[index].key
+      var container = document.getElementById('bilder')
+      container.innerHTML = ''
+      neu.forEach(function (x) {
+        if (x.art !== 'bild' || container.querySelector('[data-key="' + CSS.escape(x.key) + '"]')) return
+        var img = document.createElement('img')
+        img.className = 'bild'; img.alt = ''; img.src = x.src; img.setAttribute('data-key', x.key)
+        container.appendChild(img)
+      })
+      config = d.config
+      playlist = neu
+      var pos = -1
+      for (var i = 0; i < neu.length; i++) if (neu[i].key === aktuell) pos = i
+      index = pos >= 0 ? pos : 0
+      starteRotation()
+      return Object.keys(fehlend).length === 0
+    })
+  },
+  fehler: function () { if (!playlist.length) zeigeLeer(true) },
+  debugText: function (d) { return d.info.join('\n') + '\n' + playlist.length + ' Folien, alle ' + TAKT_SEK + ' s' }
+})
+</script>
+</body>
+</html>

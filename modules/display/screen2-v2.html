@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MetzgerPost — Screen 2</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{background:#000;width:100vw;height:100vh;overflow:hidden}
+    body{display:flex;align-items:center;justify-content:center}
+    #screen{position:relative;width:100vw;height:calc(100vw * 9/16);max-height:100vh;max-width:calc(100vh * 16/9);overflow:hidden;background:#000}
+    .slide{position:absolute;inset:0;opacity:0;transition:opacity 1.2s ease}
+    .slide.active{opacity:1}
+    .slide img{width:100%;height:100%;object-fit:cover;display:block}
+    #timer-bar{position:absolute;bottom:0;left:0;height:6px;width:0;background:#2d6a4f;z-index:5}
+    #no-content{display:none;position:absolute;inset:0;background:#e8e4de;align-items:center;justify-content:center;flex-direction:column;gap:16px;font-family:Georgia,serif;color:#2d4a2d;text-align:center}
+    #no-content.show{display:flex}
+    #no-content h1{font-size:3.5vw}
+    #no-content p{font-size:1.6vw;color:#666}
+  </style>
+</head>
+<body>
+<div id="screen">
+  <div id="slides"></div>
+  <div id="timer-bar"></div>
+  <div id="no-content"><h1>Gleich geht’s weiter</h1><p>Zurzeit sind keine Inhalte aktiv.</p></div>
+</div>
+
+<script src="../../shared/screen-runtime.js"></script>
+<script>
+/* ══════════════════════════════════════════════
+   Screen 2 (v2): Bilder aus dem Display Manager + Angebote
+   Parameter: ?kunde=<id>  optional: &datum=YYYY-MM-DD, &debug=1
+══════════════════════════════════════════════ */
+var playlist = [], index = 0, timerSek = 8, slideTimer = null
+
+function zeigeLeer (an) { document.getElementById('no-content').className = an ? 'show' : '' }
+
+function zeigeSlide (i) {
+  var alle = document.querySelectorAll('.slide')
+  for (var k = 0; k < alle.length; k++) alle[k].className = 'slide' + (k === i ? ' active' : '')
+  var bar = document.getElementById('timer-bar')
+  bar.style.transition = 'none'; bar.style.width = '0%'
+  if (playlist.length > 1) setTimeout(function () { bar.style.transition = 'width ' + timerSek + 's linear'; bar.style.width = '100%' }, 50)
+}
+
+function starteRotation () {
+  if (slideTimer) clearInterval(slideTimer)
+  slideTimer = null
+  if (!playlist.length) { zeigeLeer(true); return }
+  zeigeLeer(false)
+  zeigeSlide(index)
+  if (playlist.length > 1) slideTimer = setInterval(function () { index = (index + 1) % playlist.length; zeigeSlide(index) }, timerSek * 1000)
+}
+
+MPScreen.start({
+  name: 'screen2',
+  tabellen: ['screen2_config', 'angebote'],
+  holeDaten: function (sb) {
+    var cfg = sb.from('screen2_config').select('slides,timer_sekunden').eq('kunde_id', MPScreen.kundeId).limit(1)
+    return Promise.all([cfg, MPScreen.holeAngebote(sb, 'screen2')]).then(function (r) {
+      if (r[0].error) throw r[0].error
+      var c = (r[0].data && r[0].data[0]) || {}
+      var bilder = (c.slides || []).filter(function (s) { return s && s.bild })
+        .map(function (s) { return { key: 'b:' + s.bild, src: s.bild, art: 'bild' } })
+      var angebote = r[1].map(function (a) { return { key: 'a:' + a.id + ':' + a.updated_at, src: a.render_tv_url, art: 'angebot' } })
+      return { liste: MPScreen.mische(bilder, angebote), timer: c.timer_sekunden || 8, nAngebote: angebote.length }
+    })
+  },
+  signatur: function (d) { return d.liste.map(function (x) { return x.key }).join('|') + '#' + d.timer },
+  anzeigen: function (d) {
+    // erst alle Bilder laden, dann umschalten – kein schwarzes Bild
+    return Promise.all(d.liste.map(function (x) { return MPScreen.vorladen(x.src) })).then(function (ok) {
+      var neu = d.liste.filter(function (x, i) { return ok[i] })
+      var aktuell = playlist[index] && playlist[index].key
+      var container = document.getElementById('slides')
+      container.innerHTML = ''
+      neu.forEach(function (item) {
+        var div = document.createElement('div'); div.className = 'slide'
+        var img = document.createElement('img'); img.alt = ''; img.src = item.src
+        div.appendChild(img); container.appendChild(div)
+      })
+      playlist = neu
+      var pos = -1
+      for (var i = 0; i < neu.length; i++) if (neu[i].key === aktuell) pos = i
+      index = pos >= 0 ? pos : 0
+      timerSek = Math.max(3, Math.min(120, d.timer))
+      starteRotation()
+      return neu.length === d.liste.length
+    })
+  },
+  fehler: function () { if (!playlist.length) zeigeLeer(true) },
+  debugText: function (d) { return playlist.length + ' Folien (' + d.nAngebote + ' Angebote), alle ' + timerSek + ' s' }
+})
+</script>
+</body>
+</html>

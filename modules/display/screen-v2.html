@@ -41,6 +41,7 @@
   <div id="no-content" class="show"><h1>Gleich geht’s weiter</h1><p>Inhalte werden geladen …</p></div>
 </div>
 
+<script src="../../shared/screen-regeln.js"></script>
 <script src="../../shared/screen-runtime.js"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
@@ -72,47 +73,6 @@ function makeLayout (big) {
 }
 function standardConfig () { var c = {}; TAGE.forEach(function (d) { c[d] = makeLayout(d) }); return c }
 
-/* ── Datum-Helfer ── */
-function ohneZeit (d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()) }
-function montagVon (d) { var x = ohneZeit(d); var w = x.getDay(); x.setDate(x.getDate() - (w === 0 ? 6 : w - 1)); return x }
-function ausIso (s) { var p = String(s).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]) }
-function kwVon (d) {
-  var dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
-  dt.setUTCDate(dt.getUTCDate() + 4 - (dt.getUTCDay() || 7))
-  var y1 = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1))
-  return { kw: Math.ceil((((dt - y1) / 86400000) + 1) / 7), jahr: dt.getUTCFullYear() }
-}
-function wocheFuer (wochen, montag) {
-  var ziel = MPScreen.isoAus(montag)
-  for (var i = 0; i < wochen.length; i++) {
-    var w = wochen[i]
-    if (w.gueltig_ab && MPScreen.isoAus(montagVon(ausIso(w.gueltig_ab))) === ziel) return w
-  }
-  var k = kwVon(montag)
-  for (var j = 0; j < wochen.length; j++) {
-    if (!wochen[j].gueltig_ab && wochen[j].kw === k.kw && wochen[j].jahr === k.jahr) return wochen[j]
-  }
-  return null
-}
-/* Welche Woche gilt heute? Mo–Fr: diese Woche. Sa/So: nächste Woche, sonst diese. */
-function aktiveWoche (wochen, heute) {
-  var mo = montagVon(heute)
-  var tag = heute.getDay()
-  if (tag === 6 || tag === 0) {
-    var naechster = new Date(mo); naechster.setDate(mo.getDate() + 7)
-    var n = wocheFuer(wochen, naechster)
-    if (n) return { woche: n, naechste: true }
-  }
-  var w = wocheFuer(wochen, mo)
-  return w ? { woche: w, naechste: false } : null
-}
-/* Welches Layout (welcher Tag groß)? */
-function layoutTag (gerichte, tag, naechste) {
-  var key = naechste ? null : DAY_MAP[tag]
-  if (key && gerichte[key] && gerichte[key][0]) return key
-  for (var i = 0; i < TAGE.length; i++) if (gerichte[TAGE[i]] && gerichte[TAGE[i]][0]) return TAGE[i]
-  return 'dienstag'
-}
 function bildPfad (b) { return !b ? '' : (/^https?:|^\//.test(b) ? b : '../../' + b) }
 
 /* ── Mittagstisch zeichnen (wie screen.html, ohne Editor) ── */
@@ -208,56 +168,21 @@ var SCREEN = MPScreen.start({
   holeDaten: function (sb, ctx) {
     var K = ctx.kundeId
     return Promise.all([
-      sb.from('displays').select('content,updated_at').eq('kunde_id', K).eq('screen_id', SCREEN_ID).limit(1),
-      sb.from('displays').select('content').eq('kunde_id', K).eq('screen_id', 'sonder_configs').limit(1),
-      sb.from('displays').select('content').eq('kunde_id', K).eq('screen_id', 'mt_settings').limit(1),
+      sb.from('displays').select('screen_id,content').eq('kunde_id', K).in('screen_id', [SCREEN_ID, 'sonder_configs', 'mt_settings']),
       sb.from('wochen').select('id,kw,jahr,gueltig_ab,woche_label,gerichte').eq('kunde_id', K).order('gueltig_ab', { ascending: false }).limit(30),
       sb.from('display_configs').select('config').eq('kunde_id', K).eq('screen_id', SCREEN_ID).limit(1),
       MPScreen.holeAngebote(sb, 'screen1')
     ]).then(function (r) {
-      for (var i = 0; i < 5; i++) if (r[i].error) throw r[i].error
-      var heute = ctx.heute(), tag = heute.getDay(), heuteIso = ctx.heuteIso()
-      var disp = inhalt(r[0]), sonderC = inhalt(r[1]), mtC = inhalt(r[2]), wochen = r[3].data || [], cfgRow = inhalt(r[4])
-
+      for (var i = 0; i < 3; i++) if (r[i].error) throw r[i].error
+      var disp = {}
+      ;(r[0].data || []).forEach(function (z) { disp[z.screen_id] = z.content })
+      var cfgRow = r[2].data && r[2].data[0] ? r[2].data[0].config : null
       var cfg = standardConfig()
       if (cfgRow) TAGE.forEach(function (d) { if (cfgRow[d]) cfg[d] = cfgRow[d] })
-
-      var info = []
-      var basis = []
-      // Manueller Modus: gilt nur am Tag, an dem gesendet wurde
-      var manuellAktiv = disp && disp.manualDay && disp.updatedAt && ctx.isoAus(new Date(disp.updatedAt)) === heuteIso
-      if (manuellAktiv) {
-        var mg = disp.gerichte || {}
-        var mKey = DAY_MAP[disp.manualDay] || layoutTag(mg, 0, true)
-        basis.push({ art: 'mt', key: 'mt:manuell:' + JSON.stringify(disp), mt: { layout: mKey, label: disp.woche || '', gerichte: mg } })
-        info.push('Manueller Modus (' + mKey + ')')
-        return { liste: basis, config: cfg, info: info }
-      }
-      if (disp && disp.manualDay) info.push('Manueller Modus abgelaufen → Automatik')
-
-      var mtTage = mtC && mtC.tage ? mtC.tage : [1, 2, 3, 4, 5]
-      if (mtTage.indexOf(tag) >= 0) {
-        var aw = aktiveWoche(wochen, heute)
-        if (aw) {
-          var g = aw.woche.gerichte || {}
-          var key = layoutTag(g, tag, aw.naechste)
-          basis.push({ art: 'mt', key: 'mt:' + aw.woche.id + ':' + key + ':' + JSON.stringify(g) + aw.woche.woche_label,
-            mt: { layout: key, label: aw.woche.woche_label || '', gerichte: g } })
-          info.push('Mittagstisch ' + (aw.woche.woche_label || '') + (aw.naechste ? ' (nächste Woche)' : '') + ' · ' + key)
-        } else info.push('⚠ Keine Woche für diese Woche gespeichert → kein Mittagstisch')
-      } else info.push('Heute kein Mittagstisch-Tag')
-
-      var sonder = []
-      ;((sonderC && sonderC.layouts) || []).forEach(function (l) {
-        if (!l || !l.bild) return
-        if (l.type === 'datum' && l.datum === heuteIso) sonder.unshift(l)
-        else if (l.type === 'wochentage' && l.wochentage && l.wochentage.indexOf(tag) >= 0) sonder.push(l)
-      })
-      sonder.forEach(function (l) { basis.push({ art: 'bild', key: 's:' + l.bild, src: l.bild }) })
-
-      var angebote = r[5].map(function (a) { return { art: 'bild', key: 'a:' + a.id + ':' + a.updated_at, src: a.render_tv_url } })
-      info.push(sonder.length + ' Sonderlayouts, ' + angebote.length + ' Angebote')
-      return { liste: MPScreen.mische(basis, angebote), config: cfg, info: info }
+      // Regeln: shared/screen-regeln.js (gleiche Rechnung wie die Vorschau im Display Manager)
+      var p = MPRegeln.playlistScreen1({ screen1: disp[SCREEN_ID], sonder: disp.sonder_configs, mtSettings: disp.mt_settings,
+        wochen: r[1].data || [], angebote: r[3] }, ctx.heute())
+      return { liste: p.liste, config: cfg, info: p.info.map(function (x) { return (x.warnung ? '⚠ ' : '') + x.text }) }
     })
   },
   signatur: function (d) { return d.liste.map(function (x) { return x.key }).join('|') + '#' + JSON.stringify(d.config) },

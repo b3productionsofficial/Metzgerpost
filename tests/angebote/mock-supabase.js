@@ -10,6 +10,7 @@
     select(){if(this.op==='select')this.op='select';this.ret=true;return this}
     eq(k,v){this.f.push(r=>String(r[k])===String(v));return this}
     lte(k,v){this.f.push(r=>r[k]<=v);return this}
+    in(k,arr){this.f.push(r=>arr.map(String).includes(String(r[k])));return this}
     gte(k,v){this.f.push(r=>r[k]>=v);return this}
     contains(k,v){this.f.push(r=>v.every(x=>(r[k]||[]).includes(x)));return this}
     order(k,o){this.o.push([k,o&&o.ascending===false?-1:1]);return this}

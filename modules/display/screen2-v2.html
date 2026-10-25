@@ -27,6 +27,7 @@
   <div id="no-content" class="show"><h1>Gleich geht’s weiter</h1><p>Inhalte werden geladen …</p></div>
 </div>
 
+<script src="../../shared/screen-regeln.js"></script>
 <script src="../../shared/screen-runtime.js"></script>
 <script>
 /* ══════════════════════════════════════════════
@@ -61,15 +62,14 @@ function starteRotation () {
 var SCREEN = MPScreen.start({
   name: 'screen2',
   tabellen: ['screen2_config', 'angebote'],
-  holeDaten: function (sb) {
+  holeDaten: function (sb, ctx) {
     var cfg = sb.from('screen2_config').select('slides,timer_sekunden').eq('kunde_id', MPScreen.kundeId).limit(1)
     return Promise.all([cfg, MPScreen.holeAngebote(sb, 'screen2')]).then(function (r) {
       if (r[0].error) throw r[0].error
       var c = (r[0].data && r[0].data[0]) || {}
-      var bilder = (c.slides || []).filter(function (s) { return s && s.bild })
-        .map(function (s) { return { key: 'b:' + s.bild, src: s.bild, art: 'bild' } })
-      var angebote = r[1].map(function (a) { return { key: 'a:' + a.id + ':' + a.updated_at, src: a.render_tv_url, art: 'angebot' } })
-      return { liste: MPScreen.mische(bilder, angebote), timer: c.timer_sekunden || 8, nAngebote: angebote.length }
+      // Regeln: shared/screen-regeln.js (gleiche Rechnung wie die Vorschau im Display Manager)
+      var p = MPRegeln.playlistBilder('screen2', c.slides, r[1], ctx.heute(), c.timer_sekunden)
+      return { liste: p.liste, timer: p.takt, nAngebote: p.liste.filter(function (x) { return x.typ === 'angebot' }).length }
     })
   },
   signatur: function (d) { return d.liste.map(function (x) { return x.key }).join('|') + '#' + d.timer },

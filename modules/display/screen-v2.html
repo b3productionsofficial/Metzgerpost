@@ -23,6 +23,7 @@
     .day-price{position:absolute;transform:translate(-50%,-50%);font-weight:700;text-align:center}
     .bild{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s}
     .bild.active{opacity:1}
+    #timer-bar{position:absolute;bottom:0;left:0;height:6px;width:0;background:#2d6a4f;z-index:15}
     #no-content{display:none;position:absolute;inset:0;background:#e8e4de;align-items:center;justify-content:center;flex-direction:column;gap:16px;font-family:Georgia,serif;color:#2d4a2d;text-align:center;z-index:20}
     #no-content.show{display:flex}
     #no-content h1{font-size:3.5vw}
@@ -36,6 +37,7 @@
     <div id="overlay"><div id="datum-overlay"></div><div id="gerichte-overlay"></div></div>
   </div>
   <div id="bilder"></div>
+  <div id="timer-bar"></div>
   <div id="no-content" class="show"><h1>Gleich geht’s weiter</h1><p>Inhalte werden geladen …</p></div>
 </div>
 
@@ -173,6 +175,10 @@ function zeigeLeer (an) {
 function zeige (i) {
   var item = playlist[i]
   if (!item) return
+  // Fortschrittsbalken wie auf Bildschirm 2 und 3
+  var bar = document.getElementById('timer-bar')
+  bar.style.transition = 'none'; bar.style.width = '0%'
+  if (playlist.length > 1) setTimeout(function () { bar.style.transition = 'width ' + TAKT_SEK + 's linear'; bar.style.width = '100%' }, 50)
   var bilder = document.querySelectorAll('#bilder .bild')
   if (item.art === 'mt') {
     zeichneMittagstisch(item.mt, config)

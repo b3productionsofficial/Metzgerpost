@@ -240,7 +240,7 @@
       // bei verkleinerter Schrift vertikal nachzentrieren
       const versatz = (L.preis.groesse - g) / 2
       textZentriert(ctx, preisText, { x: L.preis.x, y: L.preis.y + versatz, w: L.preis.w },
-        L.preis.gewicht, g, S.preis, F.weiss)
+        L.preis.gewicht, g, S.preis, F.dunkelgruen)
     }
     textZentriert(ctx, einheitText(angebot.einheit), L.einheit, L.einheit.gewicht,
       passendeGroesse(ctx, einheitText(angebot.einheit), L.einheit.gewicht, L.einheit.groesse, S.preis, L.grosserKreis.d * 0.7, 20),

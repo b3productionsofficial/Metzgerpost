@@ -39,7 +39,7 @@ Beim erneuten Speichern werden die alten Renderbilder gelöscht.
 
 ## Regeln der Vorlage (Preis-Angebot)
 
-- Großer Kreis: Preis groß und mittig, darunter „€ pro kg / 100 g / Stück“
+- Großer Kreis: Preis groß und mittig in Dunkelgrün, darunter „€ pro kg / 100 g / Stück“ in Weiß
 - Kleiner Kreis (versetzt, mit Schatten): „statt“ + durchgestrichener Vorher-Preis – **nur wenn ein Vorher-Preis eingetragen ist**
 - Lange Preise (z. B. 139,90) und lange Vorher-Preise werden automatisch kleiner
 - Produktname: TV bis 3 Zeilen, Feed 2, Story 3; wird zu lang → kleiner, notfalls mit „…“ gekürzt

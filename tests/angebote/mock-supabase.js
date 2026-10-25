@@ -1,7 +1,7 @@
 // Minimaler In-Memory-Ersatz für supabase-js (nur für lokale UI-Tests)
 (function(){
   const KEY='__mockdb'
-  const load=()=>JSON.parse(localStorage.getItem(KEY)||'{"angebots_produkte":[],"angebote":[],"screen3_config":[],"uploads":{}}')
+  const load=()=>Object.assign({uploads:{}},JSON.parse(localStorage.getItem(KEY)||'{"angebots_produkte":[],"angebote":[],"screen3_config":[]}'))
   const save=db=>localStorage.setItem(KEY,JSON.stringify(db))
   window.__mock={load,save,log:[]}
   function uuid(){return 'm'+Math.random().toString(16).slice(2)+Date.now().toString(16)}
@@ -19,7 +19,7 @@
     maybeSingle(){this.maybe=true;return this}
     insert(p){this.op='insert';this.payload=p;return this}
     update(p){this.op='update';this.payload=p;return this}
-    upsert(p){this.op='upsert';this.payload=p;return this}
+    upsert(p,o){this.op='upsert';this.payload=p;this.conflict=o&&o.onConflict?o.onConflict.split(',').map(x=>x.trim()):null;return this}
     delete(){this.op='delete';return this}
     then(res,rej){return new Promise((ok,no)=>{try{ok(this.run())}catch(e){no(e)}}).then(res,rej)}
     catch(rej){return this.then(null,rej)}
@@ -30,7 +30,7 @@
       window.__mock.log.push(this.op+' '+this.t)
       if(this.op==='insert'||this.op==='upsert'){
         const arr=(Array.isArray(this.payload)?this.payload:[this.payload]).map(p=>{
-          const ex=p.id&&rows.find(r=>r.id===p.id)
+          const ex=(p.id&&rows.find(r=>r.id===p.id))||(this.conflict&&rows.find(r=>this.conflict.every(c=>String(r[c])===String(p[c]))))
           if(ex){Object.assign(ex,p,{updated_at:now});return ex}
           const r=Object.assign({id:uuid(),created_at:now,updated_at:now,aktiv:true,status:'aktiv'},p);rows.push(r);return r})
         out=arr

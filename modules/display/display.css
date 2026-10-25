@@ -1,0 +1,99 @@
+/* ══════════════════════════════════════════════
+   MetzgerPost — Display Manager 2.0
+   Baut auf shared/style.css und modules/angebote/angebote.css (ag-*) auf.
+══════════════════════════════════════════════ */
+
+/* Bildschirm-Karten oben */
+.dm-screens { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.dm-screen {
+  text-align: left; font: inherit; color: var(--text); cursor: pointer; background: var(--surface);
+  border: 1.5px solid var(--border); border-radius: var(--radius); padding: 16px 18px; display: flex; flex-direction: column; gap: 6px;
+  transition: .15s; min-height: 44px;
+}
+.dm-screen:hover { border-color: var(--border2); }
+.dm-screen[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
+.dm-screen-top { display: flex; align-items: center; gap: 10px; }
+.dm-screen-name { font-weight: 700; font-size: 16px; flex: 1; }
+.dm-screen-nr { width: 28px; height: 28px; border-radius: 50%; background: var(--surface3); color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+.dm-screen[aria-pressed="true"] .dm-screen-nr { background: var(--accent); color: var(--bg); }
+.dm-screen-meta { font-size: 13px; color: #b3aa9a; line-height: 1.4; }
+.dm-screen-warn { font-size: 12px; color: var(--warning); }
+
+/* Abschnitte */
+.dm-panel { display: flex; flex-direction: column; gap: 16px; }
+.dm-section-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dm-warn { border: 1px solid var(--warning); background: rgba(212,160,58,.08); color: #f0d9a8; border-radius: var(--radius-sm); padding: 12px 14px; font-size: 14px; line-height: 1.45; }
+.dm-info { border: 1px solid var(--border2); background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; color: #b3aa9a; line-height: 1.5; }
+
+/* Ablauf / Timeline */
+.dm-ablauf { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; align-items: start; }
+.dm-folie { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); overflow: hidden; display: flex; flex-direction: column; }
+.dm-folie-bild { position: relative; aspect-ratio: 16/9; background: var(--surface3); overflow: hidden; }
+.dm-folie-bild img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.dm-folie-nr { position: absolute; top: 6px; left: 6px; background: rgba(0,0,0,.7); color: #fff; font-size: 12px; font-weight: 700; border-radius: 999px; min-width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; padding: 0 6px; }
+.dm-folie-body { padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
+.dm-folie-titel { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dm-typ { align-self: flex-start; font-size: 11px; font-weight: 600; border-radius: 999px; padding: 2px 8px; border: 1px solid var(--border2); color: var(--muted); }
+.dm-typ-mittagstisch { color: #7fd1a3; border-color: var(--success); }
+.dm-typ-angebot { color: #f0c08a; border-color: var(--accent); }
+.dm-typ-sonder, .dm-typ-bild { color: #b3aa9a; }
+.dm-ablauf-sum { font-size: 14px; color: #d9d2c5; }
+.dm-regel { font-size: 12px; color: var(--muted); }
+
+/* Listen mit Bildern (Sonderlayouts, Bilder) */
+.dm-list { display: flex; flex-direction: column; gap: 10px; }
+.dm-row { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 12px; }
+.dm-row.pausiert { opacity: .55; border-style: dashed; }
+.dm-row-bild { width: 140px; height: auto; aspect-ratio: 16/9; border-radius: 6px; object-fit: cover; background: var(--surface3); border: 1px solid var(--border); flex-shrink: 0; }
+.dm-row-main { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.dm-row-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.dm-name { background: transparent; border: 1px solid transparent; border-radius: 6px; color: var(--text); font: inherit; font-weight: 600; font-size: 15px; padding: 4px 6px; margin-left: -6px; min-height: 36px; width: 100%; max-width: 420px; }
+.dm-name:hover, .dm-name:focus { border-color: var(--border2); outline: none; background: var(--surface); }
+.dm-tage { display: flex; flex-wrap: wrap; gap: 4px; }
+.dm-tag { min-width: 40px; min-height: 36px; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border2); background: var(--surface); color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.dm-tag[aria-pressed="true"] { border-color: var(--accent); color: var(--text); background: var(--accent-dim); }
+.dm-icon { min-width: 40px; min-height: 40px; border-radius: 8px; border: 1px solid var(--border2); background: var(--surface); color: var(--text); font: inherit; font-size: 15px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; }
+.dm-icon:hover:not(:disabled) { border-color: var(--accent); }
+.dm-icon:disabled { opacity: .35; cursor: default; }
+.dm-icon.danger { color: var(--error); }
+.dm-wann { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dm-wann .ag-seg { min-height: 36px; }
+.dm-wann .ag-seg button { padding: 0 10px; font-size: 13px; }
+.dm-wann input[type=date] { background: var(--surface); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font: inherit; padding: 6px 8px; min-height: 36px; }
+
+/* Schalter */
+.dm-switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #d9d2c5; min-height: 40px; }
+.dm-switch input { appearance: none; width: 40px; height: 22px; border-radius: 999px; background: var(--muted2); position: relative; cursor: pointer; transition: .2s; flex-shrink: 0; }
+.dm-switch input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: .2s; }
+.dm-switch input:checked { background: var(--success); }
+.dm-switch input:checked::after { left: 21px; }
+
+/* Hochladen */
+.dm-upload { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 56px; border: 2px dashed var(--border2); border-radius: var(--radius-sm); color: var(--accent); font-weight: 600; cursor: pointer; }
+.dm-upload:hover { border-color: var(--accent); background: var(--accent-dim); }
+.dm-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+/* Wochen */
+.dm-woche { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 10px 12px; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); }
+.dm-woche.aktuell { border-color: var(--success); }
+.dm-woche-main { flex: 1 1 240px; min-width: 0; }
+.dm-woche-titel { font-weight: 600; }
+.dm-woche-sub { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dm-kw { font-size: 11px; font-weight: 700; color: var(--accent); background: var(--accent-dim); border-radius: 4px; padding: 2px 6px; }
+
+/* Takt */
+.dm-takt { display: flex; align-items: center; gap: 12px; }
+.dm-takt input[type=range] { flex: 1; accent-color: var(--accent); }
+.dm-takt output { min-width: 44px; text-align: right; font-weight: 700; color: var(--accent); }
+
+/* Bilder optimieren */
+.dm-opt-liste { display: flex; flex-direction: column; gap: 6px; font-size: 13px; max-height: 260px; overflow-y: auto; }
+.dm-opt-zeile { display: flex; gap: 10px; align-items: center; }
+.dm-opt-zeile span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dm-progress { height: 8px; border-radius: 999px; background: var(--surface3); overflow: hidden; }
+.dm-progress div { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+
+@media (max-width: 640px) {
+  .dm-row-bild { width: 100%; }
+  .dm-ablauf { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

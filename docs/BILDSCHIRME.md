@@ -14,7 +14,7 @@ Alle neuen Screens nutzen `shared/screen-runtime.js` (Laufzeit) und `shared/scre
 
 - Abgleich beim Start, **alle 5 Minuten**, per Realtime, nach Mitternacht, wenn wieder online, wenn sichtbar
 - Realtime mit automatischer Wiederverbindung
-- Bilder werden vorgeladen, Umschalten erst wenn alles geladen ist; fehlende Bilder werden später erneut versucht
+- Erste Folie erscheint, sobald ihr Bild geladen ist (vorher „Inhalte werden geladen …“); danach Umschalten erst, wenn alle Bilder da sind; fehlende Bilder werden später erneut versucht, ohne Endlosschleife
 - kurzer Internet-Ausfall: Anzeige läuft einfach weiter; Supabase-Bibliothek nicht geladen → Neuversuch nach 60 s
 - nächtlicher Neustart gegen 3 Uhr (nur wenn online)
 - Test: `&datum=2026-10-28` simuliert ein Datum, `&debug=1` zeigt eine Info-Box

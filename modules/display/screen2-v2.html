@@ -24,7 +24,7 @@
 <div id="screen">
   <div id="slides"></div>
   <div id="timer-bar"></div>
-  <div id="no-content"><h1>Gleich geht’s weiter</h1><p>Zurzeit sind keine Inhalte aktiv.</p></div>
+  <div id="no-content" class="show"><h1>Gleich geht’s weiter</h1><p>Inhalte werden geladen …</p></div>
 </div>
 
 <script src="../../shared/screen-runtime.js"></script>
@@ -35,7 +35,11 @@
 ══════════════════════════════════════════════ */
 var playlist = [], index = 0, timerSek = 8, slideTimer = null
 
-function zeigeLeer (an) { document.getElementById('no-content').className = an ? 'show' : '' }
+function zeigeLeer (an) {
+  var el = document.getElementById('no-content')
+  el.className = an ? 'show' : ''
+  if (an) el.querySelector('p').textContent = 'Zurzeit sind keine Inhalte aktiv.'
+}
 
 function zeigeSlide (i) {
   var alle = document.querySelectorAll('.slide')
@@ -54,7 +58,7 @@ function starteRotation () {
   if (playlist.length > 1) slideTimer = setInterval(function () { index = (index + 1) % playlist.length; zeigeSlide(index) }, timerSek * 1000)
 }
 
-MPScreen.start({
+var SCREEN = MPScreen.start({
   name: 'screen2',
   tabellen: ['screen2_config', 'angebote'],
   holeDaten: function (sb) {
@@ -70,9 +74,10 @@ MPScreen.start({
   },
   signatur: function (d) { return d.liste.map(function (x) { return x.key }).join('|') + '#' + d.timer },
   anzeigen: function (d) {
-    // erst alle Bilder laden, dann umschalten – kein schwarzes Bild
-    return Promise.all(d.liste.map(function (x) { return MPScreen.vorladen(x.src) })).then(function (ok) {
-      var neu = d.liste.filter(function (x, i) { return ok[i] })
+    var lade = MPScreen.vorladenListe(d.liste.map(function (x) { return x.src }))
+    function aufbauen () {
+      var neu = d.liste.filter(function (x) { return lade.ok(x.src) })
+      if (!neu.length) return false
       var aktuell = playlist[index] && playlist[index].key
       var container = document.getElementById('slides')
       container.innerHTML = ''
@@ -88,7 +93,24 @@ MPScreen.start({
       timerSek = Math.max(3, Math.min(120, d.timer))
       starteRotation()
       return neu.length === d.liste.length
-    })
+    }
+    // Beim allerersten Anzeigen nicht auf alle (evtl. großen) Bilder warten
+    if (!playlist.length) {
+      return lade.erstes.then(function () {
+        var liste = d.liste.map(function (x) { return x.src })
+        var zahl = function () { return liste.filter(function (s) { return lade.ok(s) }).length }
+        var vorher = zahl()
+        var komplett = aufbauen()
+        if (komplett === false && !playlist.length) {
+          document.querySelector('#no-content p').textContent = 'Bilder konnten nicht geladen werden – neuer Versuch in Kürze …'
+        }
+        // Nur neu aufbauen, wenn danach wirklich mehr Bilder da sind (sonst Endlosschleife bei Netzproblemen)
+        if (komplett !== true) lade.alle.then(function () { if (zahl() > vorher) SCREEN.sync('bilder geladen') })
+        return komplett === true
+      })
+    }
+    // Danach: erst alle laden, dann umschalten – kein schwarzes Bild
+    return lade.alle.then(aufbauen)
   },
   fehler: function () { if (!playlist.length) zeigeLeer(true) },
   debugText: function (d) { return playlist.length + ' Folien (' + d.nAngebote + ' Angebote), alle ' + timerSek + ' s' }

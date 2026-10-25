@@ -36,7 +36,7 @@
     <div id="overlay"><div id="datum-overlay"></div><div id="gerichte-overlay"></div></div>
   </div>
   <div id="bilder"></div>
-  <div id="no-content"><h1>Gleich geht’s weiter</h1><p>Zurzeit sind keine Inhalte aktiv.</p></div>
+  <div id="no-content" class="show"><h1>Gleich geht’s weiter</h1><p>Inhalte werden geladen …</p></div>
 </div>
 
 <script src="../../shared/screen-runtime.js"></script>
@@ -165,7 +165,11 @@ window.addEventListener('resize', function () { if (aktuellesMt) zeichneMittagst
 
 /* ── Rotation ── */
 var playlist = [], index = 0, timer = null, config = standardConfig()
-function zeigeLeer (an) { document.getElementById('no-content').className = an ? 'show' : '' }
+function zeigeLeer (an) {
+  var el = document.getElementById('no-content')
+  el.className = an ? 'show' : ''
+  if (an) el.querySelector('p').textContent = 'Zurzeit sind keine Inhalte aktiv.'
+}
 function zeige (i) {
   var item = playlist[i]
   if (!item) return
@@ -191,7 +195,7 @@ function starteRotation () {
 
 function inhalt (r) { return r && r.data && r.data[0] ? (r.data[0].content || r.data[0].config) : null }
 
-MPScreen.start({
+var SCREEN = MPScreen.start({
   name: 'screen1',
   // 'displays' bewusst nicht per Realtime (alte Screens reagieren falsch darauf) – kommt per 5-Minuten-Abgleich
   tabellen: ['wochen', 'display_configs', 'angebote'],
@@ -261,11 +265,14 @@ MPScreen.start({
         TAGE.forEach(function (t) { var m = x.mt.gerichte[t] && x.mt.gerichte[t][0]; if (m && m.bild) srcs.push(bildPfad(m.bild)) })
       }
     })
-    return Promise.all(srcs.map(MPScreen.vorladen)).then(function (ok) {
-      var fehlend = {}
-      srcs.forEach(function (s, i) { if (!ok[i]) fehlend[s] = true })
-      // Folien mit fehlendem Bild weglassen; beim Mittagstisch nur fehlendes Layout-Bild ist kritisch
-      var neu = d.liste.filter(function (x) { return x.art === 'bild' ? !fehlend[x.src] : !fehlend[LAYOUTS[x.mt.layout]] })
+    var lade = MPScreen.vorladenListe(srcs)
+    // Folie ist zeigbar, wenn ihr Bild da ist (Mittagstisch: wenn das Layout-Bild da ist)
+    function hauptbild (x) { return x.art === 'bild' ? x.src : LAYOUTS[x.mt.layout] }
+    function bereit (x) { return lade.ok(hauptbild(x)) }
+    var pflicht = MPScreen.vorladenListe(d.liste.map(hauptbild)) // „erstes“ = erste zeigbare Folie
+    function aufbauen () {
+      var neu = d.liste.filter(bereit)
+      if (!neu.length) return false
       var aktuell = playlist[index] && playlist[index].key
       var container = document.getElementById('bilder')
       container.innerHTML = ''
@@ -281,8 +288,26 @@ MPScreen.start({
       for (var i = 0; i < neu.length; i++) if (neu[i].key === aktuell) pos = i
       index = pos >= 0 ? pos : 0
       starteRotation()
-      return Object.keys(fehlend).length === 0
-    })
+      return srcs.every(function (s) { return lade.ok(s) })
+    }
+    if (!d.liste.length) { playlist = []; starteRotation(); return true }
+    // Beim allerersten Anzeigen nicht auf alle (evtl. großen) Bilder warten
+    if (!playlist.length) {
+      return pflicht.erstes.then(function () {
+        var liste = srcs
+        var zahl = function () { return liste.filter(function (s) { return lade.ok(s) }).length }
+        var vorher = zahl()
+        var komplett = aufbauen()
+        if (komplett === false && !playlist.length) {
+          document.querySelector('#no-content p').textContent = 'Bilder konnten nicht geladen werden – neuer Versuch in Kürze …'
+        }
+        // Nur neu aufbauen, wenn danach wirklich mehr Bilder da sind (sonst Endlosschleife bei Netzproblemen)
+        if (komplett !== true) lade.alle.then(function () { if (zahl() > vorher) SCREEN.sync('bilder geladen') })
+        return komplett === true
+      })
+    }
+    // Danach: erst alle laden, dann umschalten – kein schwarzes Bild
+    return lade.alle.then(aufbauen)
   },
   fehler: function () { if (!playlist.length) zeigeLeer(true) },
   debugText: function (d) { return d.info.join('\n') + '\n' + playlist.length + ' Folien, alle ' + TAKT_SEK + ' s' }

@@ -57,6 +57,24 @@
     return bildCache[src]
   }
 
+  /* Mehrere Bilder laden: 'erstes' ist erfüllt, sobald das erste Bild da ist (oder alle fehlgeschlagen sind),
+     'alle' wenn alle fertig sind; 'ok(src)' sagt, ob ein Bild schon geladen ist.
+     So zeigt der Bildschirm beim Start sofort etwas, statt auf große Bilder zu warten. */
+  function vorladenListe (srcs) {
+    var fertig = {}, offen = srcs.length, erstesFertig
+    var erstes = new Promise(function (r) { erstesFertig = r })
+    if (!offen) erstesFertig()
+    var alle = Promise.all(srcs.map(function (src) {
+      return vorladen(src).then(function (ok) {
+        fertig[src] = ok
+        offen--
+        if (ok || offen === 0) erstesFertig()
+        return ok
+      })
+    }))
+    return { erstes: erstes, alle: alle, ok: function (src) { return fertig[src] === true } }
+  }
+
   function debugAnzeigen (text) {
     if (!DEBUG) return
     var el = document.getElementById('mp-debug')
@@ -224,7 +242,7 @@
   }
 
   window.MPScreen = {
-    start: start, holeAngebote: holeAngebote, mische: mische, vorladen: vorladen,
+    start: start, holeAngebote: holeAngebote, mische: mische, vorladen: vorladen, vorladenListe: vorladenListe,
     heute: heute, heuteIso: heuteIso, isoAus: isoAus, kundeId: KUNDE_ID, debug: DEBUG
   }
 })()

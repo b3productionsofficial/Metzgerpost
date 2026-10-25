@@ -1,7 +1,7 @@
 {
   "id": "preis-angebot",
-  "name": "Preis-Angebot (Layout Folie 24, Stand 25.10.)",
-  "quelle": "Canva: 'Angebot KW44 – Rinderlende – TV (Layout Folie 24)', '… Instagram Feed', '… Instagram Story'",
+  "name": "Preis-Angebot (TV: Folie 24; Feed/Story: Canva „zum Verschieben“, Stand 25.10.)",
+  "quelle": "Canva: TV 'Angebot KW44 – Rinderlende – TV (Layout Folie 24)'; Feed DAHY8VctC8M, Story DAHY8QeyGms ('… (zum Verschieben)')",
   "farben": {
     "kreis": "#b5d6a8",
     "schatten": "#5e6e5a",
@@ -94,46 +94,46 @@
       "hoehe": 1350,
       "hintergrund": "bg-feed.jpg",
       "grosserKreis": {
-        "x": 40,
-        "y": 420,
+        "x": 103.3,
+        "y": 552.8,
         "d": 330
       },
       "preis": {
-        "x": 40,
-        "y": 525,
+        "x": 103.3,
+        "y": 647.2,
         "w": 330,
         "maxW": 235,
         "groesse": 92,
         "gewicht": 800
       },
       "einheit": {
-        "x": 40,
-        "y": 623,
+        "x": 103.3,
+        "y": 745.2,
         "w": 330,
         "groesse": 36,
         "gewicht": 700
       },
       "kleinerSchatten": {
-        "x": 279,
-        "y": 359,
+        "x": 292.6,
+        "y": 457.2,
         "d": 190,
         "deckkraft": 0.4
       },
       "kleinerKreis": {
-        "x": 290,
-        "y": 345,
+        "x": 303.6,
+        "y": 443.2,
         "d": 190
       },
       "statt": {
-        "x": 290,
-        "y": 392,
+        "x": 303.6,
+        "y": 490.2,
         "w": 190,
         "groesse": 26,
         "gewicht": 700
       },
       "alterPreis": {
-        "x": 290,
-        "y": 424,
+        "x": 303.6,
+        "y": 522.2,
         "w": 190,
         "maxW": 134,
         "groesse": 40,
@@ -158,8 +158,8 @@
         "zeilenhoehe": 1.4
       },
       "foto": {
-        "x": 475,
-        "y": 335,
+        "x": 412,
+        "y": 308.6,
         "d": 560,
         "rand": 9
       }
@@ -169,74 +169,74 @@
       "hoehe": 1920,
       "hintergrund": "bg-story.jpg",
       "grosserKreis": {
-        "x": 40,
-        "y": 570,
-        "d": 330
+        "x": 134.5,
+        "y": 998.7,
+        "d": 370.5
       },
       "preis": {
-        "x": 40,
-        "y": 675,
-        "w": 330,
-        "maxW": 235,
-        "groesse": 92,
+        "x": 134.5,
+        "y": 1116.6,
+        "w": 370.5,
+        "maxW": 263.8,
+        "groesse": 103.3,
         "gewicht": 800
       },
       "einheit": {
-        "x": 40,
-        "y": 773,
-        "w": 330,
-        "groesse": 36,
+        "x": 134.5,
+        "y": 1226.7,
+        "w": 370.5,
+        "groesse": 40.4,
         "gewicht": 700
       },
       "kleinerSchatten": {
-        "x": 279,
-        "y": 509,
-        "d": 190,
+        "x": 402.8,
+        "y": 930.3,
+        "d": 213.3,
         "deckkraft": 0.4
       },
       "kleinerKreis": {
-        "x": 290,
-        "y": 495,
-        "d": 190
+        "x": 415.2,
+        "y": 914.5,
+        "d": 213.3
       },
       "statt": {
-        "x": 290,
-        "y": 542,
-        "w": 190,
-        "groesse": 26,
+        "x": 415.2,
+        "y": 967.3,
+        "w": 213.3,
+        "groesse": 29.2,
         "gewicht": 700
       },
       "alterPreis": {
-        "x": 290,
-        "y": 574,
-        "w": 190,
-        "maxW": 134,
-        "groesse": 40,
+        "x": 415.2,
+        "y": 1003.2,
+        "w": 213.3,
+        "maxW": 150.4,
+        "groesse": 44.9,
         "gewicht": 700
       },
       "name": {
-        "x": 50,
-        "y": 1115,
+        "x": 70,
+        "y": 1439,
         "w": 980,
         "groesse": 76,
         "minGroesse": 48,
         "zeilenhoehe": 1.4,
         "maxZeilen": 2,
-        "maxUnten": 1450,
+        "maxUnten": 1730,
         "einzeiligMin": 58
       },
       "zeitraum": {
-        "x": 50,
-        "abstand": 6,
+        "x": 70,
+        "abstand": 1.4,
         "w": 980,
         "groesse": 44,
         "zeilenhoehe": 1.4
       },
       "foto": {
-        "x": 475,
-        "y": 485,
-        "d": 560,
-        "rand": 9
+        "x": 381.5,
+        "y": 474.8,
+        "d": 602.4,
+        "rand": 10
       }
     }
   }

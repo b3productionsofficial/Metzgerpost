@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetzgerPost — Kunden</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="../../shared/style.css" />
+  <link rel="stylesheet" href="../angebote/angebote.css" />
+  <style>
+    [hidden] { display: none !important; }
+    .kd-code { font-family: ui-monospace, Menlo, monospace; font-size: 20px; letter-spacing: 2px; color: var(--accent2); }
+    .kd-aus { border: 1px solid var(--warning); background: rgba(212,160,58,.1); border-radius: var(--radius-sm); padding: 14px 16px; font-size: 14px; line-height: 1.5; margin-bottom: 18px; }
+    .kd-aus code { color: var(--accent2); }
+  </style>
+</head>
+<body class="mp-bg-glow">
+<nav class="mp-nav" id="mp-nav"></nav>
+<main class="ag-main" style="max-width:980px">
+  <div class="ag-crumbs"><a href="/dashboard.html">Übersicht</a> › Kunden</div>
+  <div class="ag-head">
+    <h1>Kunden</h1>
+    <button type="button" class="mp-btn mp-btn-primary" id="neu" style="min-height:44px">+ Neue Metzgerei</button>
+  </div>
+  <div class="kd-aus" id="aus" hidden>
+    <b>Noch ausgeschaltet.</b> Die Kundenverwaltung braucht die Rechte-Tabellen in der Datenbank.
+    Erst <code>supabase/mandanten.sql</code> (Stufe 1) und <code>supabase/mandanten_stufe2.sql</code> gemeinsam anwenden,
+    dann in <code>shared/supabase.js</code> <code>MP_MANDANTEN_AKTIV = true</code> setzen. Bis dahin ändert diese Seite nichts.
+  </div>
+  <p class="ag-sub">Neue Metzgerei anlegen → Einladungscode weitergeben → die Metzgerei registriert sich und gibt den Code auf ihrer Übersicht ein. Kein neues Supabase-Projekt, keine Zusatzkosten.</p>
+  <div class="ag-list" id="liste"><div class="ag-empty">Lade …</div></div>
+</main>
+
+<div class="mp-modal-overlay" id="modal-neu" onclick="closeModalOnOverlay(event)">
+  <div class="mp-modal" role="dialog" aria-modal="true" aria-labelledby="n-titel">
+    <div class="mp-modal-title" id="n-titel">Neue Metzgerei</div>
+    <div class="ag-step" id="n-form">
+      <div class="ag-field"><label for="n-name">Name</label><input id="n-name" class="ag-input" maxlength="80" placeholder="z. B. Metzgerei Müller" /></div>
+      <div class="ag-field"><label for="n-plan">Paket</label>
+        <select id="n-plan" class="ag-input"><option value="basis">Basis</option><option value="pro">Pro</option><option value="test">Test</option></select></div>
+      <div id="n-fehler" class="ag-error" role="alert"></div>
+    </div>
+    <div class="ag-step" id="n-fertig" hidden>
+      <p>Einladungscode (14 Tage gültig):</p>
+      <div class="kd-code" id="n-code"></div>
+      <p class="ag-hint">Weitergeben mit: „Auf metzgerpost.netlify.app registrieren und auf der Übersicht diesen Code eingeben.“</p>
+    </div>
+    <div class="mp-modal-actions">
+      <button type="button" class="mp-btn mp-btn-secondary" onclick="closeModal('modal-neu')" id="n-zu">Abbrechen</button>
+      <button type="button" class="mp-btn mp-btn-primary" id="n-ok">Anlegen</button>
+    </div>
+  </div>
+</div>
+
+<div class="mp-toast" id="mp-toast"></div>
+<script src="../../shared/supabase.js"></script>
+<script src="../../shared/components.js"></script>
+<script src="../mittagstisch/config.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id)
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+  const ZEICHEN = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'   // ohne 0/O, 1/I
+  function zufall (n, zeichen) {
+    const a = new Uint32Array(n); crypto.getRandomValues(a)
+    return Array.from(a, x => zeichen[x % zeichen.length]).join('')
+  }
+  const neuerCode = () => zufall(4, ZEICHEN) + '-' + zufall(4, ZEICHEN)
+  const neueId = () => zufall(8, '0123456789abcdef')
+  const in14Tagen = () => new Date(Date.now() + 14 * 86400000).toISOString()
+  let aktiv = false
+
+  async function lade () {
+    if (!aktiv) {
+      // Vorschau aus config.js, nur lesen
+      $('liste').innerHTML = Object.entries(kunden).filter(([, k]) => k.supabaseId).map(([key, k]) => `
+        <div class="ag-item"><div class="ag-item-main"><div class="ag-item-title">${esc(k.name)}</div>
+        <div class="ag-item-meta">ID ${esc(k.supabaseId)} · Vorlage ${esc(key)} · aus config.js</div></div></div>`).join('')
+      return
+    }
+    await MP.loadKundenZuordnung(window._mpUser)
+    const l = MP.kundenListe || []
+    const gewaehlt = MP.getAktiveKundeId()
+    $('liste').innerHTML = l.length ? l.map(k => `
+      <div class="ag-item" data-id="${esc(k.kunde_id)}">
+        <div class="ag-item-main">
+          <div class="ag-item-title">${esc(k.name)} ${k.kunde_id === gewaehlt ? '<span class="ag-status ag-status-laeuft">gewählt</span>' : ''}</div>
+          <div class="ag-item-meta">ID ${esc(k.kunde_id)} · Paket ${esc(k.plan)}${k.config_key ? ' · Vorlage ' + esc(k.config_key) : ''}${k.aktiv === false ? ' · inaktiv' : ''}</div>
+          ${k.einladungscode ? `<div class="ag-item-meta">Offener Code: <span class="kd-code" style="font-size:15px">${esc(k.einladungscode)}</span></div>` : ''}
+        </div>
+        <div class="ag-item-actions">
+          <button type="button" class="mp-btn mp-btn-secondary mp-btn-sm" style="min-height:40px" data-aktion="waehlen">Bearbeiten als dieser Kunde</button>
+          <button type="button" class="mp-btn mp-btn-ghost mp-btn-sm" style="min-height:40px" data-aktion="code">Neuer Code</button>
+        </div>
+      </div>`).join('') : '<div class="ag-empty">Noch keine Kunden.</div>'
+  }
+
+  async function anlegen () {
+    const name = $('n-name').value.trim()
+    if (!name) { $('n-fehler').textContent = 'Bitte einen Namen eingeben.'; return }
+    const b = $('n-ok'); b.disabled = true
+    try {
+      const code = neuerCode()
+      const { error } = await MP.getSB().from('kunden').insert({ kunde_id: neueId(), name, plan: $('n-plan').value, einladungscode: code, einladung_bis: in14Tagen() })
+      if (error) throw error
+      $('n-code').textContent = code; $('n-form').hidden = true; $('n-fertig').hidden = false; b.hidden = true; $('n-zu').textContent = 'Fertig'
+      await lade()
+    } catch (e) { $('n-fehler').textContent = 'Fehler: ' + e.message }
+    b.disabled = false
+  }
+
+  async function start () {
+    const user = await MP.requireAdmin()
+    if (!user) return
+    window._mpUser = user
+    renderNav({ backUrl: '/dashboard.html', backLabel: 'Übersicht' })
+    aktiv = MP.mandantenAktiv() && Array.isArray(MP.kundenListe)
+    $('aus').hidden = aktiv
+    $('neu').disabled = !aktiv
+    $('neu').addEventListener('click', () => {
+      $('n-name').value = ''; $('n-fehler').textContent = ''; $('n-form').hidden = false; $('n-fertig').hidden = true
+      $('n-ok').hidden = false; $('n-zu').textContent = 'Abbrechen'; openModal('modal-neu'); setTimeout(() => $('n-name').focus(), 50)
+    })
+    $('n-ok').addEventListener('click', anlegen)
+    $('liste').addEventListener('click', async e => {
+      const b = e.target.closest('[data-aktion]'); if (!b || !aktiv) return
+      const id = b.closest('[data-id]').dataset.id, k = (MP.kundenListe || []).find(x => x.kunde_id === id)
+      if (b.dataset.aktion === 'waehlen') { MP.setAdminKunde(id, k && k.config_key); renderNav({ backUrl: '/dashboard.html', backLabel: 'Übersicht' }); showToast('Gewählt: ' + k.name); lade() }
+      if (b.dataset.aktion === 'code') {
+        const code = neuerCode()
+        const { error } = await MP.getSB().from('kunden').update({ einladungscode: code, einladung_bis: in14Tagen() }).eq('kunde_id', id)
+        if (error) showToast('Fehler: ' + error.message, 'error', 5000); else { showToast('Neuer Code: ' + code, 'success', 6000); lade() }
+      }
+    })
+    await lade()
+  }
+  start()
+})()
+</script>
+</body>
+</html>

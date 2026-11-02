@@ -101,6 +101,6 @@ with sync_playwright() as pw:
     # 7 Dashboard Link
     pg.set_viewport_size({'width':1440,'height':900})
     pg.goto('http://t.local/dashboard.html'); pg.wait_for_timeout(500)
-    print('dashboard angebote href:', pg.get_attribute('a.mp-module-card:has-text("Angebote")','href'))
+    print('dashboard angebote href:', pg.get_attribute('a.db-modul:has-text("Angebote")','href'))
     b.close()
 print('FEHLER:' , [e for e in errors if 'favicon' not in e and 'mock.supabase' not in e and '404' not in e][:20])

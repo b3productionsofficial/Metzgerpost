@@ -130,11 +130,54 @@ async function loadUserPlan() {
   const user = await getUser()
   const plan = user?.user_metadata?.plan ?? 'basis'
   window.MP.userPlan = plan
+  await loadKundenZuordnung(user)
   return plan
+}
+
+/* ── Mandanten Stufe 2: Kunde aus der Datenbank (kunden / kunden_mitglieder) ──
+   AUSGESCHALTET, bis supabase/mandanten.sql + mandanten_stufe2.sql angewendet sind.
+   Einschalten: MP_MANDANTEN_AKTIV = true. Solange aus, verhält sich alles wie bisher
+   (Kunden-ID = Anfang der Login-ID bzw. Admin-Auswahl aus config.js). */
+const MP_MANDANTEN_AKTIV = false
+function mandantenAktiv() {
+  if (MP_MANDANTEN_AKTIV) return true
+  try { return localStorage.getItem('mp_mandanten_test') === '1' } catch (e) { return false }
+}
+async function loadKundenZuordnung(user) {
+  window.MP.kundeAusDb = null
+  window.MP.kundeKeyAusDb = null
+  window.MP.kundenListe = null
+  if (!mandantenAktiv() || !user) return null
+  try {
+    const sb = getSB()
+    const m = await sb.from('kunden_mitglieder').select('kunde_id').eq('user_id', user.id).limit(1)
+    if (!m.error && m.data && m.data[0]) window.MP.kundeAusDb = m.data[0].kunde_id
+    const k = await sb.from('kunden').select('kunde_id,name,config_key,plan,aktiv,einladungscode,einladung_bis').order('name')
+    if (!k.error) {
+      window.MP.kundenListe = k.data || []
+      const eigen = window.MP.kundenListe.find(x => x.kunde_id === window.MP.kundeAusDb)
+      if (eigen) window.MP.kundeKeyAusDb = eigen.config_key || null
+    }
+  } catch (e) { /* Tabellen fehlen → alter Weg */ }
+  return window.MP.kundeAusDb
+}
+/* Admin wählt einen Kunden aus der Tabelle kunden */
+function setAdminKunde(kundeId, configKey) {
+  try {
+    localStorage.setItem('mp_admin_kunde_id', kundeId || '')
+    if (configKey) localStorage.setItem('mp_admin_selected_kunde', configKey)
+    else localStorage.removeItem('mp_admin_selected_kunde')
+  } catch (e) {}
+}
+async function einladungAnnehmen(code) {
+  const { data, error } = await getSB().rpc('mp_einladung_annehmen', { code })
+  if (error) throw new Error(error.message)
+  return data
 }
 
 /* ── Aktive Kunden-Key (config.js-Key, z.B. 'sorgundseitz') ── */
 function getAktiveKundeKey() {
+  if (typeof kunden !== 'undefined' && window.MP.kundeKeyAusDb && kunden[window.MP.kundeKeyAusDb] && window.MP.userPlan !== 'admin') return window.MP.kundeKeyAusDb
   if (window.MP.userPlan === 'admin') {
     const key = localStorage.getItem('mp_admin_selected_kunde')
     if (key && typeof kunden !== 'undefined' && kunden[key]) return key
@@ -147,6 +190,11 @@ function getAktiveKundeKey() {
 /* ── Aktive Kunden-ID (synchron — liest localStorage + config.js) ── */
 function getAktiveKundeId() {
   if (window.MP.userPlan === 'admin') {
+    if (mandantenAktiv()) {
+      let id = ''
+      try { id = localStorage.getItem('mp_admin_kunde_id') || '' } catch (e) {}
+      if (id) return id
+    }
     if (typeof kunden !== 'undefined') {
       const key = localStorage.getItem('mp_admin_selected_kunde')
       if (key && kunden[key]?.supabaseId) return kunden[key].supabaseId
@@ -156,6 +204,7 @@ function getAktiveKundeId() {
     }
     return ''
   }
+  if (window.MP.kundeAusDb) return window.MP.kundeAusDb
   const user = window._mpUser
   return user ? user.id.substring(0, 8) : ''
 }
@@ -167,5 +216,6 @@ window.MP = {
   getGerichte, saveGericht,
   saveWochenplan, getWochenplaene,
   loadUserPlan, getAktiveKundeId, getAktiveKundeKey,
+  mandantenAktiv, loadKundenZuordnung, setAdminKunde, einladungAnnehmen,
   userPlan: 'basis'
 }

@@ -9,5 +9,6 @@ for r in anon authenticated; do $P -d postgres -c "do \$\$begin if not exists (s
 sed '/^create role/d' test/supabase_nachbau.sql | $P -d mp_test
 echo "── mandanten.sql anwenden"; $P -d mp_test -f mandanten.sql
 echo "── Rechte prüfen"; $P -d mp_test -f test/mandanten_pruefung.sql | sed '/^$/d'
+echo "── Stufe 2 (Einladungscode)"; $P -d mp_test -f mandanten_stufe2.sql; $P -d mp_test -f test/mandanten_stufe2_pruefung.sql | sed '/^$/d'
 echo "── Rückweg"; $P -d mp_test -f mandanten_rueckgaengig.sql
 $P -d mp_test -c "set role anon; insert into public.wochen (kunde_id) values ('x');" && echo "Rückweg OK: anon darf wieder schreiben (alter Zustand)"

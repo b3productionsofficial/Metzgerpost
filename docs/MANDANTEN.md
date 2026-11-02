@@ -38,13 +38,30 @@ Admin darf alles. Rückweg stellt den alten Zustand wieder her.
    Positionen-Editor speichern · alle drei TVs zeigen weiter Inhalte.
 4. Wenn etwas hakt: `supabase/mandanten_rueckgaengig.sql` ausführen → sofort alter Zustand.
 
-## Stufe 2 – Kunden aus dem Code (nächster Schritt)
+## Stufe 2 – Neue Metzgerei per Einladungscode (fertig vorbereitet, ausgeschaltet)
 
-- `shared/supabase.js`: `getAktiveKundeId()` liest die Zuordnung aus `kunden_mitglieder` statt aus der Login-ID
-  (für Sorg & Seitz identisch, für neue Kunden nötig); Admin-Kundenauswahl aus der Tabelle `kunden`.
-- `modules/mittagstisch/config.js`: Kundendaten (Name, Farben, Gerichte-Vorlagen) schrittweise in die Datenbank.
-- Kunden-Anlage im Admin-Bereich: Formular „Neue Metzgerei“ → `kunden` + Einladung per E-Mail → `kunden_mitglieder`.
-- Danach Altdaten `057b6a13` umziehen (Bilder in den Kundenordner kopieren, Verweise umstellen) und aufräumen.
+Stand 02.11.2026. Dateien: `supabase/mandanten_stufe2.sql` (nach Stufe 1 anwenden) · Code in `shared/supabase.js`
+(Schalter `MP_MANDANTEN_AKTIV = false`) · Admin-Seite `modules/admin/kunden.html` · Code-Feld auf der Übersicht.
+
+Ablauf:
+1. Admin → Übersicht → Admin → **Kunden verwalten** → „+ Neue Metzgerei“ → Name, Paket → Einladungscode (14 Tage gültig).
+2. Die Metzgerei registriert sich und gibt den Code auf ihrer Übersicht ein → sie ist mit „ihrer“ Metzgerei verbunden.
+3. Admin kann bei jedem Kunden „Bearbeiten als dieser Kunde“ wählen (Generator, Angebote, Display Manager arbeiten dann mit dessen ID).
+
+Solange der Schalter aus ist, fragt die App die neuen Tabellen **nicht** ab – alles verhält sich wie bisher
+(Kunden-ID = Anfang der Login-ID; für Sorg & Seitz ist das dieselbe ID wie in der neuen Tabelle).
+
+Tests: `tests/regeln/mandanten_test.sh` (Datenbank: 25 Rechte-Fälle Stufe 1 + 10 Fälle Stufe 2) ·
+`tests/regeln/mandanten_ui_test.py` (Browser: aus = wie bisher; an = anlegen, Code einlösen, eigene ID).
+
+### Einschalten (gemeinsam, nach Stufe 1)
+1. `supabase/mandanten_stufe2.sql` im SQL-Editor ausführen.
+2. In `shared/supabase.js` `MP_MANDANTEN_AKTIV = true` setzen → `staging` → testen → `main`.
+3. Testlauf: Testmetzgerei anlegen, mit zweitem Login Code einlösen, Woche speichern, prüfen dass Sorg & Seitz unverändert ist.
+
+### Noch offen (Stufe 3)
+- Eigene Vorlagen/Layouts für neue Kunden (bisher fest in `config.js`; ohne eigene Vorlage nutzt ein neuer Kunde die von Sorg & Seitz).
+- Altdaten `057b6a13` umziehen und aufräumen.
 
 ## Was es kostet
 

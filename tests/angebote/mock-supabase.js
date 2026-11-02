@@ -44,10 +44,19 @@
       return {data:out,error:null}
     }
   }
-  const user={id:'adminxxx-0000-0000-0000-000000000000',email:'lukas@test.de',user_metadata:{plan:'admin',betrieb_name:'Lukas'}}
+  const user=JSON.parse(localStorage.getItem('__mockuser')||'null')||{id:'adminxxx-0000-0000-0000-000000000000',email:'lukas@test.de',user_metadata:{plan:'admin',betrieb_name:'Lukas'}}
   window.supabase={createClient(){return{
     auth:{getSession:async()=>({data:{session:window.__noSession?null:{user}}}),signOut:async()=>({})},
     from:t=>new Q(t),
+    rpc:async(name,args)=>{
+      window.__mock.log.push('rpc '+name)
+      if(name!=='mp_einladung_annehmen')return{data:null,error:{message:'unbekannte Funktion'}}
+      const db=load();db.kunden=db.kunden||[];db.kunden_mitglieder=db.kunden_mitglieder||[]
+      const k=db.kunden.find(x=>x.einladungscode&&x.einladungscode===String(args.code||'').trim().toUpperCase())
+      if(!k)return{data:null,error:{message:'Code ungültig oder abgelaufen.'}}
+      db.kunden_mitglieder.push({user_id:user.id,kunde_id:k.kunde_id,rolle:'inhaber'});k.einladungscode=null;save(db)
+      return{data:k.kunde_id,error:null}
+    },
     storage:{from:()=>({
       upload:async(p,blob)=>{const db=load();db.uploads[p]=blob.size;save(db);window.__mock.log.push('upload '+p+' '+blob.size);return{error:null}},
       getPublicUrl:p=>({data:{publicUrl:'https://mock.supabase.co/storage/v1/object/public/screen-assets/'+p}}),

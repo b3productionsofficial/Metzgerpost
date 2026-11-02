@@ -68,6 +68,13 @@
     <select id="admin-kunde" class="mp-select"></select>
   </div>
 
+  <div class="db-admin" id="einladung" hidden>
+    <label for="code">Einladungscode</label>
+    <input id="code" class="mp-input" placeholder="z. B. ABCD-1234" autocomplete="off" style="flex:1 1 180px;min-height:44px" />
+    <button type="button" class="mp-btn mp-btn-primary" id="code-ok" style="min-height:44px">Metzgerei verbinden</button>
+    <span id="code-info" style="font-size:13px;color:var(--muted);flex-basis:100%">Den Code bekommst du von MetzgerPost. Danach siehst du die Daten deiner Metzgerei.</span>
+  </div>
+
   <div class="db-head">
     <div>
       <div class="db-hallo">Hallo, <span id="name">…</span></div>
@@ -126,6 +133,7 @@
       <div class="db-modul-name">Admin</div>
       <div class="db-modul-desc">Positionen auf den Vorlagen, alte Ansichten.</div>
       <div class="db-modul-links">
+        <a href="modules/admin/kunden.html">Kunden verwalten</a>
         <a href="modules/mittagstisch/admin.html">Positionen &amp; Gerichte (alt)</a>
         <a data-ziel="mittag-alt" href="modules/mittagstisch/index.html">Mittagstisch (alt)</a>
         <a href="modules/display/manager-alt.html">Display Manager (alt)</a>
@@ -202,7 +210,17 @@
     const name = user.user_metadata?.betrieb_name || user.email.split('@')[0]
     $('name').textContent = name.split(' ')[0]
     $('datum').textContent = new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-    if (MP.userPlan === 'admin' && typeof kunden !== 'undefined') {
+    if (MP.userPlan === 'admin' && MP.mandantenAktiv() && MP.kundenListe) {
+      // Stufe 2: Kunden aus der Datenbank
+      $('admin').hidden = false; $('admin-modul').hidden = false
+      const sel = $('admin-kunde'), aktiv = MP.getAktiveKundeId()
+      sel.innerHTML = MP.kundenListe.map(k => `<option value="${esc(k.kunde_id)}"${k.kunde_id === aktiv ? ' selected' : ''}>${esc(k.name)}</option>`).join('')
+      sel.addEventListener('change', () => {
+        const k = MP.kundenListe.find(x => x.kunde_id === sel.value)
+        MP.setAdminKunde(sel.value, k && k.config_key)
+        renderNav(); links(); ladeStatus().catch(e => console.warn(e))
+      })
+    } else if (MP.userPlan === 'admin' && typeof kunden !== 'undefined') {
       $('admin').hidden = false; $('admin-modul').hidden = false
       const sel = $('admin-kunde')
       const stored = localStorage.getItem('mp_admin_selected_kunde') || Object.keys(kunden).find(k => kunden[k].supabaseId) || ''
@@ -211,6 +229,14 @@
       sel.addEventListener('change', () => {
         localStorage.setItem('mp_admin_selected_kunde', sel.value)
         renderNav(); links(); ladeStatus().catch(e => console.warn(e))
+      })
+    }
+    if (MP.userPlan !== 'admin' && MP.mandantenAktiv() && !MP.kundeAusDb) {
+      $('einladung').hidden = false
+      $('code-ok').addEventListener('click', async () => {
+        const b = $('code-ok'); b.disabled = true
+        try { await MP.einladungAnnehmen($('code').value); showToast('Verbunden'); setTimeout(() => location.reload(), 600) }
+        catch (e) { $('code-info').textContent = e.message; $('code-info').style.color = 'var(--error)'; b.disabled = false }
       })
     }
     links()

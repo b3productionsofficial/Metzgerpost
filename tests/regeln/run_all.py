@@ -96,6 +96,14 @@ PRUEFUNGEN = {
     ('DB-05', 'Handy ohne seitliches Scrollen', r'OK     DB-05'),
     ('DB', 'keine JS-Fehler', r'OK     DB-00'),
   ]),
+  'mandanten_ui': (['python3', 'tests/regeln/mandanten_ui_test.py'], [
+    ('MA-01', 'ausgeschaltet = alles wie bisher', r'(?s)(OK     MA-01.*){3}'),
+    ('MA-02', 'Admin legt neue Metzgerei mit Code an', r'OK     MA-02'),
+    ('MA-03', 'Admin arbeitet „als Kunde“', r'OK     MA-03'),
+    ('MA-04', 'Code einlösen (falsch abgelehnt)', r'OK     MA-04'),
+    ('MA-05', 'danach eigene Kunden-ID', r'OK     MA-05'),
+    ('MA', 'keine JS-Fehler', r'OK     MA-00'),
+  ]),
 }
 CWD = {'screen3': os.path.join(REPO, 'tests', 'angebote'), 'angebote_render': os.path.join(REPO, 'tests', 'angebote'),
        'angebote_ui': os.path.join(REPO, 'tests', 'angebote')}

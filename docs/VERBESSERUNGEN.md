@@ -48,7 +48,9 @@ Nichts davon wurde an der Live-App verändert – das sind Empfehlungen.
 16. **Weiße Schrift auf orangen Buttons** hat zu wenig Kontrast (ca. 2,6:1). Im Angebote-Modul dunkle Schrift.
 17. **Design der anderen Module** an das Angebote-Modul angleichen (nummerierte Schritte, Live-Vorschau, große Klickflächen).
 18. **`script.js`:** `downloadBack` und `downloadPrint` sind doppelt definiert (die zweite überschreibt die erste).
-19. **Altlasten:** `tv.html`, `tv1–3.html` vermutlich unbenutzt; `screen3.html` referenziert einen nicht vorhandenen
+19. **Altlasten:** `tv1–3.html` sind Weiterleitungen auf `screen.html` mit der Altdaten-ID `057b6a13` – könnten als
+    Lesezeichen an einem TV hängen, daher **nicht gelöscht** (erst nach Umstellung aller TVs auf v2). `wizard.html`
+    (alter Generator-Entwurf) wird nirgends mehr verlinkt. `tv.html` vermutlich unbenutzt; `screen3.html` referenziert einen nicht vorhandenen
     Vollbild-Button (JS-Fehler beim Verlassen des Vollbilds).
 20. **`CLAUDE_CONTEXT.md` ist veraltet/widersprüchlich** (z. B. Admin-Erkennung) – nach jeder Session aktualisieren.
 21. **`supabase-schema.sql` entspricht nicht der echten Datenbank** – aus der Datenbank neu erzeugen.

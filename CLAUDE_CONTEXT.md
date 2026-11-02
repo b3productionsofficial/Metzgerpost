@@ -428,6 +428,19 @@ Neuer Kunde hinzufügen: Eintrag in `kunden`, `kundenGerichte`, `kundenLayouts` 
 
 ## 12. Changelog
 
+### 2026-11-02 (nur `staging`, noch NICHT live)
+- **Mittagstisch-Generator neu**: `modules/mittagstisch/generator.html` (Schritte Woche → Gerichte → Format → Fertig,
+  Live-Vorschau, gespeicherte Woche öffnen, Entwurf bleibt im Browser). Zeichnet über `render.js` – **pixelgleich** zur
+  alten Seite (Test GE-03). Daten: `mittag-daten.js`. Alte Seite `index.html` bleibt („Alte Ansicht“, Götz-Textvorlage, Positionen).
+- **Gerichte-Bibliothek**: `modules/mittagstisch/gerichte.html` + Tabelle `mittag_gerichte` (live angelegt, additiv;
+  nur Testkunde befüllt). Sorg & Seitz nutzt bis zum „Übernehmen“ weiter die Standardgerichte.
+- **Übersicht (`dashboard.html`) neu**: Status Mittagstisch diese/nächste Woche (Regel wie Bildschirm 1), laufende Angebote,
+  Bereiche, letzte Wochen; alte Seiten nur unter „Admin“.
+- **Kundenverwaltung Stufe 2 vorbereitet, AUS** (`MP_MANDANTEN_AKTIV = false` in `shared/supabase.js`):
+  `supabase/mandanten_stufe2.sql` (Einladungscode), `modules/admin/kunden.html`, Code-Feld auf der Übersicht. Siehe `docs/MANDANTEN.md`.
+- **Online-Status der TVs** im Display Manager (Realtime-Presence aus `shared/screen-runtime.js`, keine DB-Schreibzugriffe).
+- Tests: `python3 tests/regeln/run_all.py` → 72 Prüfungen (+ `node tests/regeln/regeln_test.js` 38, `tests/regeln/mandanten_test.sh` 35).
+
 ### 2026-10-25 abends / Nacht (nur `staging`, noch NICHT live)
 - **Regeln an einer Stelle:** `shared/screen-regeln.js` (Wochenwahl, Sonderlayouts, Angebote, Mischung) – genutzt von
   `screen-v2`, `screen2-v2`, `screen3-v2` und der Vorschau im Display Manager. Regelkatalog: `docs/REGELN.md`.

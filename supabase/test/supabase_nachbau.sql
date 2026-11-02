@@ -36,6 +36,11 @@ alter table public.angebots_produkte enable row level security;
 create policy "angebots_produkte lesen" on public.angebots_produkte for select to anon, authenticated using (true);
 create policy "angebots_produkte schreiben" on public.angebots_produkte for all to authenticated using (true) with check (true);
 alter table public.generator_configs enable row level security;
+create table public.mittag_gerichte (id uuid primary key default gen_random_uuid(), kunde_id text not null, schluessel text not null, text text not null, preis text default '', bild_url text, sortierung int default 0, aktiv boolean default true, unique (kunde_id, schluessel));
+alter table public.mittag_gerichte enable row level security;
+grant all on public.mittag_gerichte to anon, authenticated;
+create policy "mittag_gerichte lesen" on public.mittag_gerichte for select to authenticated using (true);
+create policy "mittag_gerichte schreiben" on public.mittag_gerichte for all to authenticated using (true) with check (true);
 
 insert into auth.users values ('057b6a13-08f4-466f-82bd-2abd00eb06a4', 'lukas'), ('6544d8e6-b797-4bea-abeb-5da964eefe27', 'sorg'), ('99999999-0000-0000-0000-000000000000', 'fremde metzgerei');
 insert into public.displays (kunde_id, screen_id, content) values ('6544d8e6', 'screen1', '{}'), ('6544d8e6', 'mt_settings', '{"tage":[2,3,4,5]}');

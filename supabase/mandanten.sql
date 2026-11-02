@@ -96,6 +96,14 @@ drop policy if exists "generator_configs eigene" on public.generator_configs;
 create policy "generator_configs eigene" on public.generator_configs for all to authenticated
   using (public.mp_darf(kunde_id)) with check (public.mp_darf(kunde_id));
 
+-- mittag_gerichte (Gerichte-Bibliothek, seit 02.11.2026): lesen eingeloggt, schreiben nur der eigene Betrieb
+alter table public.mittag_gerichte enable row level security;
+drop policy if exists "mittag_gerichte lesen" on public.mittag_gerichte;
+drop policy if exists "mittag_gerichte schreiben" on public.mittag_gerichte;
+create policy "mittag_gerichte lesen" on public.mittag_gerichte for select to authenticated using (true);
+create policy "mittag_gerichte schreiben" on public.mittag_gerichte for all to authenticated
+  using (public.mp_darf(kunde_id)) with check (public.mp_darf(kunde_id));
+
 -- ── 5. Bilder (Storage): öffentlich abrufbar wie bisher, hochladen/ändern/löschen nur im eigenen Ordner ──
 -- Ordner-Konvention: screen-assets/<kunde_id>/...
 drop policy if exists "Allow all anon and auth" on storage.objects;

@@ -7,7 +7,7 @@ begin;
 do $$
 declare t text;
 begin
-  foreach t in array array['displays', 'display_configs', 'wochen', 'screen2_config', 'screen3_config', 'angebote', 'angebots_produkte', 'generator_configs'] loop
+  foreach t in array array['displays', 'display_configs', 'wochen', 'screen2_config', 'screen3_config', 'angebote', 'angebots_produkte', 'generator_configs', 'mittag_gerichte'] loop
     execute (select coalesce(string_agg(format('drop policy %I on public.%I;', policyname, t), ' '), 'select 1')
              from pg_policies where schemaname = 'public' and tablename = t);
   end loop;
@@ -27,6 +27,9 @@ create policy "angebote schreiben" on public.angebote for all to authenticated u
 create policy "angebots_produkte lesen"    on public.angebots_produkte for select to anon, authenticated using (true);
 create policy "angebots_produkte schreiben" on public.angebots_produkte for all to authenticated using (true) with check (true);
 -- generator_configs: vorher RLS an ohne Policy
+-- mittag_gerichte (vorher: eingeloggt lesen/schreiben)
+create policy "mittag_gerichte lesen" on public.mittag_gerichte for select to authenticated using (true);
+create policy "mittag_gerichte schreiben" on public.mittag_gerichte for all to authenticated using (true) with check (true);
 -- wochen / screen2_config / screen3_config: vorher RLS aus
 alter table public.wochen disable row level security;
 alter table public.screen2_config disable row level security;

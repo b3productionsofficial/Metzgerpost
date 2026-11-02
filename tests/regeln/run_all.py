@@ -70,6 +70,24 @@ PRUEFUNGEN = {
     ('GE-01', 'Woche beim gewählten Kunden', r"nach Speichern 1 \[\['6544d8e6'"),
     ('GE-02', 'gleiche Woche aktualisiert (1 Eintrag)', r"nach Speichern 2 \[\['6544d8e6', '2026-02-18', '[^']*', 'Cordon"),
   ]),
+  'generator_paritaet': (['python3', 'tests/regeln/generator_paritaet_test.py'], [
+    ('GE-03', 'neuer Renderer = alter: Story', r'GE-03 story .* PIXELGLEICH'),
+    ('GE-03', 'neuer Renderer = alter: Feed', r'GE-03 feed .* PIXELGLEICH'),
+    ('GE-03', 'neuer Renderer = alter: Druck vorne', r'GE-03 front .* PIXELGLEICH'),
+    ('GE-03', 'neuer Renderer = alter: Druck hinten', r'GE-03 back .* PIXELGLEICH'),
+  ]),
+  'generator_neu': (['python3', 'tests/regeln/generator_neu_test.py'], [
+    ('GE-04', 'Gerichte: Vorlage → Bibliothek, anlegen/bearbeiten/entfernen', r'(?s)(OK     GE-04.*){5}'),
+    ('GE-05', 'Wochen-Knöpfe → Label Di–Fr', r'OK     GE-05'),
+    ('GE-06', 'Live-Vorschau = Renderer', r'OK     GE-06 Vorschau Feed = Renderer'),
+    ('GE-07', 'Instagram-Text', r'OK     GE-07'),
+    ('GE-08', 'Download PNG', r'OK     GE-08'),
+    ('GE-09', 'Speichern Bildschirm 1 (Kunde, Format, aktualisieren, TV findet sie)', r'(?s)(OK     GE-09.*){3}'),
+    ('GE-10', 'gespeicherte Woche öffnen', r'OK     GE-10'),
+    ('GE-11', 'Druck vorne/hinten + zweite Woche', r'OK     GE-11'),
+    ('GE-12', 'Handy ohne seitliches Scrollen', r'OK     GE-12'),
+    ('GE', 'keine JS-Fehler', r'OK     GE-00'),
+  ]),
 }
 CWD = {'screen3': os.path.join(REPO, 'tests', 'angebote'), 'angebote_render': os.path.join(REPO, 'tests', 'angebote'),
        'angebote_ui': os.path.join(REPO, 'tests', 'angebote')}

@@ -68,6 +68,16 @@ TV-Bildschirmen (`screen-v2`, `screen2-v2`, `screen3-v2`) und der Vorschau im Di
 |---|---|
 | GE-01 | „Als Woche speichern“ speichert beim **gewählten Kunden** (Admin) bzw. beim eigenen Betrieb. |
 | GE-02 | Dieselbe Woche nochmal speichern aktualisiert den Eintrag (kein Doppel). |
+| GE-03 | Neuer Generator zeichnet **pixelgleich** zum alten (Story, Feed, Druck vorne/hinten) – gleiche Vorlagen, Positionen, Schriften. |
+| GE-04 | Gerichte kommen aus der Bibliothek (`mittag_gerichte`), sonst aus dem Browser (alte Verwaltung), sonst Standardgerichte. Einmal „übernehmen“ kopiert sie. Neues Gericht nur mit Foto; „entfernen“ blendet nur aus. |
+| GE-05 | Wochen-Knöpfe (diese/nächste/übernächste) bzw. Datum → Text „Di – Fr“ wie bisher (`10.11.2026 - 13.11.2026`). Ab Freitag ist „nächste Woche“ vorgewählt. |
+| GE-06 | Vorschau zeigt genau das Bild, das heruntergeladen wird. |
+| GE-07 | Instagram-Text wie bisher (Woche + 4 Gerichte). |
+| GE-08 | Downloads als PNG mit den bisherigen Dateinamen. |
+| GE-09 | „Für Bildschirm 1 speichern“: gleiches Format wie die alte Seite, beim gewählten Kunden, gleiche Woche = aktualisieren; Bildschirm 1 findet sie mit seiner Regel. Preise pro Woche änderbar. |
+| GE-10 | Gespeicherte Woche lässt sich wieder öffnen (Gerichte + Preise). |
+| GE-11 | Druck: Vorderseite-Text frei, Rückseite links diese / rechts zweite Woche (abschaltbar). Leere Tage bleiben leer statt Fehler. |
+| GE-12 | Bedienbar am Handy (keine seitliche Scroll-Leiste). |
 
 ## Display Manager
 

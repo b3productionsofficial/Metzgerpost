@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetzgerPost — Mittagstisch erstellen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@600;700&family=Raleway:wght@500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="../../shared/style.css" />
+  <link rel="stylesheet" href="../angebote/angebote.css" />
+  <link rel="stylesheet" href="generator.css" />
+</head>
+<body class="mp-bg-glow mt-seite">
+<nav class="mp-nav" id="mp-nav"></nav>
+
+<main class="ag-main">
+  <div class="ag-crumbs">Mittagstisch</div>
+  <div class="ag-head">
+    <h1>Mittagstisch erstellen</h1>
+    <a class="mp-btn mp-btn-secondary" data-link="gerichte.html" href="gerichte.html" style="min-height:44px">Gerichte-Bibliothek</a>
+    <a class="mp-btn mp-btn-ghost" data-link="index.html" href="index.html" style="min-height:44px" title="Bisherige Seite (z. B. für Götz-Textvorlage oder Positionen)">Alte Ansicht</a>
+  </div>
+  <p class="ag-sub" id="kunde-hinweis"></p>
+
+  <div class="ag-split">
+    <div class="ag-form">
+
+      <!-- 1 Woche -->
+      <section class="ag-card ag-step" aria-labelledby="h-woche">
+        <div class="ag-step-head"><span class="ag-step-num">1</span><h2 id="h-woche">Woche</h2></div>
+        <div class="ag-chips" id="woche-chips" role="group" aria-label="Woche wählen"></div>
+        <div class="ag-row">
+          <div class="ag-field"><label for="woche-datum">oder Datum wählen</label><input type="date" id="woche-datum" class="ag-input" /></div>
+          <div class="ag-field" style="flex-basis:240px"><label for="woche-label">Text auf dem Bild</label><input id="woche-label" class="ag-input" autocomplete="off" /></div>
+        </div>
+        <div class="ag-hint" id="woche-info"></div>
+        <div class="ag-field">
+          <label for="woche-laden">Gespeicherte Woche öffnen</label>
+          <select id="woche-laden" class="ag-input"><option value="">– Woche wählen –</option></select>
+        </div>
+      </section>
+
+      <!-- 2 Gerichte -->
+      <section class="ag-card ag-step" aria-labelledby="h-gerichte">
+        <div class="ag-step-head"><span class="ag-step-num">2</span><h2 id="h-gerichte">Gerichte</h2></div>
+        <div class="ag-hint" id="quelle-hinweis"></div>
+        <div id="tage" class="ag-step" style="gap:10px"></div>
+      </section>
+
+      <!-- 3 Format -->
+      <section class="ag-card ag-step" aria-labelledby="h-format">
+        <div class="ag-step-head"><span class="ag-step-num">3</span><h2 id="h-format">Format</h2></div>
+        <div class="ag-seg" role="group" aria-label="Format" id="format-seg">
+          <button type="button" data-wert="mittagstisch_instagram" aria-pressed="true">Instagram</button>
+          <button type="button" data-wert="mittagstisch_druck" aria-pressed="false">Druck (A4)</button>
+        </div>
+        <div id="druck-optionen" hidden class="ag-step">
+          <div class="ag-field"><label for="front-text">Text Vorderseite</label><input id="front-text" class="ag-input" autocomplete="off" /></div>
+          <label class="ag-check"><input type="checkbox" id="zweite-an" checked /> Rückseite rechts: zweite Woche</label>
+          <div class="mt-zweite" id="zweite">
+            <div class="ag-field"><label for="zweite-label">Text zweite Woche</label><input id="zweite-label" class="ag-input" autocomplete="off" /></div>
+            <div id="tage2" class="ag-step" style="gap:10px"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 Fertig -->
+      <section class="ag-card ag-step" aria-labelledby="h-fertig">
+        <div class="ag-step-head"><span class="ag-step-num">4</span><h2 id="h-fertig">Fertig</h2></div>
+        <div class="ag-actions" id="downloads"></div>
+        <div class="ag-actions">
+          <button type="button" class="mp-btn mp-btn-primary ag-btn-big" id="btn-speichern">Für Bildschirm 1 speichern</button>
+        </div>
+        <div class="mt-status" id="speicher-status" role="status" hidden></div>
+        <div class="ag-field" id="caption-feld">
+          <label for="caption">Instagram-Text</label>
+          <textarea id="caption" class="ag-input mt-caption"></textarea>
+          <div><button type="button" class="mp-btn mp-btn-secondary" id="btn-kopieren" style="min-height:44px">Text kopieren</button></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Vorschau -->
+    <aside class="ag-preview" aria-label="Vorschau">
+      <div class="ag-tabs" role="tablist" id="vorschau-tabs" style="margin-bottom:0"></div>
+      <div class="ag-canvas-wrap hoch mt-lade" id="vorschau-wrap"><canvas id="vorschau" width="1080" height="1920" aria-label="Vorschau"></canvas></div>
+      <div class="ag-error" id="vorschau-fehler" role="alert"></div>
+    </aside>
+  </div>
+</main>
+
+<!-- Gericht wählen -->
+<div class="mp-modal-overlay" id="modal-gericht" onclick="closeModalOnOverlay(event)">
+  <div class="mp-modal mt-modal" role="dialog" aria-modal="true" aria-labelledby="mg-titel">
+    <div class="mp-modal-title" id="mg-titel">Gericht wählen</div>
+    <label for="mg-suche" class="ag-sr">Gericht suchen</label>
+    <input id="mg-suche" class="ag-input" placeholder="Gericht suchen …" autocomplete="off" style="margin-bottom:14px" />
+    <div class="ag-produktliste" id="mg-liste" style="max-height:56vh"></div>
+    <div class="mp-modal-actions">
+      <a class="mp-btn mp-btn-ghost" data-link="gerichte.html" href="gerichte.html" style="margin-right:auto">Neues Gericht in der Bibliothek anlegen</a>
+      <button type="button" class="mp-btn mp-btn-secondary" onclick="closeModal('modal-gericht')">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<div class="mp-toast" id="mp-toast"></div>
+<script src="../../shared/supabase.js"></script>
+<script src="../../shared/components.js"></script>
+<script src="config.js"></script>
+<script src="render.js"></script>
+<script src="mittag-daten.js"></script>
+<script>
+(function () {
+  const D = window.MPMittagDaten, R = window.MPMittagRender
+  const $ = id => document.getElementById(id)
+  const TAGE = D.TAGE
+
+  const FORMATE = {
+    mittagstisch_instagram: [['story', 'Story'], ['feed', 'Beitrag (Feed)']],
+    mittagstisch_druck: [['front', 'Vorderseite'], ['back', 'Rückseite']]
+  }
+  const DATEI = { story: 'klassisch-story', feed: 'klassisch-feed', front: 'mittagstisch-front', back: 'mittagstisch-back' }
+
+  let gerichte = [], quelle = 'vorlage', overrides = {}, wochen = []
+  let z = null            // Zustand
+  let ansicht = 'story'   // Vorschau-Format
+  let pickerZiel = null   // { liste: 'tage'|'tage2', tag }
+
+  function leererZustand () {
+    const w = D.wocheAus(standardDatum())
+    const w2 = D.wocheAus(D.plus(w.montag, 7))
+    return { layout: 'mittagstisch_instagram', woche: w.label, datum: D.iso(w.montag), tage: {}, front: w.label, zweiteAn: true, zweite: w2.label, tage2: {} }
+  }
+  /* Ab Freitag wird meist schon die nächste Woche gemacht */
+  function standardDatum () { const h = new Date(); return h.getDay() >= 5 || h.getDay() === 0 ? D.plus(h, 3) : h }
+
+  const entwurfKey = () => 'mp_mt_entwurf_' + D.kundeKey() + '_' + D.kundeId()
+  function merke () { D.lsSchreiben(entwurfKey(), z) }
+
+  /* ── Zustand für den Renderer ── */
+  function renderZustand () {
+    const tage = {}, rechts = {}
+    TAGE.forEach(t => { tage[t] = z.tage[t] || null; rechts[t] = z.zweiteAn ? (z.tage2[t] || null) : null })
+    return { kunde: D.kundeKey(), layout: z.layout, woche: z.woche, tage,
+      druck: { frontDatum: z.front, wocheLinks: z.woche, wocheRechts: z.zweiteAn ? z.zweite : '', rechts } }
+  }
+
+  /* ── Woche ── */
+  function zeigeWoche () {
+    const heute = D.wocheAus(new Date())
+    const chips = [['Diese Woche', heute.montag], ['Nächste Woche', D.plus(heute.montag, 7)], ['Übernächste', D.plus(heute.montag, 14)]]
+    $('woche-chips').innerHTML = chips.map(([n, d]) => {
+      const w = D.wocheAus(d)
+      return `<button type="button" class="ag-chip" data-datum="${D.iso(d)}" aria-pressed="${D.iso(d) === z.datum}">${n}<br><small style="color:var(--muted)">KW ${w.kw}</small></button>`
+    }).join('')
+    $('woche-datum').value = z.datum || ''
+    $('woche-label').value = z.woche
+    const p = D.parseLabel(z.woche)
+    const gespeichert = p && wochen.find(w => w.gueltig_ab === p.gueltigAb)
+    $('woche-info').innerHTML = p
+      ? `KW ${p.kw} · ${gespeichert ? '<b style="color:var(--success)">für Bildschirm 1 gespeichert</b> – erneutes Speichern aktualisiert sie' : 'noch nicht für Bildschirm 1 gespeichert'}`
+      : '<span class="ag-error">Datum im Text nicht erkannt – bitte z. B. „03.11.2026 - 06.11.2026“.</span>'
+    $('woche-laden').innerHTML = '<option value="">– Woche wählen –</option>' +
+      wochen.map(w => `<option value="${D.esc(w.id)}">${D.esc(w.woche_label || w.gueltig_ab)}${w.kw ? ' · KW ' + w.kw : ''}</option>`).join('')
+  }
+  function setzeWoche (datum) {
+    const w = D.wocheAus(datum), alt = z.woche
+    z.datum = D.iso(w.montag); z.woche = w.label
+    if (!z.front || z.front === alt) z.front = w.label
+    const w2 = D.wocheAus(D.plus(w.montag, 7))
+    z.zweite = w2.label
+    aktualisiere()
+  }
+
+  /* ── Gerichte-Zeilen ── */
+  function zeile (liste, t) {
+    const g = z[liste][t]
+    const name = D.TAG_NAMEN[t]
+    return `<div class="mt-tag" data-liste="${liste}" data-tag="${t}">
+      <div class="mt-tag-name">${name}</div>
+      <button type="button" class="mt-wahl${g ? '' : ' leer'}" data-aktion="waehlen" aria-label="${name}: ${g ? D.esc(g.text) + ' – ändern' : 'Gericht wählen'}">
+        ${g && g.bild ? `<img class="ag-thumb" src="${D.esc(g.bild)}" alt="">` : '<span class="ag-thumb ag-thumb-leer">+</span>'}
+        <span>${g ? D.esc(g.text) : 'Gericht wählen …'}</span>
+      </button>
+      <input class="ag-input mt-preis" data-aktion="preis" aria-label="Preis ${name}" placeholder="Preis" value="${g ? D.esc(g.preis) : ''}" ${g ? '' : 'disabled'} />
+      <button type="button" class="mt-x" data-aktion="leeren" aria-label="${name} leeren" ${g ? '' : 'disabled'}>×</button>
+    </div>`
+  }
+  function zeigeTage () {
+    $('tage').innerHTML = TAGE.map(t => zeile('tage', t)).join('')
+    $('tage2').innerHTML = TAGE.map(t => zeile('tage2', t)).join('')
+  }
+  function tageKlick (e) {
+    const b = e.target.closest('[data-aktion]'); if (!b) return
+    const r = b.closest('.mt-tag'), liste = r.dataset.liste, t = r.dataset.tag
+    if (b.dataset.aktion === 'waehlen') { pickerZiel = { liste, tag: t }; oeffnePicker() }
+    if (b.dataset.aktion === 'leeren') { z[liste][t] = null; aktualisiere() }
+  }
+  function tagePreis (e) {
+    if (e.target.dataset.aktion !== 'preis') return
+    const r = e.target.closest('.mt-tag'), g = z[r.dataset.liste][r.dataset.tag]
+    if (g) { g.preis = e.target.value; merke(); zeigeCaption(); planeVorschau() }
+  }
+
+  /* ── Gericht-Auswahl ── */
+  function oeffnePicker () {
+    $('mg-titel').textContent = 'Gericht für ' + D.TAG_NAMEN[pickerZiel.tag] + (pickerZiel.liste === 'tage2' ? ' (zweite Woche)' : '')
+    $('mg-suche').value = ''
+    zeigePicker()
+    openModal('modal-gericht')
+    setTimeout(() => $('mg-suche').focus(), 50)
+  }
+  function zeigePicker () {
+    const q = $('mg-suche').value.trim().toLowerCase()
+    const liste = gerichte.filter(g => !q || g.text.toLowerCase().includes(q))
+    $('mg-liste').innerHTML = liste.length ? liste.map(g => `
+      <button type="button" class="ag-produkt-btn" data-schluessel="${D.esc(g.schluessel)}">
+        ${g.bild ? `<img class="ag-thumb" src="${D.esc(g.bild)}" alt="" loading="lazy">` : '<span class="ag-thumb ag-thumb-leer">kein Foto</span>'}
+        <span>${D.esc(g.text)}</span><small>${D.esc(g.preis)}</small>
+      </button>`).join('') : '<div class="ag-empty" style="grid-column:1/-1">Kein Gericht gefunden.</div>'
+  }
+  function pickerKlick (e) {
+    const b = e.target.closest('[data-schluessel]'); if (!b || !pickerZiel) return
+    const g = gerichte.find(x => x.schluessel === b.dataset.schluessel); if (!g) return
+    z[pickerZiel.liste][pickerZiel.tag] = { schluessel: g.schluessel, text: g.text, preis: g.preis, bild: g.bild }
+    closeModal('modal-gericht')
+    aktualisiere()
+    const fokus = document.querySelector(`.mt-tag[data-liste="${pickerZiel.liste}"][data-tag="${pickerZiel.tag}"] .mt-wahl`)
+    if (fokus) fokus.focus()
+  }
+
+  /* ── Format & Vorschau ── */
+  function zeigeFormat () {
+    $('format-seg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.wert === z.layout)))
+    const druck = z.layout === 'mittagstisch_druck'
+    $('druck-optionen').hidden = !druck
+    $('caption-feld').hidden = druck
+    $('front-text').value = z.front
+    $('zweite-an').checked = z.zweiteAn
+    $('zweite').hidden = !z.zweiteAn
+    $('zweite-label').value = z.zweite
+    const f = FORMATE[z.layout]
+    if (!f.some(x => x[0] === ansicht)) ansicht = f[0][0]
+    $('vorschau-tabs').innerHTML = f.map(([k, n]) => `<button type="button" class="ag-tab" role="tab" data-format="${k}" aria-selected="${k === ansicht}">${n}</button>`).join('')
+    $('downloads').innerHTML = f.map(([k, n]) => `<button type="button" class="mp-btn mp-btn-secondary ag-btn-big" data-download="${k}">${n} herunterladen</button>`).join('') +
+      `<button type="button" class="mp-btn mp-btn-secondary ag-btn-big" data-download="alle">Beide herunterladen</button>`
+    $('vorschau-wrap').classList.toggle('hoch', ansicht === 'story')
+  }
+
+  let vorschauTimer = null, vorschauNr = 0
+  function planeVorschau () { clearTimeout(vorschauTimer); vorschauTimer = setTimeout(zeichneVorschau, 200) }
+  async function zeichneVorschau () {
+    const nr = ++vorschauNr
+    $('vorschau-wrap').classList.add('laedt')
+    const c = document.createElement('canvas')
+    try {
+      await R.render(c, ansicht, renderZustand(), overrides)
+      if (nr !== vorschauNr) return
+      const ziel = $('vorschau')
+      ziel.width = c.width; ziel.height = c.height
+      ziel.getContext('2d').drawImage(c, 0, 0)
+      $('vorschau-fehler').textContent = ''
+    } catch (e) {
+      if (nr === vorschauNr) $('vorschau-fehler').textContent = 'Vorschau nicht möglich: ' + e.message
+    } finally {
+      if (nr === vorschauNr) $('vorschau-wrap').classList.remove('laedt')
+    }
+  }
+
+  async function lade (format) {
+    const c = document.createElement('canvas')
+    await R.render(c, format, renderZustand(), overrides)
+    const blob = await new Promise(r => c.toBlob(r, 'image/png'))
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = DATEI[format] + '-' + Date.now() + '.png'
+    document.body.appendChild(a); a.click(); a.remove()
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000)
+  }
+  async function downloadKlick (e) {
+    const b = e.target.closest('[data-download]'); if (!b) return
+    const leer = TAGE.every(t => !z.tage[t])
+    if (leer && !(z.layout === 'mittagstisch_druck' && b.dataset.download === 'front')) { showToast('Bitte zuerst Gerichte wählen.', 'error'); return }
+    b.disabled = true
+    try {
+      if (b.dataset.download === 'alle') { for (const [k] of FORMATE[z.layout]) await lade(k) } else await lade(b.dataset.download)
+    } catch (err) { showToast('Fehler: ' + err.message, 'error', 5000) }
+    b.disabled = false
+  }
+
+  /* ── Caption ── */
+  function zeigeCaption () { $('caption').value = R.caption(renderZustand()) }
+
+  /* ── Speichern für Bildschirm 1 ── */
+  function status (text, art) { const s = $('speicher-status'); s.hidden = false; s.className = 'mt-status ' + (art || ''); s.innerHTML = text }
+  async function speichern () {
+    const b = $('btn-speichern'); b.disabled = true; b.textContent = 'Wird gespeichert …'
+    try {
+      const r = await D.speichereWoche(z.woche, z.tage)
+      wochen = await D.ladeWochen().catch(() => wochen)
+      const fehlt = TAGE.filter(t => !z.tage[t]).map(t => D.TAG_NAMEN[t])
+      status(`Woche „${D.esc(z.woche)}“ ${r.aktualisiert ? 'aktualisiert' : 'gespeichert'} – erscheint automatisch auf Bildschirm 1.` +
+        (fehlt.length ? `<br>Ohne Gericht: ${fehlt.join(', ')}` : ''), fehlt.length ? 'warn' : 'ok')
+      zeigeWoche()
+    } catch (e) {
+      status('Nicht gespeichert: ' + D.esc(e.message), 'fehler')
+    }
+    b.disabled = false; b.textContent = 'Für Bildschirm 1 speichern'
+  }
+
+  function aktualisiere () { merke(); zeigeWoche(); zeigeTage(); zeigeFormat(); zeigeCaption(); planeVorschau() }
+
+  function hinweisQuelle () {
+    const t = { db: '', browser: 'Gerichte aus diesem Browser (alte Gerichte-Verwaltung).', vorlage: 'Standardgerichte.' }[quelle]
+    $('quelle-hinweis').innerHTML = t ? `${t} <a href="${D.esc(D.link('gerichte.html'))}" style="color:var(--accent)">In die Gerichte-Bibliothek übernehmen</a>, damit sie auf allen Geräten gleich sind.` : ''
+    $('quelle-hinweis').hidden = !t
+  }
+
+  /* ── Start ── */
+  async function start () {
+    const user = await mpInit({ nav: { backUrl: '/dashboard.html', backLabel: 'Dashboard' } })
+    if (!user) return
+    document.querySelectorAll('[data-link]').forEach(a => { a.href = D.link(a.dataset.link) })
+    $('kunde-hinweis').textContent = 'Für ' + D.kundeName() + '. Bilder sehen genauso aus wie bisher – nur die Bedienung ist neu.'
+
+    const [g, o, w] = await Promise.all([
+      D.ladeGerichte(),
+      D.ladeOverrides(),
+      D.ladeWochen().catch(() => [])
+    ])
+    gerichte = g.liste; quelle = g.quelle; overrides = o || {}; wochen = w
+    hinweisQuelle()
+
+    const e = D.lsLesen(entwurfKey(), null)
+    z = Object.assign(leererZustand(), e && e.tage ? e : {})
+
+    $('tage').addEventListener('click', tageKlick); $('tage2').addEventListener('click', tageKlick)
+    $('tage').addEventListener('input', tagePreis); $('tage2').addEventListener('input', tagePreis)
+    $('woche-chips').addEventListener('click', ev => { const c = ev.target.closest('[data-datum]'); if (c) setzeWoche(new Date(c.dataset.datum + 'T12:00')) })
+    $('woche-datum').addEventListener('change', ev => { if (ev.target.value) setzeWoche(new Date(ev.target.value + 'T12:00')) })
+    $('woche-label').addEventListener('input', ev => {
+      const alt = z.woche; z.woche = ev.target.value
+      if (z.front === alt) { z.front = z.woche }
+      merke(); zeigeCaption(); planeVorschau()
+      clearTimeout(start._t); start._t = setTimeout(zeigeWoche, 600)
+    })
+    $('woche-laden').addEventListener('change', ev => {
+      const w = wochen.find(x => String(x.id) === ev.target.value); if (!w) return
+      z.woche = w.woche_label || z.woche; z.front = z.woche
+      const p = D.parseLabel(z.woche)
+      if (p) { z.datum = D.iso(D.montagVon(p.datum)); z.zweite = D.wocheAus(D.plus(D.montagVon(p.datum), 7)).label }
+      z.tage = D.tageAusWoche(w, gerichte)
+      aktualisiere(); showToast('Woche geöffnet: ' + z.woche)
+    })
+    $('format-seg').addEventListener('click', ev => { const b = ev.target.closest('[data-wert]'); if (!b) return; z.layout = b.dataset.wert; aktualisiere() })
+    $('vorschau-tabs').addEventListener('click', ev => { const b = ev.target.closest('[data-format]'); if (!b) return; ansicht = b.dataset.format; zeigeFormat(); planeVorschau() })
+    $('front-text').addEventListener('input', ev => { z.front = ev.target.value; merke(); planeVorschau() })
+    $('zweite-an').addEventListener('change', ev => { z.zweiteAn = ev.target.checked; aktualisiere() })
+    $('zweite-label').addEventListener('input', ev => { z.zweite = ev.target.value; merke(); planeVorschau() })
+    $('mg-suche').addEventListener('input', zeigePicker)
+    $('mg-liste').addEventListener('click', pickerKlick)
+    $('downloads').addEventListener('click', downloadKlick)
+    $('btn-speichern').addEventListener('click', speichern)
+    $('btn-kopieren').addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText($('caption').value) } catch (err) { $('caption').select(); document.execCommand('copy') }
+      showToast('Text kopiert')
+    })
+    aktualisiere()
+  }
+  start()
+})()
+</script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetzgerPost — Gerichte-Bibliothek</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="../../shared/style.css" />
+  <link rel="stylesheet" href="../angebote/angebote.css" />
+  <link rel="stylesheet" href="generator.css" />
+</head>
+<body class="mp-bg-glow">
+<nav class="mp-nav" id="mp-nav"></nav>
+
+<main class="ag-main">
+  <div class="ag-crumbs"><a data-link="generator.html" href="generator.html">Mittagstisch</a> › Gerichte-Bibliothek</div>
+  <div class="ag-head">
+    <h1>Gerichte-Bibliothek</h1>
+    <label for="suche" class="ag-sr">Gericht suchen</label>
+    <input id="suche" class="ag-input" placeholder="Gericht suchen …" style="width:260px;max-width:100%" autocomplete="off" />
+  </div>
+  <p class="ag-sub">Gerichte für den Mittagstisch – Name, Standardpreis und rundes Foto. Der Preis lässt sich pro Woche im Generator noch ändern.</p>
+  <div class="mt-banner" id="banner" hidden>
+    <p id="banner-text"></p>
+    <button type="button" class="mp-btn mp-btn-primary" id="btn-uebernehmen" style="min-height:44px">In die Bibliothek übernehmen</button>
+  </div>
+  <div class="ag-grid" id="grid" aria-live="polite"><div class="ag-empty" style="grid-column:1/-1">Lade Gerichte …</div></div>
+</main>
+
+<div class="mp-modal-overlay" id="modal-g" onclick="closeModalOnOverlay(event)">
+  <div class="mp-modal" role="dialog" aria-modal="true" aria-labelledby="g-titel">
+    <div class="mp-modal-title" id="g-titel">Neues Gericht</div>
+    <div class="ag-step">
+      <div class="ag-fotofeld">
+        <img id="g-thumb" class="ag-thumb ag-thumb-leer" alt="" />
+        <label class="mp-btn mp-btn-ghost ag-file">Foto wählen<input type="file" id="g-foto" accept="image/*" /></label>
+      </div>
+      <div class="ag-field"><label for="g-text">Name auf dem Bild</label><input id="g-text" class="ag-input" maxlength="80" placeholder="z. B. Schäufele mit Knödel" /></div>
+      <div class="ag-field"><label for="g-preis">Standardpreis</label><input id="g-preis" class="ag-input" maxlength="20" placeholder="z. B. 6,80 €" /></div>
+      <div id="g-fehler" class="ag-error" role="alert"></div>
+    </div>
+    <div class="mp-modal-actions">
+      <button type="button" class="mp-btn mp-btn-danger" id="g-entfernen" style="margin-right:auto" hidden>Entfernen</button>
+      <button type="button" class="mp-btn mp-btn-secondary" onclick="closeModal('modal-g')">Abbrechen</button>
+      <button type="button" class="mp-btn mp-btn-primary" id="g-speichern"><span class="mp-btn-text">Speichern</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="mp-toast" id="mp-toast"></div>
+<script src="../../shared/supabase.js"></script>
+<script src="../../shared/components.js"></script>
+<script src="config.js"></script>
+<script src="mittag-daten.js"></script>
+<script>
+(function () {
+  const D = window.MPMittagDaten
+  const $ = id => document.getElementById(id)
+  let liste = [], quelle = 'vorlage', bearbeitet = null, blob = null
+
+  function zeige () {
+    const q = $('suche').value.trim().toLowerCase()
+    const l = liste.filter(g => !q || g.text.toLowerCase().includes(q))
+    const db = quelle === 'db'
+    const neu = db ? '<button type="button" class="ag-pnew" id="neu"><span aria-hidden="true">+</span>Neues Gericht</button>' : ''
+    $('grid').innerHTML = neu + l.map(g => `
+      <div class="ag-pcard" data-schluessel="${D.esc(g.schluessel)}">
+        ${g.bild ? `<img class="ag-thumb" src="${D.esc(g.bild)}" alt="" loading="lazy">` : '<span class="ag-thumb ag-thumb-leer">kein Foto</span>'}
+        <div class="ag-pcard-name">${D.esc(g.text)}</div>
+        <div class="ag-pcard-meta mt-pcard-preis">${D.esc(g.preis) || '–'}</div>
+        ${db ? '<div class="ag-pcard-actions"><button type="button" class="mp-btn mp-btn-secondary mp-btn-sm" style="min-height:40px" data-aktion="bearbeiten">Bearbeiten</button></div>' : ''}
+      </div>`).join('')
+  }
+
+  async function lade () {
+    const r = await D.ladeGerichte()
+    liste = r.liste; quelle = r.quelle
+    const b = $('banner')
+    if (quelle !== 'db') {
+      b.hidden = false
+      $('banner-text').textContent = D.tabelleFehlt()
+        ? 'Die Gerichte-Bibliothek ist noch nicht eingerichtet. Angezeigt werden die bisherigen Gerichte.'
+        : (quelle === 'browser' ? 'Diese ' + liste.length + ' Gerichte liegen bisher nur in diesem Browser.' : 'Bisher werden die ' + liste.length + ' Standardgerichte genutzt.') +
+          ' Einmal übernehmen – danach kannst du sie hier bearbeiten, neue anlegen und sie sind auf allen Geräten gleich.'
+      $('btn-uebernehmen').hidden = D.tabelleFehlt()
+    } else b.hidden = true
+    zeige()
+  }
+
+  function oeffne (g) {
+    bearbeitet = g || null; blob = null
+    $('g-titel').textContent = g ? 'Gericht bearbeiten' : 'Neues Gericht'
+    $('g-text').value = g ? g.text : ''
+    $('g-preis').value = g ? g.preis : ''
+    $('g-fehler').textContent = ''
+    $('g-foto').value = ''
+    const t = $('g-thumb')
+    if (g && g.bild) { t.src = g.bild; t.classList.remove('ag-thumb-leer') } else { t.removeAttribute('src'); t.classList.add('ag-thumb-leer') }
+    $('g-entfernen').hidden = !g
+    openModal('modal-g')
+    setTimeout(() => $('g-text').focus(), 50)
+  }
+
+  async function speichern () {
+    const text = $('g-text').value.trim(), preis = $('g-preis').value.trim()
+    if (!text) { $('g-fehler').textContent = 'Bitte einen Namen eingeben.'; return }
+    if (!bearbeitet && !blob) { $('g-fehler').textContent = 'Bitte ein Foto wählen – ohne Foto erscheint das Gericht nicht auf dem Bild.'; return }
+    if (!bearbeitet && liste.some(g => g.text.toLowerCase() === text.toLowerCase())) { $('g-fehler').textContent = 'Dieses Gericht gibt es schon.'; return }
+    const btn = $('g-speichern'); btn.disabled = true
+    try {
+      let bild = bearbeitet ? bearbeitet.bild : ''
+      if (blob) bild = await D.ladeFotoHoch(blob, text)
+      let schluessel = bearbeitet ? bearbeitet.schluessel : D.slug(text)
+      if (!bearbeitet) { let n = 2, basis = schluessel; while (liste.some(g => g.schluessel === schluessel)) schluessel = basis + '-' + n++ }
+      await D.speichereGericht({ id: bearbeitet && bearbeitet.id, schluessel, text, preis, bild,
+        sortierung: bearbeitet ? bearbeitet.sortierung : liste.length + 1 })
+      closeModal('modal-g'); showToast('Gespeichert'); await lade()
+    } catch (e) { $('g-fehler').textContent = 'Fehler: ' + e.message }
+    btn.disabled = false
+  }
+
+  async function entfernen () {
+    if (!bearbeitet) return
+    const ok = await mpConfirm('„' + bearbeitet.text + '“ aus der Auswahl entfernen? Bereits gespeicherte Wochen bleiben unverändert.')
+    if (!ok) return
+    try { await D.blendeAus(bearbeitet.id); closeModal('modal-g'); showToast('Entfernt'); await lade() } catch (e) { $('g-fehler').textContent = 'Fehler: ' + e.message }
+  }
+
+  async function start () {
+    const user = await mpInit({ nav: { backUrl: D.link('generator.html'), backLabel: 'Mittagstisch' } })
+    if (!user) return
+    document.querySelectorAll('[data-link]').forEach(a => { a.href = D.link(a.dataset.link) })
+    $('suche').addEventListener('input', zeige)
+    $('grid').addEventListener('click', e => {
+      if (e.target.closest('#neu')) return oeffne(null)
+      const b = e.target.closest('[data-aktion="bearbeiten"]'); if (!b) return
+      oeffne(liste.find(g => g.schluessel === b.closest('.ag-pcard').dataset.schluessel))
+    })
+    $('btn-uebernehmen').addEventListener('click', async () => {
+      const b = $('btn-uebernehmen'); b.disabled = true
+      try { const n = await D.uebernehmeInBibliothek(liste); showToast(n + ' Gerichte übernommen'); await lade() }
+      catch (e) { showToast('Fehler: ' + e.message, 'error', 5000) }
+      b.disabled = false
+    })
+    $('g-foto').addEventListener('change', async e => {
+      const f = e.target.files[0]; if (!f) return
+      try {
+        blob = await D.komprimiereFoto(f, 800)
+        const t = $('g-thumb'); t.src = URL.createObjectURL(blob); t.classList.remove('ag-thumb-leer')
+        $('g-fehler').textContent = ''
+      } catch (err) { $('g-fehler').textContent = err.message }
+    })
+    $('g-speichern').addEventListener('click', speichern)
+    $('g-entfernen').addEventListener('click', entfernen)
+    await lade()
+  }
+  start()
+})()
+</script>
+</body>
+</html>

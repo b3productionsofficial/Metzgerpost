@@ -97,3 +97,8 @@
   .dm-row-bild { width: 100%; }
   .dm-ablauf { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Online-Status der Fernseher */
+.dm-tv { font-size: 12px; }
+.dm-tv-an { color: #7fd1a3; }
+.dm-tv-aus, .dm-tv-unbekannt { color: var(--muted); }

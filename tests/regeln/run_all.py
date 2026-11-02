@@ -104,6 +104,13 @@ PRUEFUNGEN = {
     ('MA-05', 'danach eigene Kunden-ID', r'OK     MA-05'),
     ('MA', 'keine JS-Fehler', r'OK     MA-00'),
   ]),
+  'tv_status': (['python3', 'tests/regeln/tv_status_test.py'], [
+    ('TV-01', 'ohne Fernseher: „keine Meldung“', r'OK     TV-01'),
+    ('TV-02', 'laufender Bildschirm meldet sich online', r'OK     TV-02'),
+    ('TV-03', 'Test-Vorschau zählt nicht', r'OK     TV-03'),
+    ('TV-04', 'Anzeige läuft unbeeinflusst', r'OK     TV-04'),
+    ('TV', 'keine JS-Fehler', r'OK     TV-00'),
+  ]),
 }
 CWD = {'screen3': os.path.join(REPO, 'tests', 'angebote'), 'angebote_render': os.path.join(REPO, 'tests', 'angebote'),
        'angebote_ui': os.path.join(REPO, 'tests', 'angebote')}

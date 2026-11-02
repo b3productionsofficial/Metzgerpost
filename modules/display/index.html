@@ -140,8 +140,31 @@
         <span class="dm-screen-top"><span class="dm-screen-nr">${s.nr}</span><span class="dm-screen-name">${esc(s.name)}</span></span>
         <span class="dm-screen-meta">Heute: ${n ? n + ' Folie' + (n > 1 ? 'n' : '') + ' · Runde ' + dauerText(n * p.takt) : 'nichts – Hinweis „Gleich geht’s weiter“'}${nA ? ' · ' + nA + ' Angebot' + (nA > 1 ? 'e' : '') : ''}${p.manuell ? ' · manuell' : ''}</span>
         ${warn.map(w => `<span class="dm-screen-warn">⚠️ ${esc(w)}</span>`).join('')}
+        ${statusZeile(s.key)}
       </button>`
     }).join('')
+  }
+
+  /* ══ Online-Status der Fernseher (Realtime-Presence aus shared/screen-runtime.js) ══ */
+  let tvStatus = null   // null = noch keine Antwort; {} = verbunden
+  function statusZeile (key) {
+    if (tvStatus === null) return '<span class="dm-tv dm-tv-unbekannt">Status wird geprüft …</span>'
+    const da = (tvStatus[key] || []).filter(x => !x.test)
+    if (!da.length) return '<span class="dm-tv dm-tv-aus" title="Bildschirm aus, ohne Internet oder noch alte Version">○ keine Meldung</span>'
+    const x = da.sort((a, b) => String(b.sync || '').localeCompare(String(a.sync || '')))[0]
+    const zeit = x.sync ? new Date(x.sync).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '–'
+    return `<span class="dm-tv dm-tv-an">● online · abgeglichen ${zeit}${da.length > 1 ? ' · ' + da.length + ' Geräte' : ''}${x.bilderFehlen ? ' · <b>Bilder fehlen noch</b>' : ''}</span>`
+  }
+  function verbindeTvStatus () {
+    try {
+      const kanal = sb().channel('mp-tv-' + K, { config: { presence: { key: 'manager-' + Math.random().toString(36).slice(2, 7) } } })
+      kanal.on('presence', { event: 'sync' }, () => {
+        const st = kanal.presenceState(), neu = {}
+        Object.values(st).forEach(arr => arr.forEach(p => { if (p && p.screen) (neu[p.screen] = neu[p.screen] || []).push(p) }))
+        tvStatus = neu; zeigeKarten()
+      })
+      kanal.subscribe(status => { if (status === 'SUBSCRIBED' && tvStatus === null) setTimeout(() => { if (tvStatus === null) { tvStatus = {}; zeigeKarten() } }, 4000) })
+    } catch (e) { tvStatus = {} }
   }
 
   /* ══ Ablauf-Vorschau ══ */
@@ -526,6 +549,7 @@
     const scr = new URLSearchParams(location.search).get('screen'); if (scr && DATEI[scr]) aktiv = scr
     if (new URLSearchParams(location.search).get('kunde') === K) $('sub').textContent = 'Testmodus: Kunde „' + K + '“. ' + $('sub').textContent
     verbinde()
+    verbindeTvStatus()
     try { await laden() } catch (e) { $('panel').innerHTML = '<div class="ag-empty">Konnte nicht laden: ' + esc(e.message || e) + '</div>'; return }
     alles()
   })

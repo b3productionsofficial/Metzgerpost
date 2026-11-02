@@ -28,6 +28,10 @@ Alle neuen Screens nutzen `shared/screen-runtime.js` (Laufzeit) und `shared/scre
 - Bildschirm 2/3: Bilder pausieren, sortieren, ersetzen, Takt; Screen 3 mit Bibliothek „weitere hochgeladene Bilder“
 - „Bilder optimieren“: große Bilder → max. 1920 px JPG in `<kunde>/optimiert/`, Verweise werden umgestellt, `original` gemerkt
 - Speichert sofort, löscht nie Bilddateien
+- **Online-Status** je Bildschirm (neu, 02.11.): „● online · abgeglichen 14:05“ oder „○ keine Meldung“ (aus, ohne Internet
+  oder noch alte Version). Technik: Realtime-Presence – der TV meldet sich nur an, schreibt nichts in die Datenbank,
+  keine Zusatzkosten. Test-Vorschauen (`?datum=` / `?debug=1`) zählen nicht. Wirkt erst, wenn die Screens mit dem neuen
+  `shared/screen-runtime.js` laufen (nach Übernahme in `main`).
 
 ## Regeln Bildschirm 1
 

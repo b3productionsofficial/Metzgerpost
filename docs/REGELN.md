@@ -89,6 +89,15 @@ TV-Bildschirmen (`screen-v2`, `screen2-v2`, `screen3-v2`) und der Vorschau im Di
 | DB-04 | Links führen zum neuen Generator mit gewähltem Kunden; alte Seiten nur über „Admin“. |
 | DB-05 | Bedienbar am Handy. |
 
+## Online-Status der Fernseher
+
+| Nr. | Regel |
+|---|---|
+| TV-01 | Kein Fernseher an → „keine Meldung“. |
+| TV-02 | Laufender v2-Bildschirm meldet sich mit Zeit des letzten Abgleichs (und ob Bilder fehlen). |
+| TV-03 | Test-Vorschauen mit `?datum=` oder `?debug=1` zählen nicht. |
+| TV-04 | Die Meldung beeinflusst die Anzeige nie (Fehler werden ignoriert). |
+
 ## Display Manager
 
 | Nr. | Regel |

@@ -27,6 +27,7 @@
   var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmcnFiY2hncnBpeHdsZWNlcmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODk5NDksImV4cCI6MjA5MDE2NTk0OX0.AnSqi2rJ46PN8dm6zMUgRDNMdXlwRRaES4JQ4Fozn10'
   var RESYNC_MS     = 5 * 60 * 1000
   var RELOAD_STUNDE = 3
+  var VERSION       = '2026-11-02'
 
   var params     = new URLSearchParams(location.search)
   var KUNDE_ID   = params.get('kunde') || 'demo'
@@ -134,12 +135,14 @@
         .then(function () { return opt.holeDaten(sb, ctx) })
         .then(function (daten) {
           letzterSync = new Date()
+          meldePraesenz({ sync: letzterSync.toISOString(), folien: daten && daten.liste ? daten.liste.length : (daten && daten.playlist ? daten.playlist.length : null) })
           var neu = opt.signatur(daten)
           if (neu === signatur) return
           letzteDaten = daten
           return Promise.resolve(opt.anzeigen(daten, ctx)).then(function (vollstaendig) {
             // false = nicht alles geladen (z. B. ein Bild fehlte) → beim nächsten Abgleich erneut
             signatur = vollstaendig === false ? null : neu
+            meldePraesenz({ bilderFehlen: vollstaendig === false })
           })
         })
         .then(function () { zeigeDebug() }, function (e) {
@@ -173,6 +176,29 @@
       } catch (e) { /* Polling übernimmt */ }
     }
 
+    /* ── Online-Meldung an den Display Manager (Realtime-Presence: keine Datenbank-Schreibzugriffe) ── */
+    var praesenz = null, praesenzNr = 0, praesenzBereit = false
+    var praesenzDaten = { screen: opt.name, seit: new Date().toISOString(), version: VERSION, test: !!TEST_DATUM || DEBUG }
+    function meldePraesenz (extra) {
+      if (extra) for (var k in extra) praesenzDaten[k] = extra[k]
+      if (!praesenz || !praesenzBereit) return
+      try { var p = praesenz.track(praesenzDaten); if (p && p.catch) p.catch(function () {}) } catch (e) {}
+    }
+    function verbindePraesenz () {
+      if (!sb || !sb.channel) return
+      var nr = ++praesenzNr
+      praesenzBereit = false
+      try {
+        if (praesenz) sb.removeChannel(praesenz)
+        praesenz = sb.channel('mp-tv-' + KUNDE_ID, { config: { presence: { key: opt.name + '-' + Math.random().toString(36).slice(2, 7) } } })
+        praesenz.subscribe(function (status) {
+          if (nr !== praesenzNr) return
+          if (status === 'SUBSCRIBED') { praesenzBereit = true; meldePraesenz() }
+          else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setTimeout(function () { if (nr === praesenzNr) verbindePraesenz() }, 120000)
+        })
+      } catch (e) { /* nur Statusanzeige – Bildschirm läuft weiter */ }
+    }
+
     function planeTageswechsel () {
       var jetzt = new Date()
       var mitternacht = new Date(jetzt.getFullYear(), jetzt.getMonth(), jetzt.getDate() + 1, 0, 0, 30)
@@ -201,8 +227,9 @@
       ctx.sb = sb
       sync('start')
       verbindeRealtime()
+      verbindePraesenz()
       setInterval(function () { sync('intervall') }, RESYNC_MS)
-      window.addEventListener('online', function () { sync('wieder online'); verbindeRealtime() })
+      window.addEventListener('online', function () { sync('wieder online'); verbindeRealtime(); verbindePraesenz() })
       document.addEventListener('visibilitychange', function () { if (!document.hidden) sync('sichtbar') })
       planeTageswechsel()
       planeNeustart()

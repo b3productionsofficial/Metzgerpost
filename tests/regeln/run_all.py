@@ -88,6 +88,14 @@ PRUEFUNGEN = {
     ('GE-12', 'Handy ohne seitliches Scrollen', r'OK     GE-12'),
     ('GE', 'keine JS-Fehler', r'OK     GE-00'),
   ]),
+  'dashboard': (['python3', 'tests/regeln/dashboard_test.py'], [
+    ('DB-01', 'Status Mittagstisch diese Woche (gleiche Regel wie TV)', r'(?s)(OK     DB-01.*){2}'),
+    ('DB-02', 'Hinweis nächste Woche fehlt', r'OK     DB-02'),
+    ('DB-03', 'Angebote nur eigene, laufende', r'OK     DB-03'),
+    ('DB-04', 'Links mit gewähltem Kunden', r'OK     DB-04'),
+    ('DB-05', 'Handy ohne seitliches Scrollen', r'OK     DB-05'),
+    ('DB', 'keine JS-Fehler', r'OK     DB-00'),
+  ]),
 }
 CWD = {'screen3': os.path.join(REPO, 'tests', 'angebote'), 'angebote_render': os.path.join(REPO, 'tests', 'angebote'),
        'angebote_ui': os.path.join(REPO, 'tests', 'angebote')}

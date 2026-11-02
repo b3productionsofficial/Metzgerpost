@@ -79,6 +79,16 @@ TV-Bildschirmen (`screen-v2`, `screen2-v2`, `screen3-v2`) und der Vorschau im Di
 | GE-11 | Druck: Vorderseite-Text frei, Rückseite links diese / rechts zweite Woche (abschaltbar). Leere Tage bleiben leer statt Fehler. |
 | GE-12 | Bedienbar am Handy (keine seitliche Scroll-Leiste). |
 
+## Übersicht (Dashboard)
+
+| Nr. | Regel |
+|---|---|
+| DB-01 | Karte „Mittagstisch diese Woche“ nutzt dieselbe Wochenregel wie Bildschirm 1; fehlt sie → gelb. |
+| DB-02 | „Nächste Woche“ fehlt → ab Donnerstag gelb (Samstag zeigt Bildschirm 1 schon die nächste Woche). |
+| DB-03 | Angebote: nur eigene, „läuft“ = heute im Zeitraum, nicht Entwurf/beendet. |
+| DB-04 | Links führen zum neuen Generator mit gewähltem Kunden; alte Seiten nur über „Admin“. |
+| DB-05 | Bedienbar am Handy. |
+
 ## Display Manager
 
 | Nr. | Regel |

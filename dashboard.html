@@ -3,134 +3,223 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MetzgerPost — Dashboard</title>
+  <title>MetzgerPost — Übersicht</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="shared/style.css" />
   <style>
-    .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:32px; }
-    .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:18px 20px; }
-    .stat-val { font-family:var(--font-d); font-size:28px; font-weight:700; }
-    .stat-label { font-size:11px; color:var(--muted); margin-top:4px; text-transform:uppercase; letter-spacing:.5px; }
-    .module-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; margin-bottom:40px; }
-    .welcome-banner { background:linear-gradient(135deg,rgba(212,133,58,.12) 0%,rgba(212,133,58,.04) 100%); border:1px solid rgba(212,133,58,.2); border-radius:var(--radius); padding:24px 28px; margin-bottom:32px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
-    .welcome-title { font-family:var(--font-d); font-size:24px; font-weight:800; margin-bottom:4px; }
-    .welcome-title span { color:var(--accent); }
-    .welcome-sub { font-size:14px; color:var(--muted); }
-    .activity-row { display:flex; align-items:center; gap:14px; padding:14px 18px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:10px; cursor:pointer; transition:border-color .2s; }
-    .activity-row:hover { border-color:var(--border2); }
-    .activity-dot { width:8px; height:8px; border-radius:50%; background:var(--success); flex-shrink:0; }
-    .activity-dot.old { background:var(--border2); }
-    @media(max-width:640px){ .stats-row{grid-template-columns:1fr 1fr;} .welcome-banner{flex-direction:column;align-items:flex-start;} }
-    .admin-selector { display:none; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--accent); border-radius:var(--radius); padding:14px 20px; margin-bottom:24px; }
-    .admin-selector-label { font-size:13px; font-weight:600; color:var(--accent); white-space:nowrap; }
-    .admin-selector-name { font-size:13px; font-weight:700; color:var(--text); }
+    [hidden] { display: none !important; }
+    .db-main { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; padding: 32px 24px 80px; }
+    .db-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+    .db-hallo { font-family: var(--font-d); font-size: 28px; font-weight: 800; }
+    .db-hallo span { color: var(--accent); }
+    .db-datum { color: var(--muted); font-size: 14px; margin-top: 4px; }
+    .db-schnell { display: flex; flex-wrap: wrap; gap: 10px; }
+    .db-schnell .mp-btn { min-height: 46px; padding: 12px 18px; font-size: 15px; }
+    .mp-btn-primary { color: var(--bg); }
+
+    .db-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin: 28px 0 12px; }
+    .db-status { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .db-karte { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: var(--text); transition: border-color .15s; min-height: 132px; }
+    a.db-karte:hover { border-color: var(--accent); }
+    .db-karte-titel { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+    .db-karte-wert { font-size: 17px; font-weight: 600; line-height: 1.35; }
+    .db-karte-info { font-size: 13px; color: #b3aa9a; line-height: 1.45; margin-top: auto; }
+    .db-punkt { width: 9px; height: 9px; border-radius: 50%; background: var(--muted2); flex-shrink: 0; }
+    .db-ok .db-punkt { background: var(--success); }
+    .db-warn { border-color: var(--warning); }
+    .db-warn .db-punkt { background: var(--warning); }
+    .db-warn .db-karte-info { color: #f0d08a; }
+
+    .db-module { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+    .db-modul { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; text-decoration: none; color: var(--text); display: flex; flex-direction: column; gap: 6px; transition: border-color .15s, transform .15s; }
+    .db-modul:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .db-modul-icon { font-size: 26px; margin-bottom: 6px; }
+    .db-modul-name { font-family: var(--font-d); font-weight: 700; font-size: 17px; }
+    .db-modul-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .db-modul-links { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 13px; }
+    .db-modul-links a { color: var(--accent); text-decoration: none; }
+    .db-modul-links a:hover { text-decoration: underline; }
+
+    .db-liste { display: flex; flex-direction: column; gap: 8px; }
+    .db-zeile { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; }
+    .db-zeile b { font-weight: 600; }
+    .db-zeile small { color: var(--muted); margin-left: auto; text-align: right; }
+    .db-leer { color: var(--muted); font-size: 14px; padding: 8px 0; }
+
+    .db-admin { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 24px; }
+    .db-admin label { font-size: 13px; font-weight: 600; color: var(--accent); }
+    .db-admin select { flex: 1 1 220px; min-height: 44px; }
+
+    @media (max-width: 760px) {
+      .db-status { grid-template-columns: 1fr; }
+      .db-main { padding: 20px 16px 60px; }
+      .db-hallo { font-size: 24px; }
+      .mp-nav { flex-wrap: wrap; gap: 10px; }
+      .mp-nav-right { flex-wrap: wrap; gap: 8px; }
+      .mp-nav-user { display: none; }
+    }
   </style>
 </head>
 <body class="mp-bg-glow">
 <nav class="mp-nav" id="mp-nav"></nav>
-<div class="mp-main">
-  <div class="welcome-banner mp-animate">
-    <div>
-      <div class="welcome-title">Hallo, <span id="dash-name">…</span> 👋</div>
-      <div class="welcome-sub">Was möchtest du heute erstellen?</div>
-    </div>
-    <a href="modules/mittagstisch/index.html?kunde=sorgundseitz" class="mp-btn mp-btn-primary mp-btn-lg">+ Mittagstisch erstellen</a>
+<main class="db-main">
+  <div class="db-admin" id="admin" hidden>
+    <label for="admin-kunde">Kunde verwalten</label>
+    <select id="admin-kunde" class="mp-select"></select>
   </div>
 
-  <!-- Admin: Kunden-Selector -->
-  <div id="admin-selector" class="admin-selector">
-    <span class="admin-selector-label">Kunde verwalten:</span>
-    <select id="admin-kunde-select" class="mp-select" style="flex:1" onchange="onAdminKundeChange(this.value)"></select>
-    <span class="admin-selector-name" id="admin-kunde-name"></span>
-  </div>
-  <div class="stats-row">
-    <div class="stat-card mp-animate mp-animate-d1"><div class="stat-val" id="stat-wochen">0</div><div class="stat-label">Erstellte Wochen</div></div>
-    <div class="stat-card mp-animate mp-animate-d2"><div class="stat-val" id="stat-designs">0</div><div class="stat-label">Gespeicherte Designs</div></div>
-    <div class="stat-card mp-animate mp-animate-d3"><div class="stat-val" id="stat-plan">Basis</div><div class="stat-label">Dein Paket</div></div>
-  </div>
-  <div class="mp-label" style="margin-bottom:14px;">Module</div>
-  <div class="module-grid">
-    <a href="modules/mittagstisch/index.html?kunde=sorgundseitz" class="mp-module-card mp-animate mp-animate-d1">
-      <div class="mp-module-card-icon">🍽️</div>
-      <div class="mp-module-card-name">Mittagstisch</div>
-      <div class="mp-module-card-desc">Wöchentlichen Mittagstisch für Instagram, Feed und Druck erstellen</div>
-      <span class="mp-badge mp-badge-success mp-module-card-badge">Aktiv</span>
-    </a>
-    <a href="modules/display/index.html" class="mp-module-card mp-animate mp-animate-d2">
-      <div class="mp-module-card-icon">📺</div>
-      <div class="mp-module-card-name">Display Manager</div>
-      <div class="mp-module-card-desc">Inhalte auf Bildschirmen im Laden synchronisieren</div>
-      <span class="mp-badge mp-badge-accent mp-module-card-badge">Neu</span>
-    </a>
-    <a href="modules/mittagstisch/admin.html" class="mp-module-card mp-animate mp-animate-d3" id="admin-card" style="display:none">
-      <div class="mp-module-card-icon">⚙️</div>
-      <div class="mp-module-card-name">Admin</div>
-      <div class="mp-module-card-desc">Gerichte &amp; Positionen verwalten</div>
-    </a>
-    <a href="modules/angebote/index.html" class="mp-module-card mp-animate mp-animate-d3">
-      <div class="mp-module-card-icon">🏷️</div>
-      <div class="mp-module-card-name">Angebote</div>
-      <div class="mp-module-card-desc">Wochenangebote für Bildschirme und Instagram erstellen</div>
-      <span class="mp-badge mp-badge-accent mp-module-card-badge">Neu</span>
-    </a>
-    <div class="mp-module-card coming-soon mp-animate mp-animate-d4">
-      <div class="mp-module-card-icon">📅</div>
-      <div class="mp-module-card-name">Schichtplan</div>
-      <div class="mp-module-card-desc">Schichten planen und Mitarbeiter einteilen</div>
-      <span class="mp-badge mp-badge-muted mp-module-card-badge">Bald</span>
+  <div class="db-head">
+    <div>
+      <div class="db-hallo">Hallo, <span id="name">…</span></div>
+      <div class="db-datum" id="datum"></div>
+    </div>
+    <div class="db-schnell">
+      <a class="mp-btn mp-btn-primary" data-ziel="mittag" href="modules/mittagstisch/generator.html">+ Mittagstisch</a>
+      <a class="mp-btn mp-btn-secondary" href="modules/angebote/bearbeiten.html">+ Angebot</a>
     </div>
   </div>
-  <div class="mp-label" style="margin-bottom:14px;">Letzte Aktivität</div>
-  <div id="activity-list"><div style="color:var(--muted);font-size:14px;padding:20px 0;">Noch keine Aktivität.</div></div>
-</div>
+
+  <div class="db-label">Auf den Bildschirmen</div>
+  <div class="db-status">
+    <a class="db-karte" id="k-diese" data-ziel="mittag" href="modules/mittagstisch/generator.html">
+      <div class="db-karte-titel"><span class="db-punkt"></span>Mittagstisch diese Woche</div>
+      <div class="db-karte-wert">…</div><div class="db-karte-info"></div>
+    </a>
+    <a class="db-karte" id="k-naechste" data-ziel="mittag" href="modules/mittagstisch/generator.html">
+      <div class="db-karte-titel"><span class="db-punkt"></span>Mittagstisch nächste Woche</div>
+      <div class="db-karte-wert">…</div><div class="db-karte-info"></div>
+    </a>
+    <a class="db-karte" id="k-angebote" href="modules/angebote/index.html">
+      <div class="db-karte-titel"><span class="db-punkt"></span>Angebote</div>
+      <div class="db-karte-wert">…</div><div class="db-karte-info"></div>
+    </a>
+  </div>
+
+  <div class="db-label">Bereiche</div>
+  <div class="db-module">
+    <a class="db-modul" data-ziel="mittag" href="modules/mittagstisch/generator.html">
+      <div class="db-modul-icon" aria-hidden="true">🍽️</div>
+      <div class="db-modul-name">Mittagstisch</div>
+      <div class="db-modul-desc">Wochenplan für Instagram, Druck und Bildschirm 1.</div>
+    </a>
+    <a class="db-modul" href="modules/angebote/index.html">
+      <div class="db-modul-icon" aria-hidden="true">🏷️</div>
+      <div class="db-modul-name">Angebote</div>
+      <div class="db-modul-desc">Wochenangebote für Bildschirme und Instagram.</div>
+    </a>
+    <a class="db-modul" href="modules/display/index.html">
+      <div class="db-modul-icon" aria-hidden="true">📺</div>
+      <div class="db-modul-name">Bildschirme</div>
+      <div class="db-modul-desc">Was im Laden läuft: Vorschau, Sonderlayouts, Bilder.</div>
+    </a>
+    <div class="db-modul" style="cursor:default">
+      <div class="db-modul-icon" aria-hidden="true">📚</div>
+      <div class="db-modul-name">Bibliotheken</div>
+      <div class="db-modul-desc">Gerichte und Produkte mit Fotos und Standardpreisen.</div>
+      <div class="db-modul-links">
+        <a data-ziel="gerichte" href="modules/mittagstisch/gerichte.html">Gerichte</a>
+        <a href="modules/angebote/produkte.html">Produkte</a>
+      </div>
+    </div>
+    <div class="db-modul" id="admin-modul" style="cursor:default" hidden>
+      <div class="db-modul-icon" aria-hidden="true">⚙️</div>
+      <div class="db-modul-name">Admin</div>
+      <div class="db-modul-desc">Positionen auf den Vorlagen, alte Ansichten.</div>
+      <div class="db-modul-links">
+        <a href="modules/mittagstisch/admin.html">Positionen &amp; Gerichte (alt)</a>
+        <a data-ziel="mittag-alt" href="modules/mittagstisch/index.html">Mittagstisch (alt)</a>
+        <a href="modules/display/manager-alt.html">Display Manager (alt)</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="db-label">Zuletzt gespeicherte Wochen</div>
+  <div class="db-liste" id="wochen"><div class="db-leer">Lade …</div></div>
+</main>
 <div class="mp-toast" id="mp-toast"></div>
 <script src="shared/supabase.js"></script>
 <script src="shared/components.js"></script>
+<script src="shared/screen-regeln.js"></script>
 <script src="modules/mittagstisch/config.js"></script>
 <script>
-function onAdminKundeChange(val) {
-  localStorage.setItem('mp_admin_selected_kunde', val)
-  if (typeof kunden !== 'undefined' && kunden[val]) {
-    document.getElementById('admin-kunde-name').textContent = kunden[val].name
-  }
-}
+(function () {
+  const $ = id => document.getElementById(id)
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+  const zwei = n => (n < 10 ? '0' : '') + n
+  const iso = d => d.getFullYear() + '-' + zwei(d.getMonth() + 1) + '-' + zwei(d.getDate())
 
-window.addEventListener('DOMContentLoaded', async () => {
-  const user = await mpInit()
-  if (!user) return
-  const name = user.user_metadata?.betrieb_name || user.email.split('@')[0]
-  document.getElementById('dash-name').textContent = name.split(' ')[0]
-  document.getElementById('stat-plan').textContent = (user.user_metadata?.plan || 'Basis').charAt(0).toUpperCase() + (user.user_metadata?.plan || 'basis').slice(1)
-  if (MP.userPlan === 'admin') {
-    const adminCard = document.getElementById('admin-card')
-    if (adminCard) adminCard.style.display = 'flex'
-    if (typeof kunden !== 'undefined') {
-      const sel = document.getElementById('admin-kunde-select')
-      const stored = localStorage.getItem('mp_admin_selected_kunde') || Object.keys(kunden).find(key => kunden[key].supabaseId) || ''
-      sel.innerHTML = Object.entries(kunden).filter(([, k]) => k.supabaseId).map(([key, k]) =>
-        `<option value="${key}"${key === stored ? ' selected' : ''}>${k.name}</option>`
-      ).join('')
-      document.getElementById('admin-kunde-name').textContent = kunden[stored]?.name || stored
-      document.getElementById('admin-selector').style.display = 'flex'
+  function karte (id, art, wert, info) {
+    const k = $(id)
+    k.classList.remove('db-ok', 'db-warn'); if (art) k.classList.add('db-' + art)
+    k.querySelector('.db-karte-wert').textContent = wert
+    k.querySelector('.db-karte-info').textContent = info || ''
+  }
+  function gerichteText (w) {
+    const g = (w && w.gerichte) || {}
+    return ['dienstag', 'mittwoch', 'donnerstag', 'freitag'].map(t => g[t] && g[t][0] && g[t][0].name).filter(Boolean)
+  }
+
+  function links () {
+    const key = MP.getAktiveKundeKey ? MP.getAktiveKundeKey() : ''
+    const q = key ? '?kunde=' + encodeURIComponent(key) : ''
+    const ziele = { mittag: 'modules/mittagstisch/generator.html', gerichte: 'modules/mittagstisch/gerichte.html', 'mittag-alt': 'modules/mittagstisch/index.html' }
+    document.querySelectorAll('[data-ziel]').forEach(a => { a.href = ziele[a.dataset.ziel] + q })
+  }
+
+  async function ladeStatus () {
+    const id = MP.getAktiveKundeId(), sb = MP.getSB()
+    const heute = new Date(), mo = new Date(heute.getFullYear(), heute.getMonth(), heute.getDate() - ((heute.getDay() + 6) % 7))
+    const naechsterMo = new Date(mo.getFullYear(), mo.getMonth(), mo.getDate() + 7)
+    const [w, a] = await Promise.all([
+      sb.from('wochen').select('*').eq('kunde_id', id).order('gueltig_ab', { ascending: false }).limit(20),
+      sb.from('angebote').select('id,titel,status,gueltig_von,gueltig_bis,screens').eq('kunde_id', id)
+    ])
+    const wochen = (w && w.data) || []
+    // gleiche Regel wie Bildschirm 1 (Mo–Fr diese Woche; für „nächste“ den Montag der nächsten Woche fragen)
+    const diese = MPRegeln.aktiveWoche(wochen, new Date(mo.getFullYear(), mo.getMonth(), mo.getDate() + 1, 12))
+    const naechste = MPRegeln.aktiveWoche(wochen, new Date(naechsterMo.getFullYear(), naechsterMo.getMonth(), naechsterMo.getDate() + 1, 12))
+    if (diese) karte('k-diese', 'ok', diese.woche.woche_label || 'gespeichert', gerichteText(diese.woche).join(' · '))
+    else karte('k-diese', 'warn', 'nicht gespeichert', 'Bildschirm 1 zeigt diese Woche keinen Mittagstisch.')
+    const spaet = heute.getDay() >= 4 || heute.getDay() === 0  // ab Donnerstag erinnern
+    if (naechste) karte('k-naechste', 'ok', naechste.woche.woche_label || 'gespeichert', gerichteText(naechste.woche).join(' · '))
+    else karte('k-naechste', spaet ? 'warn' : '', 'noch nicht gespeichert', spaet ? 'Am Samstag zeigt Bildschirm 1 schon die nächste Woche.' : 'Kann jederzeit vorbereitet werden.')
+
+    const t = iso(heute), ang = (a && a.data) || []
+    const laeuft = ang.filter(x => x.status !== 'entwurf' && x.status !== 'beendet' && x.gueltig_von <= t && x.gueltig_bis >= t)
+    const geplant = ang.filter(x => x.status !== 'entwurf' && x.status !== 'beendet' && x.gueltig_von > t)
+    karte('k-angebote', laeuft.length ? 'ok' : '', laeuft.length ? laeuft.length + ' läuft gerade' + (laeuft.length === 1 ? '' : 'n') : 'keins aktiv',
+      laeuft.length ? laeuft.map(x => x.titel).join(' · ') + (geplant.length ? ' – ' + geplant.length + ' geplant' : '') : (geplant.length ? geplant.length + ' geplant' : 'Neues Angebot in 2 Minuten erstellt.'))
+
+    $('wochen').innerHTML = wochen.length ? wochen.slice(0, 5).map(x => `
+      <div class="db-zeile"><b>${esc(x.woche_label || x.gueltig_ab)}</b><span style="color:#b3aa9a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(gerichteText(x).join(' · '))}</span>
+      <small>${x.created_at ? formatRelative(x.updated_at || x.created_at) : ''}</small></div>`).join('')
+      : '<div class="db-leer">Noch keine Woche gespeichert.</div>'
+  }
+
+  async function start () {
+    const user = await mpInit()
+    if (!user) return
+    const name = user.user_metadata?.betrieb_name || user.email.split('@')[0]
+    $('name').textContent = name.split(' ')[0]
+    $('datum').textContent = new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    if (MP.userPlan === 'admin' && typeof kunden !== 'undefined') {
+      $('admin').hidden = false; $('admin-modul').hidden = false
+      const sel = $('admin-kunde')
+      const stored = localStorage.getItem('mp_admin_selected_kunde') || Object.keys(kunden).find(k => kunden[k].supabaseId) || ''
+      sel.innerHTML = Object.entries(kunden).filter(([, k]) => k.supabaseId)
+        .map(([k, v]) => `<option value="${esc(k)}"${k === stored ? ' selected' : ''}>${esc(v.name)}</option>`).join('')
+      sel.addEventListener('change', () => {
+        localStorage.setItem('mp_admin_selected_kunde', sel.value)
+        renderNav(); links(); ladeStatus().catch(e => console.warn(e))
+      })
+    }
+    links()
+    try { await ladeStatus() } catch (e) {
+      console.warn(e); ['k-diese', 'k-naechste', 'k-angebote'].forEach(k => karte(k, '', '–', 'Konnte nicht geladen werden.'))
     }
   }
-  const designs = JSON.parse(localStorage.getItem('mp_designs') || '[]')
-  const weeks   = JSON.parse(localStorage.getItem('mp_weeks')   || '[]')
-  document.getElementById('stat-designs').textContent = designs.length
-  document.getElementById('stat-wochen').textContent  = weeks.length
-  const list = document.getElementById('activity-list')
-  const recent = weeks.sort((a,b) => b.createdAt - a.createdAt).slice(0,5)
-  if (recent.length > 0) {
-    list.innerHTML = recent.map(w => {
-      const isNew = Date.now() - w.createdAt < 1000*60*60*24*7
-      return `<div class="activity-row" onclick="window.location.href='modules/mittagstisch/wizard.html'">
-        <div class="activity-dot ${isNew?'':'old'}"></div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:600;">${w.woche||'Unbenannte Woche'}</div>
-        <div style="font-size:12px;color:var(--muted);">${formatRelative(new Date(w.createdAt).toISOString())} · <span style="color:var(--accent);font-weight:600;">Mittagstisch</span></div></div>
-        <div style="font-size:12px;color:var(--muted);">→</div></div>`
-    }).join('')
-  }
-})
+  window.addEventListener('DOMContentLoaded', start)
+})()
 </script>
 </body>
 </html>

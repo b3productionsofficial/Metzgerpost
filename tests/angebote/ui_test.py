@@ -4,7 +4,9 @@ REPO=os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..
 F=os.path.join(os.path.dirname(os.path.abspath(__file__)),'node_modules','@fontsource')
 FONTCSS='''@font-face{font-family:"Montserrat";font-weight:700;src:url(http://t.local/__f/montserrat/montserrat-latin-700-normal.woff2)}
 @font-face{font-family:"Montserrat";font-weight:800;src:url(http://t.local/__f/montserrat/montserrat-latin-800-normal.woff2)}
-@font-face{font-family:"IBM Plex Serif";font-weight:700;src:url(http://t.local/__f/ibm-plex-serif/ibm-plex-serif-latin-700-normal.woff2)}'''
+@font-face{font-family:"IBM Plex Serif";font-weight:700;src:url(http://t.local/__f/ibm-plex-serif/ibm-plex-serif-latin-700-normal.woff2)}
+@font-face{font-family:"Raleway";font-weight:500;src:url(http://t.local/__f/raleway/raleway-latin-500-normal.woff2)}
+@font-face{font-family:"Raleway";font-weight:600;src:url(http://t.local/__f/raleway/raleway-latin-600-normal.woff2)}'''
 errors=[]
 def route(r):
     u=r.request.url

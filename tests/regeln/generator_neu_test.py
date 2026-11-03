@@ -94,6 +94,15 @@ with sync_playwright() as pw:
     vb = pg.evaluate("()=>{const c=document.getElementById('vorschau');return c.width+'x'+c.height}")
     LABEL3 = f(mo2 + datetime.timedelta(days=8)) + ' - ' + f(mo2 + datetime.timedelta(days=11))
     pruefe('GE-11', vs == '3508x2480' and vb == '3508x2480' and pg.is_hidden('#caption-feld') and pg.input_value('#zweite-label') == LABEL3, f'Druck: Vorderseite {vs}, Rückseite {vb}, zweite Woche {pg.input_value("#zweite-label")}')
+    # Druck: beide Wochen auf einmal für Bildschirm 1
+    t_beide = pg.inner_text('#btn-speichern')
+    pg.click('#btn-speichern'); pg.wait_for_timeout(900)
+    w = sorted(db(pg)['wochen'], key=lambda x: x['gueltig_ab'])
+    AB3 = (mo2 + datetime.timedelta(days=8)).isoformat()
+    ok = t_beide.startswith('Beide Wochen') and len(w) == 2 and w[0]['gueltig_ab'] == AB2 and w[1]['gueltig_ab'] == AB3 \
+        and w[1]['woche_label'] == LABEL3 and sorted(w[1]['gerichte']) == ['dienstag', 'mittwoch'] and 'Currywurst' in w[1]['gerichte']['dienstag'][0]['name']
+    pg.uncheck('#zweite-an'); pg.wait_for_timeout(200); t_eine = pg.inner_text('#btn-speichern'); pg.check('#zweite-an'); pg.wait_for_timeout(200)
+    pruefe('GE-14', ok and t_eine == 'Für Bildschirm 1 speichern', f'Druck: „{t_beide}“ → {len(w)} Wochen ({", ".join(x["gueltig_ab"] for x in w)}); ohne zweite Woche wieder „{t_eine}“')
     pg.screenshot(path=OUT + '/gen_02_druck.png', full_page=True)
     # Deckblatt-Datum: beide Wochen zusammen, ohne zweite Woche wie Woche 1, eigener Text bleibt
     FRONT2 = (mo2 + datetime.timedelta(days=1)).strftime('%d.%m.') + ' - ' + f(mo2 + datetime.timedelta(days=11))

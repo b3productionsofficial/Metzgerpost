@@ -74,6 +74,7 @@
         <div class="ag-actions">
           <button type="button" class="mp-btn mp-btn-primary ag-btn-big" id="btn-speichern">Für Bildschirm 1 speichern</button>
         </div>
+        <div class="ag-hint" id="speicher-hinweis"></div>
         <div class="mt-status" id="speicher-status" role="status" hidden></div>
         <div class="ag-field" id="caption-feld">
           <label for="caption">Instagram-Text</label>
@@ -295,19 +296,38 @@
 
   /* ── Speichern für Bildschirm 1 ── */
   function status (text, art) { const s = $('speicher-status'); s.hidden = false; s.className = 'mt-status ' + (art || ''); s.innerHTML = text }
+  /* Was „Speichern“ an Bildschirm 1 gibt: immer die Woche oben; beim Druck mit ausgefüllter
+     zweiter Woche zusätzlich die rechte Woche (leere rechte Seite wird nicht gespeichert). */
+  function zuSpeichern () {
+    const l = [{ label: z.woche, tage: z.tage }]
+    const zweite = z.layout === 'mittagstisch_druck' && z.zweiteAn && TAGE.some(t => z.tage2[t])
+    if (zweite) l.push({ label: z.zweite, tage: z.tage2 })
+    return l
+  }
+  function zeigeSpeichern () {
+    const l = zuSpeichern(), druck = z.layout === 'mittagstisch_druck'
+    $('btn-speichern').textContent = l.length > 1 ? 'Beide Wochen für Bildschirm 1 speichern' : 'Für Bildschirm 1 speichern'
+    $('speicher-hinweis').textContent = l.length > 1
+      ? 'Speichert links „' + z.woche + '“ und rechts „' + z.zweite + '“. Bildschirm 1 zeigt jede Woche automatisch, wenn sie dran ist.'
+      : (druck && z.zweiteAn ? 'Rechts ist noch kein Gericht gewählt – gespeichert wird nur die linke Woche.' : '')
+  }
   async function speichern () {
     const b = $('btn-speichern'); b.disabled = true; b.textContent = 'Wird gespeichert …'
-    try {
-      const r = await D.speichereWoche(z.woche, z.tage)
-      wochen = await D.ladeWochen().catch(() => wochen)
-      const fehlt = TAGE.filter(t => !z.tage[t]).map(t => D.TAG_NAMEN[t])
-      status(`Woche „${D.esc(z.woche)}“ ${r.aktualisiert ? 'aktualisiert' : 'gespeichert'} – erscheint automatisch auf Bildschirm 1.` +
-        (fehlt.length ? `<br>Ohne Gericht: ${fehlt.join(', ')}` : ''), fehlt.length ? 'warn' : 'ok')
-      zeigeWoche()
-    } catch (e) {
-      status('Nicht gespeichert: ' + D.esc(e.message), 'fehler')
+    const zeilen = []; let art = 'ok'
+    for (const w of zuSpeichern()) {
+      try {
+        const r = await D.speichereWoche(w.label, w.tage)
+        const fehlt = TAGE.filter(t => !w.tage[t]).map(t => D.TAG_NAMEN[t])
+        zeilen.push(`Woche „${D.esc(w.label)}“ ${r.aktualisiert ? 'aktualisiert' : 'gespeichert'}` + (fehlt.length ? ` (ohne Gericht: ${fehlt.join(', ')})` : ''))
+        if (fehlt.length && art === 'ok') art = 'warn'
+      } catch (e) {
+        zeilen.push(`Woche „${D.esc(w.label)}“ nicht gespeichert: ${D.esc(e.message)}`); art = 'fehler'
+      }
     }
-    b.disabled = false; b.textContent = 'Für Bildschirm 1 speichern'
+    wochen = await D.ladeWochen().catch(() => wochen)
+    status(zeilen.join('<br>') + (art !== 'fehler' ? '<br>Erscheint automatisch auf Bildschirm 1, sobald die Woche dran ist.' : ''), art)
+    zeigeWoche()
+    b.disabled = false; zeigeSpeichern()
   }
 
   /* Deckblatt: mit zweiter Woche „erster Tag Woche 1 – letzter Tag Woche 2“, sonst wie Woche 1.
@@ -328,7 +348,7 @@
     if ($('front-text') && document.activeElement !== $('front-text')) $('front-text').value = z.front
   }
 
-  function aktualisiere () { frontAbgleich(); merke(); zeigeWoche(); zeigeTage(); zeigeFormat(); zeigeCaption(); planeVorschau() }
+  function aktualisiere () { frontAbgleich(); merke(); zeigeWoche(); zeigeTage(); zeigeFormat(); zeigeSpeichern(); zeigeCaption(); planeVorschau() }
 
   function hinweisQuelle () {
     const t = { db: '', browser: 'Gerichte aus diesem Browser (alte Gerichte-Verwaltung).', vorlage: 'Standardgerichte.' }[quelle]
@@ -385,7 +405,7 @@
       ev.preventDefault(); z.frontManuell = false; aktualisiere()
     })
     $('zweite-an').addEventListener('change', ev => { z.zweiteAn = ev.target.checked; aktualisiere() })
-    $('zweite-label').addEventListener('input', ev => { z.zweite = ev.target.value; frontAbgleich(); merke(); planeVorschau() })
+    $('zweite-label').addEventListener('input', ev => { z.zweite = ev.target.value; frontAbgleich(); zeigeSpeichern(); merke(); planeVorschau() })
     $('mg-suche').addEventListener('input', zeigePicker)
     $('mg-liste').addEventListener('click', pickerKlick)
     $('downloads').addEventListener('click', downloadKlick)

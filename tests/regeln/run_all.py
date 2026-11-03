@@ -86,6 +86,7 @@ PRUEFUNGEN = {
     ('GE-10', 'gespeicherte Woche öffnen', r'OK     GE-10'),
     ('GE-11', 'Druck vorne/hinten + zweite Woche', r'OK     GE-11'),
     ('GE-12', 'Handy ohne seitliches Scrollen', r'OK     GE-12'),
+    ('GE-13', 'Deckblatt-Datum über beide Wochen, eigener Text bleibt', r'OK     GE-13'),
     ('GE', 'keine JS-Fehler', r'OK     GE-00'),
   ]),
   'dashboard': (['python3', 'tests/regeln/dashboard_test.py'], [

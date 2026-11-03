@@ -78,6 +78,7 @@ TV-Bildschirmen (`screen-v2`, `screen2-v2`, `screen3-v2`) und der Vorschau im Di
 | GE-10 | Gespeicherte Woche lässt sich wieder öffnen (Gerichte + Preise). |
 | GE-11 | Druck: Vorderseite-Text frei, Rückseite links diese / rechts zweite Woche (abschaltbar). Leere Tage bleiben leer statt Fehler. |
 | GE-12 | Bedienbar am Handy (keine seitliche Scroll-Leiste). |
+| GE-13 | Druck-Deckblatt: mit zweiter Woche automatisch „erster Tag Woche 1 – letzter Tag Woche 2“ (z. B. `10.11. - 20.11.2026`), ohne zweite Woche wie Woche 1. Eigener Text bleibt stehen; Feld leeren oder „Wieder automatisch“ stellt zurück. |
 
 ## Übersicht (Dashboard)
 

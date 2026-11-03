@@ -57,7 +57,8 @@
           <button type="button" data-wert="mittagstisch_druck" aria-pressed="false">Druck (A4)</button>
         </div>
         <div id="druck-optionen" hidden class="ag-step">
-          <div class="ag-field"><label for="front-text">Text Vorderseite</label><input id="front-text" class="ag-input" autocomplete="off" /></div>
+          <div class="ag-field"><label for="front-text">Text Vorderseite</label><input id="front-text" class="ag-input" autocomplete="off" />
+            <span class="ag-hint" id="front-hinweis"></span></div>
           <label class="ag-check"><input type="checkbox" id="zweite-an" checked /> Rückseite rechts: zweite Woche</label>
           <div class="mt-zweite" id="zweite">
             <div class="ag-field"><label for="zweite-label">Text zweite Woche</label><input id="zweite-label" class="ag-input" autocomplete="off" /></div>
@@ -168,7 +169,6 @@
   function setzeWoche (datum) {
     const w = D.wocheAus(datum), alt = z.woche
     z.datum = D.iso(w.montag); z.woche = w.label
-    if (!z.front || z.front === alt) z.front = w.label
     const w2 = D.wocheAus(D.plus(w.montag, 7))
     z.zweite = w2.label
     aktualisiere()
@@ -310,7 +310,25 @@
     b.disabled = false; b.textContent = 'Für Bildschirm 1 speichern'
   }
 
-  function aktualisiere () { merke(); zeigeWoche(); zeigeTage(); zeigeFormat(); zeigeCaption(); planeVorschau() }
+  /* Deckblatt: mit zweiter Woche „erster Tag Woche 1 – letzter Tag Woche 2“, sonst wie Woche 1.
+     Bleibt automatisch, bis man selbst etwas einträgt (Feld leeren = wieder automatisch). */
+  function frontAuto () {
+    if (!z.zweiteAn) return z.woche
+    const a = String(z.woche || '').match(/(\d{1,2})\.(\d{1,2})\./)
+    const b = String(z.zweite || '').split(/\s*[-–]\s*/).pop().trim()
+    if (!a || !/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(b)) return z.woche
+    return a[1].padStart(2, '0') + '.' + a[2].padStart(2, '0') + '. - ' + b
+  }
+  function frontAbgleich () {
+    if (!z.frontManuell) z.front = frontAuto()
+    const h = $('front-hinweis'); if (!h) return
+    h.innerHTML = z.frontManuell
+      ? `Eigener Text. <a href="#" id="front-auto" style="color:var(--accent)">Wieder automatisch (${D.esc(frontAuto())})</a>`
+      : (z.zweiteAn ? 'Automatisch: beide Wochen zusammen.' : 'Automatisch: wie die Woche.')
+    if ($('front-text') && document.activeElement !== $('front-text')) $('front-text').value = z.front
+  }
+
+  function aktualisiere () { frontAbgleich(); merke(); zeigeWoche(); zeigeTage(); zeigeFormat(); zeigeCaption(); planeVorschau() }
 
   function hinweisQuelle () {
     const t = { db: '', browser: 'Gerichte aus diesem Browser (alte Gerichte-Verwaltung).', vorlage: 'Standardgerichte.' }[quelle]
@@ -342,13 +360,12 @@
     $('woche-datum').addEventListener('change', ev => { if (ev.target.value) setzeWoche(new Date(ev.target.value + 'T12:00')) })
     $('woche-label').addEventListener('input', ev => {
       const alt = z.woche; z.woche = ev.target.value
-      if (z.front === alt) { z.front = z.woche }
-      merke(); zeigeCaption(); planeVorschau()
+      frontAbgleich(); merke(); zeigeCaption(); planeVorschau()
       clearTimeout(start._t); start._t = setTimeout(zeigeWoche, 600)
     })
     $('woche-laden').addEventListener('change', ev => {
       const w = wochen.find(x => String(x.id) === ev.target.value); if (!w) return
-      z.woche = w.woche_label || z.woche; z.front = z.woche
+      z.woche = w.woche_label || z.woche
       const p = D.parseLabel(z.woche)
       if (p) { z.datum = D.iso(D.montagVon(p.datum)); z.zweite = D.wocheAus(D.plus(D.montagVon(p.datum), 7)).label }
       z.tage = D.tageAusWoche(w, gerichte)
@@ -356,9 +373,19 @@
     })
     $('format-seg').addEventListener('click', ev => { const b = ev.target.closest('[data-wert]'); if (!b) return; z.layout = b.dataset.wert; aktualisiere() })
     $('vorschau-tabs').addEventListener('click', ev => { const b = ev.target.closest('[data-format]'); if (!b) return; ansicht = b.dataset.format; zeigeFormat(); planeVorschau() })
-    $('front-text').addEventListener('input', ev => { z.front = ev.target.value; merke(); planeVorschau() })
+    $('front-text').addEventListener('input', ev => {
+      const v = ev.target.value
+      z.frontManuell = v.trim() !== '' && v !== frontAuto()
+      z.front = z.frontManuell ? v : frontAuto()
+      frontAbgleich(); merke(); planeVorschau()
+    })
+    $('front-text').addEventListener('blur', () => frontAbgleich())
+    $('front-hinweis').addEventListener('click', ev => {
+      if (!ev.target.closest('#front-auto')) return
+      ev.preventDefault(); z.frontManuell = false; aktualisiere()
+    })
     $('zweite-an').addEventListener('change', ev => { z.zweiteAn = ev.target.checked; aktualisiere() })
-    $('zweite-label').addEventListener('input', ev => { z.zweite = ev.target.value; merke(); planeVorschau() })
+    $('zweite-label').addEventListener('input', ev => { z.zweite = ev.target.value; frontAbgleich(); merke(); planeVorschau() })
     $('mg-suche').addEventListener('input', zeigePicker)
     $('mg-liste').addEventListener('click', pickerKlick)
     $('downloads').addEventListener('click', downloadKlick)

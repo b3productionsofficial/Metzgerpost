@@ -95,6 +95,18 @@ with sync_playwright() as pw:
     LABEL3 = f(mo2 + datetime.timedelta(days=8)) + ' - ' + f(mo2 + datetime.timedelta(days=11))
     pruefe('GE-11', vs == '3508x2480' and vb == '3508x2480' and pg.is_hidden('#caption-feld') and pg.input_value('#zweite-label') == LABEL3, f'Druck: Vorderseite {vs}, Rückseite {vb}, zweite Woche {pg.input_value("#zweite-label")}')
     pg.screenshot(path=OUT + '/gen_02_druck.png', full_page=True)
+    # Deckblatt-Datum: beide Wochen zusammen, ohne zweite Woche wie Woche 1, eigener Text bleibt
+    FRONT2 = (mo2 + datetime.timedelta(days=1)).strftime('%d.%m.') + ' - ' + f(mo2 + datetime.timedelta(days=11))
+    f1 = pg.input_value('#front-text')
+    pg.uncheck('#zweite-an'); pg.wait_for_timeout(200); f2 = pg.input_value('#front-text')
+    pg.check('#zweite-an'); pg.wait_for_timeout(200); f3 = pg.input_value('#front-text')
+    pg.fill('#front-text', 'Martini-Wochen'); pg.click('#woche-chips >> text=Übernächste'); pg.wait_for_timeout(300); f4 = pg.input_value('#front-text')
+    pg.click('#front-auto'); pg.wait_for_timeout(300); f5 = pg.input_value('#front-text')
+    pruefe('GE-13', f1 == FRONT2 and f2 == LABEL2 and f3 == FRONT2 and f4 == 'Martini-Wochen' and f5 != 'Martini-Wochen' and f5.endswith(f(mo2 + datetime.timedelta(days=18))),
+           f'Deckblatt: beide Wochen „{f1}“, nur eine „{f2}“, eigener Text bleibt „{f4}“, zurück auf automatisch „{f5}“')
+    pg.click('#woche-chips >> text=Nächste Woche'); pg.wait_for_timeout(1500)
+    pg.click('#vorschau-tabs >> text=Vorderseite'); pg.wait_for_timeout(2500)
+    pg.screenshot(path=OUT + '/gen_05_deckblatt.png')
 
     # Handy
     m = ctx.new_page(); m.set_viewport_size({'width': 390, 'height': 844}); m.goto(SEITE); m.wait_for_timeout(1200)

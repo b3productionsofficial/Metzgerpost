@@ -113,6 +113,7 @@ PRUEFUNGEN = {
     ('TV-04', 'Anzeige läuft unbeeinflusst', r'OK     TV-04'),
     ('TV-05', 'Display Manager: „Jetzt am Fernseher“ + Adresse', r'OK     TV-05'),
     ('TV-06', 'Fernseher mit falscher Kunden-ID wird erkannt', r'OK     TV-06'),
+    ('TV-07', 'auch Bildschirm 1 (Mittagstisch)', r'OK     TV-07'),
     ('TV', 'keine JS-Fehler', r'OK     TV-00'),
   ]),
 }

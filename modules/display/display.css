@@ -102,3 +102,9 @@
 .dm-tv { font-size: 12px; }
 .dm-tv-an { color: #7fd1a3; }
 .dm-tv-aus, .dm-tv-unbekannt { color: var(--muted); }
+.dm-live { font-size: 14px; line-height: 1.5; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--surface2); }
+.dm-live a { color: var(--accent); word-break: break-all; }
+.dm-live code { word-break: break-all; }
+.dm-live-klein { font-size: 12px; color: var(--muted); }
+.dm-folie.dm-jetzt { outline: 2px solid #7fd1a3; outline-offset: 2px; }
+.dm-folie.dm-jetzt .dm-folie-nr { background: #2f8f5b; color: #fff; }

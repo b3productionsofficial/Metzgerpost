@@ -32,6 +32,11 @@ Alle neuen Screens nutzen `shared/screen-runtime.js` (Laufzeit) und `shared/scre
   oder noch alte Version). Technik: Realtime-Presence – der TV meldet sich nur an, schreibt nichts in die Datenbank,
   keine Zusatzkosten. Test-Vorschauen (`?datum=` / `?debug=1`) zählen nicht. Wirkt erst, wenn die Screens mit dem neuen
   `shared/screen-runtime.js` laufen (nach Übernahme in `main`).
+- **„Jetzt am Fernseher“** (05.11.): In „So läuft Bildschirm X“ (heute) steht, welche Folie der Fernseher gerade zeigt
+  (grün markiert), wann er zuletzt abgeglichen hat und **mit welcher Adresse** er läuft (anklickbar = genau seine Ansicht).
+  Zeigt er andere Folien als die Vorschau → Hinweis. Läuft ein Bildschirm mit **anderer Kunden-ID** → Warnung mit seiner
+  Adresse (nur Admin). Technik: der TV meldet beim Start jeder Runde einmal Folienliste + Startzeit; die aktuelle Folie wird
+  daraus berechnet (keine Nachricht pro Folie).
 
 ## Regeln Bildschirm 1
 

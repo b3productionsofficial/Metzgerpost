@@ -178,7 +178,9 @@
 
     /* ── Online-Meldung an den Display Manager (Realtime-Presence: keine Datenbank-Schreibzugriffe) ── */
     var praesenz = null, praesenzNr = 0, praesenzBereit = false
-    var praesenzDaten = { screen: opt.name, seit: new Date().toISOString(), version: VERSION, test: !!TEST_DATUM || DEBUG }
+    // Was der Display Manager sieht: welcher Bildschirm, mit welcher Adresse/Kunden-ID, welche Folien gerade laufen
+    var praesenzDaten = { screen: opt.name, kunde: KUNDE_ID, adresse: location.href.split('#')[0], seit: new Date().toISOString(),
+      version: VERSION, test: !!TEST_DATUM || DEBUG }
     function meldePraesenz (extra) {
       if (extra) for (var k in extra) praesenzDaten[k] = extra[k]
       if (!praesenz || !praesenzBereit) return
@@ -190,7 +192,7 @@
       praesenzBereit = false
       try {
         if (praesenz) sb.removeChannel(praesenz)
-        praesenz = sb.channel('mp-tv-' + KUNDE_ID, { config: { presence: { key: opt.name + '-' + Math.random().toString(36).slice(2, 7) } } })
+        praesenz = sb.channel('mp-tv', { config: { presence: { key: opt.name + '-' + Math.random().toString(36).slice(2, 7) } } })
         praesenz.subscribe(function (status) {
           if (nr !== praesenzNr) return
           if (status === 'SUBSCRIBED') { praesenzBereit = true; meldePraesenz() }
@@ -238,7 +240,7 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', los)
     else los()
 
-    return { sync: sync, ctx: ctx }
+    return { sync: sync, ctx: ctx, melde: meldePraesenz }
   }
 
   /* Angebote (heute gültig, aktiv, für diesen Bildschirm) – Fehler stoppen den Bildschirm nie */

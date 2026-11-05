@@ -111,6 +111,8 @@ PRUEFUNGEN = {
     ('TV-02', 'laufender Bildschirm meldet sich online', r'OK     TV-02'),
     ('TV-03', 'Test-Vorschau zählt nicht', r'OK     TV-03'),
     ('TV-04', 'Anzeige läuft unbeeinflusst', r'OK     TV-04'),
+    ('TV-05', 'Display Manager: „Jetzt am Fernseher“ + Adresse', r'OK     TV-05'),
+    ('TV-06', 'Fernseher mit falscher Kunden-ID wird erkannt', r'OK     TV-06'),
     ('TV', 'keine JS-Fehler', r'OK     TV-00'),
   ]),
 }

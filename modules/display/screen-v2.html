@@ -153,6 +153,7 @@ function zeige (i) {
 function starteRotation () {
   if (timer) clearInterval(timer)
   timer = null
+  if (typeof SCREEN !== 'undefined' && SCREEN && SCREEN.melde) SCREEN.melde({ folien: playlist.map(function (p) { return p.titel || '' }), start: Date.now(), index0: index, takt: TAKT_SEK })
   if (!playlist.length) { document.getElementById('mt').className = ''; zeigeLeer(true); return }
   zeigeLeer(false)
   zeige(index)

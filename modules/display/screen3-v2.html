@@ -53,6 +53,7 @@ function zeigeSlide (i) {
 function starteRotation () {
   if (slideTimer) clearInterval(slideTimer)
   slideTimer = null
+  if (typeof SCREEN !== 'undefined' && SCREEN && SCREEN.melde) SCREEN.melde({ folien: playlist.map(function (p) { return p.titel || '' }), start: Date.now(), index0: index, takt: timerSek })
   if (!playlist.length) { zeigeLeer(true); return }
   zeigeLeer(false)
   zeigeSlide(index)

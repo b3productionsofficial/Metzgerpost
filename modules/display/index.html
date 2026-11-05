@@ -147,6 +147,17 @@
 
   /* ══ Online-Status der Fernseher (Realtime-Presence aus shared/screen-runtime.js) ══ */
   let tvStatus = null   // null = noch keine Antwort; {} = verbunden
+  let tvFremd = []      // Bildschirme, die mit einer anderen Kunden-ID laufen (nur Admin sieht sie)
+  function tvVon (key) {
+    const da = ((tvStatus || {})[key] || []).filter(x => !x.test)
+    return da.sort((a, b) => String(b.sync || '').localeCompare(String(a.sync || '')))[0] || null
+  }
+  /* Welche Folie zeigt der Fernseher gerade? (aus Start der Runde + Takt, ohne Nachricht pro Folie) */
+  function tvFolie (x) {
+    if (!x || !x.folien || !x.folien.length || !x.start || !x.takt) return null
+    const n = x.folien.length, i = (x.index0 + Math.floor((Date.now() - x.start) / (x.takt * 1000))) % n
+    return { i, n, titel: x.folien[i] }
+  }
   function statusZeile (key) {
     if (tvStatus === null) return '<span class="dm-tv dm-tv-unbekannt">Status wird geprüft …</span>'
     const da = (tvStatus[key] || []).filter(x => !x.test)
@@ -157,15 +168,47 @@
   }
   function verbindeTvStatus () {
     try {
-      const kanal = sb().channel('mp-tv-' + K, { config: { presence: { key: 'manager-' + Math.random().toString(36).slice(2, 7) } } })
+      const kanal = sb().channel('mp-tv', { config: { presence: { key: 'manager-' + Math.random().toString(36).slice(2, 7) } } })
       kanal.on('presence', { event: 'sync' }, () => {
-        const st = kanal.presenceState(), neu = {}
-        Object.values(st).forEach(arr => arr.forEach(p => { if (p && p.screen) (neu[p.screen] = neu[p.screen] || []).push(p) }))
-        tvStatus = neu; zeigeKarten()
+        const st = kanal.presenceState(), neu = {}, fremd = []
+        Object.values(st).forEach(arr => arr.forEach(p => {
+          if (!p || !p.screen) return
+          if (p.kunde && p.kunde !== K) { if (!p.test) fremd.push(p); return }
+          ;(neu[p.screen] = neu[p.screen] || []).push(p)
+        }))
+        tvStatus = neu; tvFremd = fremd; zeigeKarten(); zeigeLive()
       })
       kanal.subscribe(status => { if (status === 'SUBSCRIBED' && tvStatus === null) setTimeout(() => { if (tvStatus === null) { tvStatus = {}; zeigeKarten() } }, 4000) })
     } catch (e) { tvStatus = {} }
   }
+
+  /* Kasten „Jetzt am Fernseher“ in der Ablauf-Ansicht – alle 5 s aktualisiert */
+  function liveKasten () {
+    const s = SCREENS.find(x => x.id === aktiv); if (!s) return ''
+    const x = tvVon(s.key)
+    if (tvStatus === null) return 'Prüfe, ob der Fernseher online ist …'
+    if (!x) {
+      const fr = tvFremd.filter(f => f.screen === s.key)
+      return fr.length && MP.userPlan === 'admin'
+        ? `⚠️ Kein Bildschirm ${s.nr} mit dieser Kunden-ID online – aber einer läuft mit <b>Kunden-ID ${esc(fr[0].kunde)}</b>. Änderungen hier kommen dort nicht an. Adresse am Fernseher: <code>${esc(fr[0].adresse || '')}</code>`
+        : `Kein Fernseher meldet sich für Bildschirm ${s.nr}. Entweder aus, ohne Internet, oder er läuft noch mit der alten Version bzw. einer anderen Adresse.`
+    }
+    const f = tvFolie(x)
+    const vorschau = playlist(aktiv, new Date()).liste.map(p => p.titel || '')
+    const gleich = x.folien && x.folien.join('|') === vorschau.join('|')
+    const ver = x.sync ? new Date(x.sync).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '–'
+    return `<b>● Jetzt am Fernseher:</b> ${f ? `Folie ${f.i + 1} von ${f.n} – „${esc(f.titel)}“` : 'keine Folie (nichts aktiv)'}
+      <br><span class="dm-live-klein">Zuletzt abgeglichen ${ver}${x.bilderFehlen ? ' · Bilder fehlen noch' : ''} · Adresse am Fernseher:
+      <a href="${esc(x.adresse || '#')}" target="_blank" rel="noopener">${esc(x.adresse || 'unbekannt')}</a></span>
+      ${gleich ? '' : '<br>⚠️ Der Fernseher zeigt gerade andere Folien als diese Vorschau – er gleicht in spätestens 5 Minuten ab. Bleibt das so, läuft er mit anderen Einstellungen (Adresse prüfen).'}`
+  }
+  function zeigeLive () {
+    const el = document.getElementById('dm-live'); if (!el) return
+    el.innerHTML = liveKasten()
+    const s = SCREENS.find(x => x.id === aktiv), f = s && tvFolie(tvVon(s.key))
+    document.querySelectorAll('#ablauf .dm-folie').forEach((d, i) => d.classList.toggle('dm-jetzt', !!f && i === f.i))
+  }
+  setInterval(zeigeLive, 5000)
 
   /* ══ Ablauf-Vorschau ══ */
   function ablaufKarte (screen) {
@@ -190,6 +233,7 @@
         <input type="date" class="ag-input" style="max-width:190px;min-height:44px" id="ablauf-datum" value="${gewaehlt}" aria-label="Datum wählen">
         <a class="mp-btn mp-btn-secondary mp-btn-sm" style="min-height:44px" target="_blank" rel="noopener" href="${esc(DATEI[screen] + '?kunde=' + K + (screen === 's1' ? '&screen=screen1' : '') + '&datum=' + gewaehlt + '&debug=1')}">Live-Vorschau ↗</a>
       </div>
+      ${gewaehlt === heuteIso ? '<div class="dm-live" id="dm-live" role="status"></div>' : ''}
       ${p.liste.length
         ? `<div class="dm-ablauf-sum">${p.liste.length} Folie${p.liste.length > 1 ? 'n' : ''}, je ${p.takt} s → eine Runde dauert <strong>${dauerText(p.liste.length * p.takt)}</strong>${p.manuell ? ' · <strong>manueller Modus</strong>' : ''}</div><div class="dm-ablauf" id="ablauf">${folien}</div>`
         : '<div class="ag-empty" id="ablauf">An diesem Tag läuft nichts – der Bildschirm zeigt „Gleich geht’s weiter“.</div>'}
@@ -400,6 +444,7 @@
   function alles () {
     zeigeKarten()
     $('panel').innerHTML = aktiv === 's1' ? panelS1() : aktiv === 's2' ? panelS2() : panelS3()
+    zeigeLive()
     $('panel').setAttribute('data-screen', aktiv)
   }
 

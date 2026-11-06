@@ -113,6 +113,7 @@ function zeichneMittagstisch (mt, config) {
     txt.style.cssText = 'left:' + cfg.text.x + '%;top:' + cfg.text.y + '%;width:' + cfg.text.w + '%;font-size:' + cfg.text.size + 'vw;font-weight:600;color:' + cfg.text.color + ';font-family:' + (FONTS[cfg.text.font] || FONTS.Georgia)
     txt.textContent = m.name
     overlay.appendChild(txt)
+    passeTextEin(txt, cfg)
 
     if (m.preis) {
       var pr = document.createElement('div')
@@ -122,6 +123,19 @@ function zeichneMittagstisch (mt, config) {
       overlay.appendChild(pr)
     }
   })
+}
+/* Lange Gerichtnamen: Schrift schrittweise verkleinern (max. auf 75 %), bis der Text über dem Preis endet.
+   Misst die echte Darstellung → passt sich auch an andere Schriften auf dem Fernseher an. */
+function passeTextEin (txt, cfg) {
+  if (!cfg.preis || cfg.preis.y == null) return
+  var hoehe = document.getElementById('screen').offsetHeight
+  var platz = (cfg.preis.y - 4.5 - cfg.text.y) / 100 * hoehe   // Preis-Kasten ragt ca. 4,5 % über seine Mitte
+  if (platz <= 0) return
+  var groesse = cfg.text.size, minimum = cfg.text.size * 0.75
+  while (txt.offsetHeight > platz && groesse > minimum) {
+    groesse = Math.round((groesse - 0.05) * 100) / 100
+    txt.style.fontSize = groesse + 'vw'
+  }
 }
 window.addEventListener('resize', function () { if (aktuellesMt) zeichneMittagstisch(aktuellesMt.mt, aktuellesMt.config) })
 

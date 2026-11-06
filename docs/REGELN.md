@@ -91,6 +91,14 @@ TV-Bildschirmen (`screen-v2`, `screen2-v2`, `screen3-v2`) und der Vorschau im Di
 | DB-04 | Links führen zum neuen Generator mit gewähltem Kunden; alte Seiten nur über „Admin“. |
 | DB-05 | Bedienbar am Handy. |
 
+## Bildschirm 1 – Textgröße
+
+| Nr. | Regel |
+|---|---|
+| S1-12 | Lange Gerichtnamen werden auf dem Fernseher automatisch kleiner (bis 75 %), bis sie über dem Preis enden – gemessen an der echten Darstellung. |
+| S1-13 | Kurze Namen behalten die Schriftgröße aus dem Positions-Editor. |
+| – | Breite und Lage der Texte kommen weiter aus dem Positions-Editor. Großer Freitag: Breite 23,5 ist breiter als der Kasten (andere große Tage: 18) → im Editor auf ca. 20 stellen. |
+
 ## Online-Status der Fernseher
 
 | Nr. | Regel |

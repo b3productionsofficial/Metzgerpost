@@ -106,6 +106,11 @@ PRUEFUNGEN = {
     ('MA-05', 'danach eigene Kunden-ID', r'OK     MA-05'),
     ('MA', 'keine JS-Fehler', r'OK     MA-00'),
   ]),
+  'textpassung': (['python3', 'tests/bildschirme/textpassung_test.py'], [
+    ('S1-12', 'lange Gerichtnamen enden über dem Preis (alle 4 Layouts)', r'(?s)(OK     S1-12.*){4}'),
+    ('S1-13', 'kurze Gerichtnamen behalten ihre Schriftgröße', r'(?s)(OK     S1-13.*){4}'),
+    ('S1', 'keine JS-Fehler', r'OK     S1-00'),
+  ]),
   'tv_status': (['python3', 'tests/regeln/tv_status_test.py'], [
     ('TV-01', 'ohne Fernseher: „keine Meldung“', r'OK     TV-01'),
     ('TV-02', 'laufender Bildschirm meldet sich online', r'OK     TV-02'),

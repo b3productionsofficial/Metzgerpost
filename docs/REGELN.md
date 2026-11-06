@@ -97,7 +97,7 @@ TV-Bildschirmen (`screen-v2`, `screen2-v2`, `screen3-v2`) und der Vorschau im Di
 |---|---|
 | S1-12 | Lange Gerichtnamen werden auf dem Fernseher automatisch kleiner (bis 75 %), bis sie über dem Preis enden – gemessen an der echten Darstellung. |
 | S1-13 | Kurze Namen behalten die Schriftgröße aus dem Positions-Editor. |
-| – | Breite und Lage der Texte kommen weiter aus dem Positions-Editor. Großer Freitag: Breite 23,5 ist breiter als der Kasten (andere große Tage: 18) → im Editor auf ca. 20 stellen. |
+| – | Breite und Lage der Texte kommen weiter aus dem Positions-Editor. **06.11.2026 korrigiert** (mit Lukas): großer Freitag Text Breite 23,5 → 20, y 57 → 58,5, Größe 1,7 → 1,6 (lief über den Kasten). Rückweg: `update display_configs set config = jsonb_set(jsonb_set(jsonb_set(config,'{freitag,freitag,text,w}','23.5'),'{freitag,freitag,text,y}','57'),'{freitag,freitag,text,size}','1.7') where kunde_id='6544d8e6' and screen_id='screen1';` |
 
 ## Online-Status der Fernseher
 

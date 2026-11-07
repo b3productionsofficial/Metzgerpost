@@ -32,14 +32,14 @@ with sync_playwright() as pw:
     pruefe('TV-02', 'online' in s2 and 'abgeglichen' in s2 and 'fehlen' not in s2, 'Bildschirm 2 läuft → ' + s2)
     pruefe('TV-03', 'keine Meldung' in s3, 'Test-Vorschau (?datum=/debug) zählt nicht als Fernseher → ' + s3)
     pg.screenshot(path=OUT + '/tv_status.png')
-    pg.click('[data-screen="s2"]'); pg.wait_for_timeout(5600)
+    pg.click('[data-screen="s2"]'); pg.wait_for_function("()=>{const e=document.getElementById('dm-live');return e&&/Fernseher|Kunden-ID/.test(e.textContent)&&!/Prüfe/.test(e.textContent)}", timeout=15000); pg.wait_for_timeout(600)
     live = pg.inner_text('#dm-live'); href = pg.get_attribute('#dm-live a', 'href') or ''
     jetzt = pg.evaluate("()=>[...document.querySelectorAll('#ablauf .dm-folie')].findIndex(d=>d.classList.contains('dm-jetzt'))")
     pruefe('TV-05', 'Jetzt am Fernseher' in live and 'Lende' in live and 'screen2-v2.html?kunde=test0001' in href and jetzt == 0 and 'andere Folien' not in live,
            'Display Manager zeigt, was der Fernseher gerade zeigt + seine Adresse → ' + live.splitlines()[0])
     if True:
-        tv1 = ctx.new_page(); tv1.goto(B + 'screen-v2.html?kunde=test0001&screen=screen1'); tv1.wait_for_timeout(2000)
-        pg.click('[data-screen="s1"]'); pg.wait_for_timeout(5600)
+        tv1 = ctx.new_page(); tv1.goto(B + 'screen-v2.html?kunde=test0001&screen=screen1'); tv1.wait_for_timeout(2500)
+        pg.click('[data-screen="s1"]'); pg.wait_for_function("()=>{const e=document.getElementById('dm-live');return e&&/Jetzt am Fernseher/.test(e.textContent)}", timeout=15000); pg.wait_for_timeout(600)
         live1 = pg.inner_text('#dm-live')
         pruefe('TV-07', 'Jetzt am Fernseher' in live1 and 'Mittagstisch' in live1 and 'screen-v2.html' in live1 and 'andere Folien' not in live1,
                'auch Bildschirm 1 (Mittagstisch) → ' + live1.splitlines()[0])
@@ -48,7 +48,7 @@ with sync_playwright() as pw:
            'Adresse für den Fernseher: ' + adr + ' (Test-TV läuft woanders → Hinweis)')
     # Fernseher mit falscher Kunden-ID für Bildschirm 3
     falsch = ctx.new_page(); falsch.goto(B + 'screen3-v2.html?kunde=057b6a13'); falsch.wait_for_timeout(1500)
-    pg.click('[data-screen="s3"]'); pg.wait_for_timeout(5600)
+    pg.click('[data-screen="s3"]'); pg.wait_for_function("()=>{const e=document.getElementById('dm-live');return e&&/Fernseher|Kunden-ID/.test(e.textContent)&&!/Prüfe/.test(e.textContent)}", timeout=15000); pg.wait_for_timeout(600)
     live3 = pg.inner_text('#dm-live')
     pruefe('TV-06', '057b6a13' in live3 and 'kommen dort nicht an' in live3, 'Bildschirm mit anderer Kunden-ID wird erkannt → ' + live3[:90])
     pg.screenshot(path=OUT + '/tv_live.png', full_page=True)

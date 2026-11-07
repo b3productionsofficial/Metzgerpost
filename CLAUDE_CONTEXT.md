@@ -428,7 +428,13 @@ Neuer Kunde hinzufügen: Eintrag in `kunden`, `kundenGerichte`, `kundenLayouts` 
 
 ## 12. Changelog
 
-### 2026-11-02 (nur `staging`, noch NICHT live)
+### 2026-11-07 – GO-LIVE
+- `staging` → `main` übernommen (Fast-Forward, Commit 0fe7a21), Netlify-Deploy 6aeee8f2 live seit 10:01 Uhr.
+  Enthält alles unten (Generator neu, Gerichte-Bibliothek, Übersicht, Display Manager 2.0, Online-Status/„Jetzt am Fernseher“,
+  Textanpassung Bildschirm 1, 💾-Festpreis). Kundenverwaltung Stufe 2 bleibt AUS. Rückweg: in Netlify vorherigen Deploy 6ade4ebc veröffentlichen.
+- Daten: großer Freitag Text-Breite 23,5 → 20 (06.11., mit Lukas).
+
+### 2026-11-02 (seit 07.11. live)
 - **Mittagstisch-Generator neu**: `modules/mittagstisch/generator.html` (Schritte Woche → Gerichte → Format → Fertig,
   Live-Vorschau, gespeicherte Woche öffnen, Entwurf bleibt im Browser). Zeichnet über `render.js` – **pixelgleich** zur
   alten Seite (Test GE-03). Daten: `mittag-daten.js`. Alte Seite `index.html` bleibt („Alte Ansicht“, Götz-Textvorlage, Positionen).

@@ -1,6 +1,6 @@
 # Bildschirme (TV) – neue Versionen
 
-Stand: 25.10.2026 abends · Screens v2 live; Display Manager 2.0 nur auf `staging`
+Stand: 07.11.2026 · alles live (Screens v2, Display Manager 2.0). TVs 2/3: Adresse auf v2 umstellen
 
 ## Überblick
 

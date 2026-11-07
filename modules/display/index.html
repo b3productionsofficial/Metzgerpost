@@ -48,6 +48,9 @@
   const TAG_REIHE = [1, 2, 3, 4, 5, 6, 0]
   const LAYOUT_BILD = { dienstag: 'assets/Bildschirm_1_Dienstag.jpg', mittwoch: 'assets/Bildschirm_1_Mittwoch.jpg', donnerstag: 'assets/Bildschirm_1_Donnerstag.jpg', freitag: 'assets/Bildschirm_1_Freitag.jpg' }
   const DATEI = { s1: 'screen-v2.html', s2: 'screen2-v2.html', s3: 'screen3-v2.html' }
+  /* Adresse, die am Fernseher eingetragen wird – immer die echte Seite, ohne Test-Zusätze */
+  const LIVE_SEITE = 'https://metzgerpost.netlify.app/modules/display/'
+  function tvAdresse (screen) { return LIVE_SEITE + DATEI[screen] + '?kunde=' + K + (screen === 's1' ? '&screen=screen1' : '') }
   const SCREENS = [
     { id: 's1', nr: 1, name: 'Mittagstisch', key: 'screen1' },
     { id: 's2', nr: 2, name: 'Sortiment & Preise', key: 'screen2' },
@@ -196,10 +199,12 @@
     const f = tvFolie(x)
     const vorschau = playlist(aktiv, new Date()).liste.map(p => p.titel || '')
     const gleich = x.folien && x.folien.join('|') === vorschau.join('|')
+    const adresseOk = (x.adresse || '') === tvAdresse(aktiv)
     const ver = x.sync ? new Date(x.sync).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '–'
     return `<b>● Jetzt am Fernseher:</b> ${f ? `Folie ${f.i + 1} von ${f.n} – „${esc(f.titel)}“` : 'keine Folie (nichts aktiv)'}
       <br><span class="dm-live-klein">Zuletzt abgeglichen ${ver}${x.bilderFehlen ? ' · Bilder fehlen noch' : ''} · Adresse am Fernseher:
       <a href="${esc(x.adresse || '#')}" target="_blank" rel="noopener">${esc(x.adresse || 'unbekannt')}</a></span>
+      ${adresseOk ? '<br><span class="dm-live-klein">✓ Adresse stimmt</span>' : '<br>⚠️ Der Fernseher läuft mit einer anderen Adresse als oben empfohlen – bitte am Fernseher die Adresse von oben eintragen.'}
       ${gleich ? '' : '<br>⚠️ Der Fernseher zeigt gerade andere Folien als diese Vorschau – er gleicht in spätestens 5 Minuten ab. Bleibt das so, läuft er mit anderen Einstellungen (Adresse prüfen).'}`
   }
   function zeigeLive () {
@@ -232,6 +237,14 @@
         </div>
         <input type="date" class="ag-input" style="max-width:190px;min-height:44px" id="ablauf-datum" value="${gewaehlt}" aria-label="Datum wählen">
         <a class="mp-btn mp-btn-secondary mp-btn-sm" style="min-height:44px" target="_blank" rel="noopener" href="${esc(DATEI[screen] + '?kunde=' + K + (screen === 's1' ? '&screen=screen1' : '') + '&datum=' + gewaehlt + '&debug=1')}">Live-Vorschau ↗</a>
+      </div>
+      <div class="dm-adresse">
+        <label for="tv-adresse">📺 Adresse für den Fernseher</label>
+        <div class="dm-adresse-zeile">
+          <input id="tv-adresse" class="ag-input" readonly value="${esc(tvAdresse(screen))}" onclick="this.select()">
+          <button type="button" class="mp-btn mp-btn-secondary mp-btn-sm" style="min-height:44px" id="tv-adresse-kopieren">Kopieren</button>
+        </div>
+        <span class="dm-live-klein">„Live-Vorschau“ öffnet dieselbe Seite nur zum Prüfen – mit gewähltem Datum und Info-Kasten. Am Fernseher immer diese Adresse eintragen.</span>
       </div>
       ${gewaehlt === heuteIso ? '<div class="dm-live" id="dm-live" role="status"></div>' : ''}
       ${p.liste.length
@@ -445,6 +458,12 @@
     zeigeKarten()
     $('panel').innerHTML = aktiv === 's1' ? panelS1() : aktiv === 's2' ? panelS2() : panelS3()
     zeigeLive()
+    const kb = document.getElementById('tv-adresse-kopieren')
+    if (kb) kb.onclick = async () => {
+      const f = document.getElementById('tv-adresse')
+      try { await navigator.clipboard.writeText(f.value) } catch (e) { f.select(); document.execCommand('copy') }
+      showToast('Adresse kopiert')
+    }
     $('panel').setAttribute('data-screen', aktiv)
   }
 

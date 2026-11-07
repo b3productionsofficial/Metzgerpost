@@ -43,6 +43,9 @@ with sync_playwright() as pw:
         live1 = pg.inner_text('#dm-live')
         pruefe('TV-07', 'Jetzt am Fernseher' in live1 and 'Mittagstisch' in live1 and 'screen-v2.html' in live1 and 'andere Folien' not in live1,
                'auch Bildschirm 1 (Mittagstisch) → ' + live1.splitlines()[0])
+    adr = pg.input_value('#tv-adresse')
+    pruefe('TV-08', adr == 'https://metzgerpost.netlify.app/modules/display/screen-v2.html?kunde=test0001&screen=screen1' and 'anderen Adresse' in live1,
+           'Adresse für den Fernseher: ' + adr + ' (Test-TV läuft woanders → Hinweis)')
     # Fernseher mit falscher Kunden-ID für Bildschirm 3
     falsch = ctx.new_page(); falsch.goto(B + 'screen3-v2.html?kunde=057b6a13'); falsch.wait_for_timeout(1500)
     pg.click('[data-screen="s3"]'); pg.wait_for_timeout(5600)

@@ -110,6 +110,7 @@ TV-Bildschirmen (`screen-v2`, `screen2-v2`, `screen3-v2`) und der Vorschau im Di
 | TV-04 | Die Meldung beeinflusst die Anzeige nie (Fehler werden ignoriert). |
 | TV-05 | Display Manager zeigt heute „Jetzt am Fernseher: Folie x von n“, markiert sie und nennt die Adresse des Fernsehers. |
 | TV-06 | Läuft ein Bildschirm mit anderer Kunden-ID, warnt der Display Manager (Admin) mit dessen Adresse. |
+| TV-08 | Display Manager zeigt je Bildschirm die **Adresse für den Fernseher** (immer echte Seite, ohne `datum`/`debug`, mit Kopieren). Läuft der Fernseher mit anderer Adresse → Hinweis. „Live-Vorschau“ = dieselbe Seite mit Test-Zusätzen, nur zum Prüfen. |
 
 ## Display Manager
 

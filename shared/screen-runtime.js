@@ -181,10 +181,19 @@
     // Was der Display Manager sieht: welcher Bildschirm, mit welcher Adresse/Kunden-ID, welche Folien gerade laufen
     var praesenzDaten = { screen: opt.name, kunde: KUNDE_ID, adresse: location.href.split('#')[0], seit: new Date().toISOString(),
       version: VERSION, test: !!TEST_DATUM || DEBUG }
+    /* Supabase begrenzt Presence-Meldungen pro Gerät. Deshalb gebündelt: erste Meldung 2 s nach dem Start
+       (fasst Start, Abgleich und Rundenstart zusammen), danach höchstens alle 20 s. */
+    var praesenzTimer = null, letzteMeldung = 0
     function meldePraesenz (extra) {
       if (extra) for (var k in extra) praesenzDaten[k] = extra[k]
-      if (!praesenz || !praesenzBereit) return
-      try { var p = praesenz.track(praesenzDaten); if (p && p.catch) p.catch(function () {}) } catch (e) {}
+      if (!praesenz || !praesenzBereit || praesenzTimer) return
+      var warte = Math.max(2000, 20000 - (Date.now() - letzteMeldung))
+      praesenzTimer = setTimeout(function () {
+        praesenzTimer = null
+        if (!praesenz || !praesenzBereit) return
+        letzteMeldung = Date.now()
+        try { var p = praesenz.track(praesenzDaten); if (p && p.catch) p.catch(function () {}) } catch (e) {}
+      }, warte)
     }
     function verbindePraesenz () {
       if (!sb || !sb.channel) return

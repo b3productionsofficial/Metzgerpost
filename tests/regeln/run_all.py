@@ -121,6 +121,7 @@ PRUEFUNGEN = {
     ('TV-06', 'Fernseher mit falscher Kunden-ID wird erkannt', r'OK     TV-06'),
     ('TV-07', 'auch Bildschirm 1 (Mittagstisch)', r'OK     TV-07'),
     ('TV-08', 'Adresse für den Fernseher + Hinweis bei abweichender Adresse', r'OK     TV-08'),
+    ('TV-09', 'Online-Meldungen gebündelt (Supabase-Limit pro Gerät)', r'OK     TV-09'),
     ('TV', 'keine JS-Fehler', r'OK     TV-00'),
   ]),
 }

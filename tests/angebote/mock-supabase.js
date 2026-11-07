@@ -72,7 +72,7 @@
       if(bc)bc.onmessage=melde
       const c={on(typ,filter,cb){if(typ==='presence')hoerer.push(cb);return c},
         subscribe(cb){setTimeout(()=>{cb&&cb('SUBSCRIBED');melde()},10);return c},
-        track(d){if(window.__mockPresenceAus)return Promise.resolve('error');const st=lies();st[key]=[d];localStorage.setItem(LS,JSON.stringify(st));melde();bc&&bc.postMessage(1);return Promise.resolve('ok')},
+        track(d){window.__mock&&window.__mock.log.push('track');if(window.__mockPresenceAus)return Promise.resolve('error');const st=lies();st[key]=[d];localStorage.setItem(LS,JSON.stringify(st));melde();bc&&bc.postMessage(1);return Promise.resolve('ok')},
         presenceState(){return lies()}}
       return c},
     removeChannel(){}

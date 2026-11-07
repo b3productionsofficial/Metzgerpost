@@ -50,6 +50,14 @@
   const DATEI = { s1: 'screen-v2.html', s2: 'screen2-v2.html', s3: 'screen3-v2.html' }
   /* Adresse, die am Fernseher eingetragen wird – immer die echte Seite, ohne Test-Zusätze */
   const LIVE_SEITE = 'https://metzgerpost.netlify.app/modules/display/'
+  /* gleiche Seite + gleicher Kunde + gleicher Bildschirm (screen fehlt = screen1); Reihenfolge egal */
+  function gleicheAdresse (a, b) {
+    try {
+      const u = new URL(a), v = new URL(b), sc = q => q.searchParams.get('screen') || 'screen1'
+      return u.origin === v.origin && u.pathname === v.pathname && u.searchParams.get('kunde') === v.searchParams.get('kunde') &&
+        sc(u) === sc(v) && !u.searchParams.has('datum') && !u.searchParams.has('debug')
+    } catch (e) { return false }
+  }
   function tvAdresse (screen) { return LIVE_SEITE + DATEI[screen] + '?kunde=' + K + (screen === 's1' ? '&screen=screen1' : '') }
   const SCREENS = [
     { id: 's1', nr: 1, name: 'Mittagstisch', key: 'screen1' },
@@ -199,7 +207,7 @@
     const f = tvFolie(x)
     const vorschau = playlist(aktiv, new Date()).liste.map(p => p.titel || '')
     const gleich = x.folien && x.folien.join('|') === vorschau.join('|')
-    const adresseOk = (x.adresse || '') === tvAdresse(aktiv)
+    const adresseOk = gleicheAdresse(x.adresse, tvAdresse(aktiv))
     const ver = x.sync ? new Date(x.sync).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '–'
     return `<b>● Jetzt am Fernseher:</b> ${f ? `Folie ${f.i + 1} von ${f.n} – „${esc(f.titel)}“` : 'keine Folie (nichts aktiv)'}
       <br><span class="dm-live-klein">Zuletzt abgeglichen ${ver}${x.bilderFehlen ? ' · Bilder fehlen noch' : ''} · Adresse am Fernseher:

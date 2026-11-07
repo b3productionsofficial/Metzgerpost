@@ -185,9 +185,33 @@
         ${g && g.bild ? `<img class="ag-thumb" src="${D.esc(g.bild)}" alt="">` : '<span class="ag-thumb ag-thumb-leer">+</span>'}
         <span>${g ? D.esc(g.text) : 'Gericht wählen …'}</span>
       </button>
-      <input class="ag-input mt-preis" data-aktion="preis" aria-label="Preis ${name}" placeholder="Preis" value="${g ? D.esc(g.preis) : ''}" ${g ? '' : 'disabled'} />
+      <div class="mt-preisfeld">
+        <input class="ag-input mt-preis" data-aktion="preis" aria-label="Preis ${name}" placeholder="Preis" value="${g ? D.esc(g.preis) : ''}" ${g ? '' : 'disabled'} />
+        <button type="button" class="mt-merken" data-aktion="standard" title="Als festen Preis für dieses Gericht speichern" aria-label="Preis ${name} als festen Preis speichern" ${preisGeaendert(g) ? '' : 'hidden'}>💾</button>
+      </div>
       <button type="button" class="mt-x" data-aktion="leeren" aria-label="${name} leeren" ${g ? '' : 'disabled'}>×</button>
     </div>`
+  }
+  /* Fester Preis aus der Gerichteliste – weicht der Wochenpreis ab, erscheint der kleine Speichern-Knopf */
+  function standardPreis (g) { const x = g && g.schluessel && gerichte.find(y => y.schluessel === g.schluessel); return x ? x.preis : null }
+  function preisGeaendert (g) { const p = standardPreis(g); return p !== null && String(g.preis || '').trim() !== String(p || '').trim() }
+  async function preisAlsStandard (liste, t, knopf) {
+    const g = z[liste][t]; if (!g || !g.schluessel) return
+    knopf.disabled = true
+    try {
+      if (quelle !== 'db') {
+        // erstes Mal: Gerichte in die Bibliothek übernehmen, damit Preise geräteübergreifend gespeichert werden
+        await D.uebernehmeInBibliothek(gerichte)
+        const r = await D.ladeGerichte(); gerichte = r.liste; quelle = r.quelle; hinweisQuelle()
+      }
+      const x = gerichte.find(y => y.schluessel === g.schluessel)
+      if (!x) throw new Error('Gericht nicht in der Bibliothek gefunden.')
+      await D.speichereGericht({ id: x.id, schluessel: x.schluessel, text: x.text, preis: String(g.preis || '').trim(), bild: x.bild, sortierung: x.sortierung })
+      x.preis = String(g.preis || '').trim()
+      knopf.hidden = true
+      showToast('„' + x.text + '“ kostet ab jetzt standardmäßig ' + (x.preis || '(kein Preis)'))
+    } catch (e) { showToast('Nicht gespeichert: ' + e.message, 'error', 5000) }
+    knopf.disabled = false
   }
   function zeigeTage () {
     $('tage').innerHTML = TAGE.map(t => zeile('tage', t)).join('')
@@ -198,11 +222,15 @@
     const r = b.closest('.mt-tag'), liste = r.dataset.liste, t = r.dataset.tag
     if (b.dataset.aktion === 'waehlen') { pickerZiel = { liste, tag: t }; oeffnePicker() }
     if (b.dataset.aktion === 'leeren') { z[liste][t] = null; aktualisiere() }
+    if (b.dataset.aktion === 'standard') preisAlsStandard(liste, t, b)
   }
   function tagePreis (e) {
     if (e.target.dataset.aktion !== 'preis') return
     const r = e.target.closest('.mt-tag'), g = z[r.dataset.liste][r.dataset.tag]
-    if (g) { g.preis = e.target.value; merke(); zeigeCaption(); planeVorschau() }
+    if (g) {
+      g.preis = e.target.value; merke(); zeigeCaption(); planeVorschau()
+      const k = r.querySelector('[data-aktion="standard"]'); if (k) k.hidden = !preisGeaendert(g)
+    }
   }
 
   /* ── Gericht-Auswahl ── */

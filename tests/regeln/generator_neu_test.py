@@ -150,6 +150,25 @@ with sync_playwright() as pw:
     n = pg.evaluate("()=>document.querySelectorAll('#mg-liste .ag-produkt-btn').length"); txt = pg.inner_text('#mg-liste')
     pruefe('GE-04', n == anzahl and 'Backfisch mit Remoulade' in txt and 'Lasagne' not in txt and pg.is_hidden('#quelle-hinweis'),
            f'Generator nutzt jetzt die Bibliothek ({n} Gerichte, neues dabei, entferntes nicht)')
+    # GE-15: Wochenpreis als festen Preis speichern (kleiner Knopf im Preisfeld)
+    pg.evaluate("()=>{localStorage.setItem('__mockdb',JSON.stringify({wochen:[],mittag_gerichte:[]}));Object.keys(localStorage).filter(k=>k.startsWith('mp_mt_entwurf_')).forEach(k=>localStorage.removeItem(k))}")
+    pg.goto(SEITE); pg.wait_for_timeout(1200)
+    waehle(pg, 'tage', 'dienstag', 'gulasch')
+    knopf = '.mt-tag[data-liste="tage"][data-tag="dienstag"] [data-aktion="standard"]'
+    vorher = pg.is_hidden(knopf)
+    pg.fill('.mt-tag[data-liste="tage"][data-tag="dienstag"] .mt-preis', '7,40 €'); pg.wait_for_timeout(100)
+    sichtbar = pg.is_visible(knopf)
+    pg.screenshot(path=OUT + '/gen_06_preis_merken.png', clip={'x': 0, 'y': 0, 'width': 1440, 'height': 1000}, full_page=True)
+    pg.click(knopf); pg.wait_for_timeout(1000)
+    g = [x for x in db(pg)['mittag_gerichte'] if x['kunde_id'] == '6544d8e6']
+    gul = [x for x in g if x['schluessel'] == 'gulasch']
+    nachher = pg.is_hidden(knopf)
+    pg.fill('.mt-tag[data-liste="tage"][data-tag="dienstag"] .mt-preis', '6,80 €'); pg.wait_for_timeout(100)
+    wieder = pg.is_visible(knopf)
+    pg.reload(); pg.wait_for_timeout(1200); waehle(pg, 'tage', 'mittwoch', 'gulasch')
+    neu_preis = pg.input_value('.mt-tag[data-liste="tage"][data-tag="mittwoch"] .mt-preis')
+    pruefe('GE-15', vorher and sichtbar and nachher and wieder and len(g) == anzahl and gul and gul[0]['preis'] == '7,40 €' and neu_preis == '7,40 €',
+           f'Knopf nur bei geändertem Preis; Klick → Bibliothek angelegt ({len(g)}), Gulasch fest {gul[0]["preis"] if gul else "-"}, nächste Auswahl {neu_preis}')
     b.close()
 
 pruefe('GE-00', not errs, 'keine Skriptfehler ' + str(errs[:3]))

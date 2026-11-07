@@ -80,6 +80,7 @@ TV-Bildschirmen (`screen-v2`, `screen2-v2`, `screen3-v2`) und der Vorschau im Di
 | GE-12 | Bedienbar am Handy (keine seitliche Scroll-Leiste). |
 | GE-13 | Druck-Deckblatt: mit zweiter Woche automatisch „erster Tag Woche 1 – letzter Tag Woche 2“ (z. B. `10.11. - 20.11.2026`), ohne zweite Woche wie Woche 1. Eigener Text bleibt stehen; Feld leeren oder „Wieder automatisch“ stellt zurück. |
 | GE-14 | „Für Bildschirm 1 speichern“ speichert die Woche oben. Nur beim **Druck mit ausgefüllter zweiter Woche** heißt der Knopf „Beide Wochen …“ und speichert die rechte Woche zusätzlich (leere rechte Seite wird nicht gespeichert). Bildschirm 1 zeigt jede Woche erst, wenn sie dran ist. |
+| GE-15 | Weicht der Preis vom festen Preis des Gerichts ab, erscheint im Preisfeld ein kleiner 💾-Knopf: speichert den Preis als festen Preis (beim ersten Mal wird dafür die Gerichte-Bibliothek angelegt). Sonst bleibt die Änderung nur für diese Woche. |
 
 ## Übersicht (Dashboard)
 

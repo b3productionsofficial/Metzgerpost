@@ -88,6 +88,7 @@ PRUEFUNGEN = {
     ('GE-12', 'Handy ohne seitliches Scrollen', r'OK     GE-12'),
     ('GE-13', 'Deckblatt-Datum über beide Wochen, eigener Text bleibt', r'OK     GE-13'),
     ('GE-14', 'Druck: beide Wochen auf einmal für Bildschirm 1', r'OK     GE-14'),
+    ('GE-15', 'Wochenpreis als festen Preis speichern (💾 im Preisfeld)', r'OK     GE-15'),
     ('GE', 'keine JS-Fehler', r'OK     GE-00'),
   ]),
   'dashboard': (['python3', 'tests/regeln/dashboard_test.py'], [

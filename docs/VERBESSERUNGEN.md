@@ -107,3 +107,11 @@ Dazu kleine Fixes im Generator (B3, B4) und Display Manager (B10–B12) auf `sta
 eine doppelte „MetzgerPost – Angebot Vorlage (Hintergrund)“ und die ältere „Angebot KW44 – Rinderlende (26.–31.10.2026)“
 können gelöscht werden. Behalten: „… TV (Layout Folie 24)“, „… Instagram Feed“, „… Instagram Story“ und die drei
 „MetzgerPost – Hintergrund Preis-Angebot …“.
+
+
+## Offen vor dem 2. Kunden (Stand 07.11.2026)
+- **Online-Status-Kanal pro Kunde:** Die Fernseher melden sich derzeit in *einem* gemeinsamen Realtime-Kanal `mp-tv`.
+  Jede Meldung geht an alle Teilnehmer → wächst quadratisch mit der Zahl der Fernseher. Bei 1 Kunde (3 TVs) ~60.000
+  Nachrichten/Monat (Pro-Paket: 5 Mio. inklusive) – unkritisch. Ab mehreren Kunden auf `mp-tv-<kunde_id>` umstellen
+  (Warnung „falsche Kunden-ID“ dann nur noch als „keine Meldung“).
+- **Bilder optimieren** (Display Manager) für Sorg & Seitz ausführen: 20 von 21 Bildern > 3 MB.

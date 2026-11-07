@@ -12,7 +12,8 @@ _h = datetime.date.today(); _mo = _h - datetime.timedelta(days=_h.weekday()); _f
 WOCHE = {'id': 'w1', 'kunde_id': 'test0001', 'woche_label': _f(_mo + datetime.timedelta(1)) + ' - ' + _f(_mo + datetime.timedelta(4)),
          'gueltig_ab': (_mo + datetime.timedelta(1)).isoformat(), 'gerichte': {t: [{'name': 'Gulasch mit Spätzle', 'preis': '6,80 €', 'bild': '/modules/mittagstisch/Gerichte/gulasch.jpg'}] for t in ['dienstag', 'mittwoch', 'donnerstag', 'freitag']}}
 DB = {'screen2_config': [{'kunde_id': 'test0001', 'slides': [{'bild': '/modules/mittagstisch/Gerichte/lende.jpg', 'label': 'Lende'}], 'timer_sekunden': 8}],
-      'screen3_config': [], 'displays': [], 'wochen': [WOCHE] if 0 <= _h.weekday() <= 4 else [], 'angebote': [], 'display_configs': []}
+      'screen3_config': [], 'displays': [{'kunde_id': 'test0001', 'screen_id': 'mt_settings', 'content': {'tage': [0, 1, 2, 3, 4, 5, 6]}}],
+      'wochen': [WOCHE, dict(WOCHE, id='w2', woche_label=_f(_mo + datetime.timedelta(8)) + ' - ' + _f(_mo + datetime.timedelta(11)), gueltig_ab=(_mo + datetime.timedelta(8)).isoformat())], 'angebote': [], 'display_configs': []}
 def karte(pg, s): return pg.inner_text(f'[data-screen="{s}"] .dm-tv')
 
 with sync_playwright() as pw:
@@ -36,7 +37,7 @@ with sync_playwright() as pw:
     jetzt = pg.evaluate("()=>[...document.querySelectorAll('#ablauf .dm-folie')].findIndex(d=>d.classList.contains('dm-jetzt'))")
     pruefe('TV-05', 'Jetzt am Fernseher' in live and 'Lende' in live and 'screen2-v2.html?kunde=test0001' in href and jetzt == 0 and 'andere Folien' not in live,
            'Display Manager zeigt, was der Fernseher gerade zeigt + seine Adresse → ' + live.splitlines()[0])
-    if 0 <= _h.weekday() <= 4:
+    if True:
         tv1 = ctx.new_page(); tv1.goto(B + 'screen-v2.html?kunde=test0001&screen=screen1'); tv1.wait_for_timeout(2000)
         pg.click('[data-screen="s1"]'); pg.wait_for_timeout(5600)
         live1 = pg.inner_text('#dm-live')

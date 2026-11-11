@@ -20,6 +20,7 @@
   <div class="ag-head">
     <h1>Mittagstisch erstellen</h1>
     <a class="mp-btn mp-btn-secondary" data-link="gerichte.html" href="gerichte.html" style="min-height:44px">Gerichte-Bibliothek</a>
+    <a class="mp-btn mp-btn-secondary" data-link="vorlagen.html" href="vorlagen.html" style="min-height:44px" title="Hintergründe für Instagram und Druck tauschen">Vorlagen</a>
     <a class="mp-btn mp-btn-ghost" data-link="index.html" href="index.html" style="min-height:44px" title="Bisherige Seite (z. B. für Götz-Textvorlage oder Positionen)">Alte Ansicht</a>
   </div>
   <p class="ag-sub" id="kunde-hinweis"></p>
@@ -391,12 +392,13 @@
     document.querySelectorAll('[data-link]').forEach(a => { a.href = D.link(a.dataset.link) })
     $('kunde-hinweis').textContent = 'Für ' + D.kundeName() + '. Bilder sehen genauso aus wie bisher – nur die Bedienung ist neu.'
 
-    const [g, o, w] = await Promise.all([
+    const [g, o, w, v] = await Promise.all([
       D.ladeGerichte(),
       D.ladeOverrides(),
-      D.ladeWochen().catch(() => [])
+      D.ladeWochen().catch(() => []),
+      D.ladeVorlagen()
     ])
-    gerichte = g.liste; quelle = g.quelle; overrides = o || {}; wochen = w
+    gerichte = g.liste; quelle = g.quelle; overrides = D.mitVorlagen(o || {}, v); wochen = w
     hinweisQuelle()
 
     const e = D.lsLesen(entwurfKey(), null)

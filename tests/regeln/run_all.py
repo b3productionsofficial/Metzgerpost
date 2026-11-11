@@ -124,6 +124,18 @@ PRUEFUNGEN = {
     ('TV-09', 'Online-Meldungen gebündelt (Supabase-Limit pro Gerät)', r'OK     TV-09'),
     ('TV', 'keine JS-Fehler', r'OK     TV-00'),
   ]),
+  'vorlagen': (['python3', 'tests/regeln/vorlagen_test.py'], [
+    ('VL-01', 'Vorlagen-Seite: 4 Formate + aktuelle Vorschau', r'OK     VL-01'),
+    ('VL-02', 'falsches Seitenverhältnis wird abgelehnt', r'OK     VL-02'),
+    ('VL-03', 'Vorher/Nachher-Vorschau mit neuem Bild', r'OK     VL-03'),
+    ('VL-04', 'Übernehmen speichert + aktiviert', r'OK     VL-04'),
+    ('VL-05', 'Generator nutzt neue Vorlage, Download klappt', r'OK     VL-05'),
+    ('VL-06', 'andere Formate bleiben unverändert', r'OK     VL-06'),
+    ('VL-07', 'kleines Bild → Hinweis, Verlauf bleibt', r'OK     VL-07'),
+    ('VL-08', 'zurück zu Standard / älterer Version', r'OK     VL-08'),
+    ('VL-09', 'alte Admin-Seite nur für Admins', r'OK     VL-09'),
+    ('VL', 'keine JS-Fehler', r'OK     VL-00'),
+  ]),
 }
 CWD = {'screen3': os.path.join(REPO, 'tests', 'angebote'), 'angebote_render': os.path.join(REPO, 'tests', 'angebote'),
        'angebote_ui': os.path.join(REPO, 'tests', 'angebote')}

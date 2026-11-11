@@ -20,6 +20,9 @@
     if (!bildCache[src]) {
       bildCache[src] = new Promise(function (resolve, reject) {
         var img = new Image()
+        // Bilder aus Supabase (eigene Vorlagen, Gerichtfotos aus der Bibliothek) liegen auf einer anderen Adresse:
+        // ohne crossOrigin wäre das Canvas danach „verunreinigt“ und Download/Vorschau-Kopie würden scheitern.
+        if (/^https?:/.test(src) && src.indexOf(location.origin) !== 0) img.crossOrigin = 'anonymous'
         img.onload = function () { resolve(img) }
         img.onerror = function () { delete bildCache[src]; reject(new Error('Bild konnte nicht geladen werden: ' + src)) }
         img.src = src
@@ -107,6 +110,8 @@
       if (standard[seite].meals) merge(standard[seite].meals, so.meals)
     })
     if (standard.tage) merge(standard.tage, fo.tage)
+    // eigene Hintergrund-Vorlage (Seite „Vorlagen“): ersetzt nur das Bild, Größe bleibt gleich
+    if (fo.template) standard.template = fo.template
     return standard
   }
 

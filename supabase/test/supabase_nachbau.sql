@@ -41,6 +41,11 @@ alter table public.mittag_gerichte enable row level security;
 grant all on public.mittag_gerichte to anon, authenticated;
 create policy "mittag_gerichte lesen" on public.mittag_gerichte for select to authenticated using (true);
 create policy "mittag_gerichte schreiben" on public.mittag_gerichte for all to authenticated using (true) with check (true);
+create table public.mittag_vorlagen (id uuid primary key default gen_random_uuid(), kunde_id text not null, layout text not null, format text not null, bild_url text, breite int, hoehe int, positionen jsonb, notiz text, aktiv boolean not null default false, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+alter table public.mittag_vorlagen enable row level security;
+grant all on public.mittag_vorlagen to anon, authenticated;
+create policy "mittag_vorlagen lesen" on public.mittag_vorlagen for select to authenticated using (true);
+create policy "mittag_vorlagen schreiben" on public.mittag_vorlagen for all to authenticated using (true) with check (true);
 
 insert into auth.users values ('057b6a13-08f4-466f-82bd-2abd00eb06a4', 'lukas'), ('6544d8e6-b797-4bea-abeb-5da964eefe27', 'sorg'), ('99999999-0000-0000-0000-000000000000', 'fremde metzgerei');
 insert into public.displays (kunde_id, screen_id, content) values ('6544d8e6', 'screen1', '{}'), ('6544d8e6', 'mt_settings', '{"tage":[2,3,4,5]}');

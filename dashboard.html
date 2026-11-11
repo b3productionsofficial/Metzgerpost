@@ -122,10 +122,11 @@
     <div class="db-modul" style="cursor:default">
       <div class="db-modul-icon" aria-hidden="true">📚</div>
       <div class="db-modul-name">Bibliotheken</div>
-      <div class="db-modul-desc">Gerichte und Produkte mit Fotos und Standardpreisen.</div>
+      <div class="db-modul-desc">Gerichte, Produkte und Hintergründe für Instagram und Druck.</div>
       <div class="db-modul-links">
         <a data-ziel="gerichte" href="modules/mittagstisch/gerichte.html">Gerichte</a>
         <a href="modules/angebote/produkte.html">Produkte</a>
+        <a data-ziel="vorlagen" href="modules/mittagstisch/vorlagen.html">Vorlagen (Hintergründe)</a>
       </div>
     </div>
     <div class="db-modul" id="admin-modul" style="cursor:default" hidden>
@@ -170,7 +171,7 @@
   function links () {
     const key = MP.getAktiveKundeKey ? MP.getAktiveKundeKey() : ''
     const q = key ? '?kunde=' + encodeURIComponent(key) : ''
-    const ziele = { mittag: 'modules/mittagstisch/generator.html', gerichte: 'modules/mittagstisch/gerichte.html', 'mittag-alt': 'modules/mittagstisch/index.html' }
+    const ziele = { mittag: 'modules/mittagstisch/generator.html', gerichte: 'modules/mittagstisch/gerichte.html', vorlagen: 'modules/mittagstisch/vorlagen.html', 'mittag-alt': 'modules/mittagstisch/index.html' }
     document.querySelectorAll('[data-ziel]').forEach(a => { a.href = ziele[a.dataset.ziel] + q })
   }
 

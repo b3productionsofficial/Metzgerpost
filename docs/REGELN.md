@@ -100,6 +100,22 @@ TV-Bildschirmen (`screen-v2`, `screen2-v2`, `screen3-v2`) und der Vorschau im Di
 | S1-13 | Kurze Namen behalten die Schriftgröße aus dem Positions-Editor. |
 | – | Breite und Lage der Texte kommen weiter aus dem Positions-Editor. **06.11.2026 korrigiert** (mit Lukas): großer Freitag Text Breite 23,5 → 20, y 57 → 58,5, Größe 1,7 → 1,6 (lief über den Kasten). Rückweg: `update display_configs set config = jsonb_set(jsonb_set(jsonb_set(config,'{freitag,freitag,text,w}','23.5'),'{freitag,freitag,text,y}','57'),'{freitag,freitag,text,size}','1.7') where kunde_id='6544d8e6' and screen_id='screen1';` |
 
+## Vorlagen (eigene Hintergründe für Instagram/Druck) – seit 11.11.2026 auf staging
+
+Seite `modules/mittagstisch/vorlagen.html` (Übersicht → Bibliotheken → „Vorlagen (Hintergründe)“). Tabelle `mittag_vorlagen` (rein additiv, `supabase/mittag_vorlagen.sql`). Bilder liegen in `screen-assets/<kunde>/vorlagen/`.
+
+| Nr. | Regel |
+|---|---|
+| VL-01 | Je Kunde 4 Formate: Instagram Story (1080×1920), Instagram Beitrag (1080×1350), Druck vorne/hinten (A4 quer, 3508×2480). Seite zeigt die Sollgröße + Canva-Tipp. |
+| VL-02 | Falsches Seitenverhältnis (> 1 % Abweichung) wird abgelehnt – nichts wird gespeichert. |
+| VL-03 | Passendes Bild wird auf die exakte Größe gebracht und als JPG (Qualität 0,9) verkleinert; Vorschau „Aktuell“ vs. „Neu“ mit echtem Inhalt der letzten Woche. |
+| VL-04 | „Übernehmen“ lädt hoch und macht die Vorlage sofort aktiv (alle Geräte, ohne Deploy). Höchstens eine aktive Vorlage je Kunde+Format (DB-Index). |
+| VL-05 | Generator nutzt die aktive Vorlage für Vorschau und Download (Bilder von Supabase mit `crossOrigin`, sonst wäre der Download gesperrt). |
+| VL-06 | Ohne aktive Vorlage gilt die Datei aus dem Code; andere Formate bleiben unberührt. Positionen der Texte bleiben gleich (Verschieben = Schritt 2). |
+| VL-07 | Bild unter 75 % der Sollbreite → Hinweis „recht klein“, Speichern trotzdem möglich. Alte Versionen bleiben im Verlauf (nichts wird gelöscht). |
+| VL-08 | Verlauf: „Wieder verwenden“ für jede ältere Version und für die Standard-Vorlage. |
+| VL-09 | Alte Seite `modules/mittagstisch/admin.html` (Positions-Editor) nur noch für Admins (vorher ohne Login erreichbar). |
+
 ## Online-Status der Fernseher
 
 | Nr. | Regel |

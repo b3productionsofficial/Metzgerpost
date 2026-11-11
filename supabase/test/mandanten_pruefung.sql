@@ -30,6 +30,8 @@ insert into erg select 'Kunde speichert Woche', pg_temp.versuch($q$insert into p
 insert into erg select 'Kunde speichert Positionen (generator_configs)', pg_temp.versuch($q$insert into public.generator_configs (kunde_id, layout_positions) values ('6544d8e6','{}')$q$), 'erlaubt(1)';
 insert into erg select 'Kunde legt eigenes Gericht an', pg_temp.versuch($q$insert into public.mittag_gerichte (kunde_id, schluessel, text) values ('6544d8e6','neu','Neu')$q$), 'erlaubt(1)';
 insert into erg select 'Kunde darf kein fremdes Gericht anlegen', pg_temp.versuch($q$insert into public.mittag_gerichte (kunde_id, schluessel, text) values ('test0001','x','X')$q$), 'verboten';
+insert into erg select 'Kunde speichert eigene Vorlage', pg_temp.versuch($q$insert into public.mittag_vorlagen (kunde_id, layout, format) values ('6544d8e6','mittagstisch_druck','front')$q$), 'erlaubt(1)';
+insert into erg select 'Kunde darf keine fremde Vorlage speichern', pg_temp.versuch($q$insert into public.mittag_vorlagen (kunde_id, layout, format) values ('test0001','mittagstisch_druck','front')$q$), 'verboten';
 insert into erg select 'Kunde lädt Bild in eigenen Ordner', pg_temp.versuch($q$insert into storage.objects (bucket_id,name) values ('screen-assets','6544d8e6/screen2/neu.jpg')$q$), 'erlaubt(1)';
 insert into erg select 'Kunde darf nicht in fremden Ordner', pg_temp.versuch($q$insert into storage.objects (bucket_id,name) values ('screen-assets','test0001/x.jpg')$q$), 'verboten';
 insert into erg select 'Kunde darf Altdaten-Bild nicht löschen', pg_temp.versuch($q$delete from storage.objects where name like '057b6a13/%'$q$), 'erlaubt(0)';

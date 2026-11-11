@@ -319,6 +319,15 @@ Fonts: `Syne` (Display/Überschriften), `DM Sans` (Body).
 - Pixel-genaue Positionsoverrides pro Kunde/Format/Tag — gespeichert in localStorage (`mp_layout_overrides_{kundeId}`)
 - Reset auf Standardwerte
 
+- **Seit 11.11.2026 nur für Admins** (`MP.requireAdmin()`); Positionen landen weiter nur im localStorage (generator_configs ist per RLS gesperrt).
+
+### B2) Vorlagen (`modules/mittagstisch/vorlagen.html`, seit 11.11.2026 auf staging)
+- Eigene Hintergründe (Canva-Export) je Kunde und Format hochladen: Prüfung Seitenverhältnis, Skalierung auf Sollgröße, JPG-Kompression, Vorher/Nachher-Vorschau, Übernehmen, Verlauf/Zurück.
+- Tabelle `mittag_vorlagen` (eine aktive Zeile je kunde/layout/format), Bilder in `screen-assets/<kunde>/vorlagen/`.
+- `MPMittagDaten.ladeVorlagen()` + `mitVorlagen(overrides, vorlagen)` → Generator setzt `overrides[layout][format].template`; `render.js` nimmt `fo.template` und lädt fremde Bilder mit `crossOrigin='anonymous'`.
+- Spalte `positionen` ist für Schritt 2 (Texte verschieben) vorgesehen, noch ungenutzt.
+- Tests: `tests/regeln/vorlagen_test.py` (VL-01…09).
+
 ### C) Display Manager (`modules/display/index.html`)
 - **Screen 1 (Mittagstisch):**
   - Gespeicherte Wochen aus `wochen`-Tabelle laden und auf Screen 1 senden

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetzgerPost — Vorlagen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@600;700&family=Raleway:wght@500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="../../shared/style.css" />
+  <link rel="stylesheet" href="../angebote/angebote.css" />
+  <link rel="stylesheet" href="generator.css" />
+  <style>
+    .vl-vergleich { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .vl-vergleich.quer { grid-template-columns: 1fr; }
+    .vl-bild { display: flex; flex-direction: column; gap: 6px; }
+    .vl-bild b { font-size: 13px; color: var(--muted); font-weight: 600; }
+    .vl-bild canvas { width: 100%; height: auto; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--surface2); display: block; }
+    .vl-bild.neu canvas { border-color: var(--accent); }
+    .vl-pruef { list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.45; }
+    .vl-pruef li::before { margin-right: 8px; }
+    .vl-pruef .ok::before { content: '✓'; color: var(--success); }
+    .vl-pruef .warn::before { content: '!'; color: var(--warning); font-weight: 700; }
+    .vl-pruef .fehler::before { content: '✕'; color: var(--error); }
+    .vl-verlauf { display: flex; flex-direction: column; gap: 8px; }
+    .vl-v { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface2); font-size: 14px; }
+    .vl-v img { width: 72px; height: 48px; object-fit: cover; border-radius: 6px; background: var(--bg); flex-shrink: 0; }
+    .vl-v.hoch img { width: 40px; height: 64px; }
+    .vl-v span { flex: 1; min-width: 0; }
+    .vl-v small { color: var(--muted); display: block; }
+    .vl-aktiv { color: var(--success); font-weight: 600; font-size: 13px; white-space: nowrap; }
+    .vl-masse { font-size: 14px; line-height: 1.5; }
+    .vl-masse code { color: var(--accent2); }
+    @media (max-width: 760px) { .vl-vergleich { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body class="mp-bg-glow mt-seite">
+<nav class="mp-nav" id="mp-nav"></nav>
+
+<main class="ag-main">
+  <div class="ag-crumbs"><a data-link="generator.html" href="generator.html">Mittagstisch</a> › Vorlagen</div>
+  <div class="ag-head"><h1>Vorlagen</h1></div>
+  <p class="ag-sub" id="kunde-hinweis">Hintergründe für Instagram und Druck tauschen: in Canva gestalten, als JPG herunterladen, hier hochladen, Vorschau prüfen, übernehmen.</p>
+
+  <div class="ag-tabs" role="tablist" id="format-tabs"></div>
+
+  <div class="ag-split">
+    <div class="ag-form">
+      <section class="ag-card ag-step" aria-labelledby="h-aktuell">
+        <div class="ag-step-head"><span class="ag-step-num">1</span><h2 id="h-aktuell">Neue Vorlage hochladen</h2></div>
+        <div class="vl-masse" id="masse"></div>
+        <div class="ag-fotofeld">
+          <label class="mp-btn mp-btn-primary ag-btn-big ag-file" style="margin:0">Bild auswählen (JPG oder PNG)<input type="file" id="datei" accept="image/jpeg,image/png" /></label>
+        </div>
+        <ul class="vl-pruef" id="pruefung" hidden></ul>
+        <div class="ag-field" id="notiz-feld" hidden>
+          <label for="notiz">Notiz (optional)</label>
+          <input id="notiz" class="ag-input" maxlength="80" placeholder="z. B. Weihnachten 2026" />
+        </div>
+        <div class="ag-actions" id="aktionen" hidden>
+          <button type="button" class="mp-btn mp-btn-primary ag-btn-big" id="btn-uebernehmen">Übernehmen</button>
+          <button type="button" class="mp-btn mp-btn-secondary ag-btn-big" id="btn-verwerfen">Verwerfen</button>
+        </div>
+        <div class="mt-status" id="status" role="status" hidden></div>
+      </section>
+
+      <section class="ag-card ag-step" aria-labelledby="h-verlauf">
+        <div class="ag-step-head"><span class="ag-step-num">2</span><h2 id="h-verlauf">Verlauf</h2></div>
+        <p class="ag-hint">Ältere Versionen bleiben erhalten und lassen sich mit einem Klick wieder verwenden.</p>
+        <div class="vl-verlauf" id="verlauf"></div>
+      </section>
+    </div>
+
+    <aside class="ag-preview" aria-label="Vorschau">
+      <div class="vl-vergleich" id="vergleich">
+        <div class="vl-bild"><b id="lbl-vorher">Aktuell</b><canvas id="cv-vorher" aria-label="Aktuelle Vorlage mit Beispielinhalt"></canvas></div>
+        <div class="vl-bild neu" id="box-nachher" hidden><b>Neu</b><canvas id="cv-nachher" aria-label="Neue Vorlage mit Beispielinhalt"></canvas></div>
+      </div>
+      <p class="ag-hint" id="vorschau-hinweis"></p>
+      <div class="ag-error" id="vorschau-fehler" role="alert"></div>
+    </aside>
+  </div>
+</main>
+
+<div class="mp-toast" id="mp-toast"></div>
+<script src="../../shared/supabase.js"></script>
+<script src="../../shared/components.js"></script>
+<script src="config.js"></script>
+<script src="render.js"></script>
+<script src="mittag-daten.js"></script>
+<script>
+(function () {
+  const D = window.MPMittagDaten, R = window.MPMittagRender
+  const $ = id => document.getElementById(id)
+  let formate = [], fmt = null, vorlagen = [], basisOverrides = {}, beispiel = null
+  let neu = null   // { blob, url, breite, hoehe }
+
+  const datum = iso => new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const mb = n => (n / 1024 / 1024).toLocaleString('de-DE', { maximumFractionDigits: 1 }) + ' MB'
+
+  /* Beispielinhalt: zuletzt gespeicherte Woche, sonst die ersten Gerichte */
+  async function baueBeispiel () {
+    const [g, w] = await Promise.all([D.ladeGerichte(), D.ladeWochen(3).catch(() => [])])
+    const tageAus = woche => woche ? D.tageAusWoche(woche, g.liste) : null
+    const ersatz = {}
+    D.TAGE.forEach((t, i) => { const x = g.liste[i]; ersatz[t] = x ? { text: x.text, preis: x.preis, bild: x.bild } : null })
+    const w1 = w[0], w2 = w[1]
+    const label1 = w1 ? w1.woche_label : D.wocheAus(new Date()).label
+    const label2 = w2 ? w2.woche_label : D.wocheAus(D.plus(new Date(), 7)).label
+    return { woche: label1, tage: tageAus(w1) || ersatz, zweite: w2 ? label2 : label1, tage2: tageAus(w2) || tageAus(w1) || ersatz }
+  }
+  function zustand (f) {
+    return { kunde: D.kundeKey(), layout: f.layout, woche: beispiel.woche, tage: beispiel.tage,
+      druck: { frontDatum: beispiel.woche, wocheLinks: beispiel.woche, wocheRechts: beispiel.zweite, rechts: beispiel.tage2 } }
+  }
+  async function zeichne (canvas, f, overrides) {
+    const c = document.createElement('canvas')
+    await R.render(c, f.format, zustand(f), overrides)
+    canvas.width = c.width; canvas.height = c.height
+    canvas.getContext('2d').drawImage(c, 0, 0)
+  }
+  const aktive = () => vorlagen.find(v => v.aktiv && v.layout === fmt.layout && v.format === fmt.format)
+
+  async function zeigeVorschau () {
+    $('vorschau-fehler').textContent = ''
+    $('vergleich').classList.toggle('quer', fmt.breite > fmt.hoehe)
+    const a = aktive()
+    $('lbl-vorher').textContent = a ? 'Aktuell: eigene Vorlage vom ' + datum(a.created_at) + (a.notiz ? ' – ' + a.notiz : '') : 'Aktuell: Standard-Vorlage'
+    $('box-nachher').hidden = !neu
+    $('vorschau-hinweis').textContent = 'Vorschau mit Beispielinhalt (' + beispiel.woche + '). Genau so sieht das heruntergeladene Bild aus.'
+    try {
+      await zeichne($('cv-vorher'), fmt, D.mitVorlagen(basisOverrides, vorlagen))
+      if (neu) {
+        const o = D.mitVorlagen(basisOverrides, vorlagen)
+        o[fmt.layout] = o[fmt.layout] || {}
+        o[fmt.layout][fmt.format] = Object.assign({}, o[fmt.layout][fmt.format], { template: neu.url })
+        await zeichne($('cv-nachher'), fmt, o)
+      }
+    } catch (e) { $('vorschau-fehler').textContent = 'Vorschau nicht möglich: ' + e.message }
+  }
+
+  function zeigeFormat () {
+    $('format-tabs').innerHTML = formate.map(f => `<button type="button" class="ag-tab" role="tab" data-key="${f.layout}/${f.format}" aria-selected="${f === fmt}">${f.name}</button>`).join('')
+    const quer = fmt.breite > fmt.hoehe
+    $('masse').innerHTML = `Benötigt: <code>${fmt.breite} × ${fmt.hoehe} px</code>${fmt.format === 'front' || fmt.format === 'back' ? ' (A4 quer, 300 dpi)' : ''}.<br>
+      In Canva: „Benutzerdefinierte Größe“ ${fmt.breite} × ${fmt.hoehe} px anlegen, Hintergrund gestalten, Download als JPG.
+      Kreise, Datum und Preise setzt MetzgerPost selbst darauf – dort also freie Flächen lassen.`
+    zeigeVerlauf()
+  }
+  function zeigeVerlauf () {
+    const l = vorlagen.filter(v => v.layout === fmt.layout && v.format === fmt.format)
+    const a = aktive(), hoch = fmt.hoehe > fmt.breite ? ' hoch' : ''
+    $('verlauf').innerHTML = l.map(v => `
+      <div class="vl-v${hoch}"><img src="${D.esc(v.bild_url)}" alt="" loading="lazy">
+        <span>${datum(v.created_at)}${v.notiz ? ' – ' + D.esc(v.notiz) : ''}<small>${v.breite || '?'} × ${v.hoehe || '?'} px</small></span>
+        ${v.aktiv ? '<span class="vl-aktiv">● aktiv</span>' : `<button type="button" class="mp-btn mp-btn-secondary mp-btn-sm" style="min-height:40px" data-id="${D.esc(v.id)}">Wieder verwenden</button>`}
+      </div>`).join('') + `
+      <div class="vl-v${hoch}"><img src="${D.esc(fmt.standard)}" alt="" loading="lazy">
+        <span>Standard-Vorlage<small>aus dem Programm</small></span>
+        ${!a ? '<span class="vl-aktiv">● aktiv</span>' : '<button type="button" class="mp-btn mp-btn-secondary mp-btn-sm" style="min-height:40px" data-id="standard">Wieder verwenden</button>'}
+      </div>`
+  }
+
+  function pruefe (zeilen) {
+    $('pruefung').hidden = false
+    $('pruefung').innerHTML = zeilen.map(([art, t]) => `<li class="${art}">${t}</li>`).join('')
+  }
+  function verwerfen () {
+    if (neu) URL.revokeObjectURL(neu.url)
+    neu = null; $('datei').value = ''; $('notiz').value = ''
+    $('pruefung').hidden = true; $('aktionen').hidden = true; $('notiz-feld').hidden = true
+    zeigeVorschau()
+  }
+
+  async function dateiGewaehlt (e) {
+    const datei = e.target.files[0]; if (!datei) return
+    $('status').hidden = true
+    let img
+    try {
+      img = await new Promise((ok, fehl) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => fehl(new Error('Die Datei ist kein lesbares Bild.')); i.src = URL.createObjectURL(datei) })
+    } catch (err) { pruefe([['fehler', err.message]]); return }
+    const w = img.naturalWidth, h = img.naturalHeight
+    const soll = fmt.breite / fmt.hoehe, ist = w / h
+    if (Math.abs(ist - soll) / soll > 0.01) {
+      pruefe([['fehler', `Falsches Format: Das Bild ist ${w} × ${h} px, benötigt wird ${fmt.breite} × ${fmt.hoehe} px (${fmt.breite > fmt.hoehe ? 'quer' : 'hoch'}). In Canva die Größe auf ${fmt.breite} × ${fmt.hoehe} px ändern und neu herunterladen.`]])
+      $('aktionen').hidden = true; return
+    }
+    const zeilen = []
+    if (w === fmt.breite && h === fmt.hoehe) zeilen.push(['ok', `Größe passt: ${w} × ${h} px`])
+    else zeilen.push([w < fmt.breite * 0.75 ? 'warn' : 'ok', `Seitenverhältnis passt. ${w} × ${h} px wird auf ${fmt.breite} × ${fmt.hoehe} px gebracht${w < fmt.breite * 0.75 ? ' – das Bild ist recht klein, im Druck evtl. unscharf. Besser in voller Größe herunterladen.' : '.'}`])
+    // auf exakte Größe bringen + als JPG speichern (macht große PNGs klein)
+    const c = document.createElement('canvas'); c.width = fmt.breite; c.height = fmt.hoehe
+    const ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, c.width, c.height)
+    ctx.drawImage(img, 0, 0, c.width, c.height)
+    URL.revokeObjectURL(img.src)
+    const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.9))
+    zeilen.push(['ok', `Dateigröße: ${mb(datei.size)} → ${mb(blob.size)} (JPG)`])
+    if (neu) URL.revokeObjectURL(neu.url)
+    neu = { blob, url: URL.createObjectURL(blob), breite: fmt.breite, hoehe: fmt.hoehe }
+    pruefe(zeilen)
+    $('aktionen').hidden = false; $('notiz-feld').hidden = false
+    await zeigeVorschau()
+    $('vergleich').scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }
+
+  async function uebernehmen () {
+    if (!neu) return
+    const b = $('btn-uebernehmen'); b.disabled = true; b.textContent = 'Wird übernommen …'
+    try {
+      await D.speichereVorlage({ layout: fmt.layout, format: fmt.format, blob: neu.blob, breite: neu.breite, hoehe: neu.hoehe, notiz: $('notiz').value.trim() })
+      vorlagen = await D.ladeVorlagen()
+      verwerfen(); zeigeVerlauf()
+      status(`„${fmt.name}“ übernommen – der Mittagstisch-Generator nutzt ab sofort die neue Vorlage.`, 'ok')
+    } catch (e) { status('Nicht übernommen: ' + D.esc(e.message), 'fehler') }
+    b.disabled = false; b.textContent = 'Übernehmen'
+  }
+  function status (t, art) { const s = $('status'); s.hidden = false; s.className = 'mt-status ' + art; s.innerHTML = t }
+
+  async function verlaufKlick (e) {
+    const b = e.target.closest('[data-id]'); if (!b) return
+    const row = b.dataset.id === 'standard' ? null : vorlagen.find(v => v.id === b.dataset.id)
+    b.disabled = true
+    try {
+      await D.aktiviereVorlage(fmt.layout, fmt.format, row)
+      vorlagen = await D.ladeVorlagen()
+      zeigeVerlauf(); await zeigeVorschau()
+      showToast(row ? 'Version vom ' + datum(row.created_at) + ' ist wieder aktiv' : 'Standard-Vorlage ist wieder aktiv')
+    } catch (err) { showToast('Fehler: ' + err.message, 'error', 5000); b.disabled = false }
+  }
+
+  async function start () {
+    const user = await mpInit({ nav: { backUrl: D.link('generator.html'), backLabel: 'Mittagstisch' } })
+    if (!user) return
+    document.querySelectorAll('[data-link]').forEach(a => { a.href = D.link(a.dataset.link) })
+    formate = D.vorlagenFormate()
+    if (!formate.length) { $('masse').textContent = 'Für diesen Kunden gibt es keine Mittagstisch-Vorlagen.'; return }
+    const p = new URLSearchParams(location.search).get('format')
+    fmt = formate.find(f => f.format === p) || formate[0]
+    const [o, v, bsp] = await Promise.all([D.ladeOverrides(), D.ladeVorlagen(), baueBeispiel()])
+    basisOverrides = o || {}; vorlagen = v; beispiel = bsp
+    $('format-tabs').addEventListener('click', e => {
+      const t = e.target.closest('[data-key]'); if (!t) return
+      fmt = formate.find(f => f.layout + '/' + f.format === t.dataset.key)
+      verwerfen(); zeigeFormat()
+    })
+    $('datei').addEventListener('change', dateiGewaehlt)
+    $('btn-uebernehmen').addEventListener('click', uebernehmen)
+    $('btn-verwerfen').addEventListener('click', verwerfen)
+    $('verlauf').addEventListener('click', verlaufKlick)
+    zeigeFormat(); zeigeVorschau()
+  }
+  start()
+})()
+</script>
+</body>
+</html>

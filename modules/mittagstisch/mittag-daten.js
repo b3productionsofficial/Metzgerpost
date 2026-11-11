@@ -222,7 +222,69 @@
       }).catch(function () { return lokal })
   }
 
+  /* ── Eigene Hintergrund-Vorlagen (Tabelle mittag_vorlagen) ── */
+  var FORMAT_NAMEN = { story: 'Instagram Story', feed: 'Instagram Beitrag', front: 'Druck vorne', back: 'Druck hinten' }
+  /* welche Formate hat dieser Kunde? (aus config.js) */
+  function vorlagenFormate () {
+    var k = (typeof kundenLayouts !== 'undefined' && kundenLayouts[kundeKey()]) || {}, l = []
+    ;['mittagstisch_instagram', 'mittagstisch_druck'].forEach(function (layout) {
+      Object.keys(k[layout] || {}).forEach(function (format) {
+        var f = k[layout][format]
+        if (f && f.template && f.width && f.height && FORMAT_NAMEN[format]) {
+          l.push({ layout: layout, format: format, name: FORMAT_NAMEN[format], breite: f.width, hoehe: f.height, standard: f.template })
+        }
+      })
+    })
+    return l
+  }
+  function ladeVorlagen () {
+    var id = kundeId()
+    if (!id) return Promise.resolve([])
+    return Promise.resolve(sb().from('mittag_vorlagen').select('*').eq('kunde_id', id).order('created_at', { ascending: false }))
+      .then(function (r) { if (r.error) { console.warn('mittag_vorlagen:', r.error.message); return [] } return r.data || [] })
+      .catch(function () { return [] })
+  }
+  /* aktive Vorlagen über die Positionen legen → Format wie layoutOverrides */
+  function mitVorlagen (overrides, vorlagen) {
+    var r = JSON.parse(JSON.stringify(overrides || {}))
+    ;(vorlagen || []).filter(function (v) { return v.aktiv }).forEach(function (v) {
+      r[v.layout] = r[v.layout] || {}
+      var f = Object.assign({}, r[v.layout][v.format] || {}, v.positionen || {})
+      if (v.bild_url) f.template = v.bild_url
+      r[v.layout][v.format] = f
+    })
+    return r
+  }
+  function deaktiviere (layout, format) {
+    return Promise.resolve(sb().from('mittag_vorlagen').update({ aktiv: false })
+      .eq('kunde_id', kundeId()).eq('layout', layout).eq('format', format).eq('aktiv', true))
+      .then(function (r) { if (r && r.error) throw r.error })
+  }
+  function speichereVorlage (v) {
+    var pfad = kundeId() + '/vorlagen/' + v.layout + '-' + v.format + '-' + Date.now().toString(36) + '.jpg'
+    return sb().storage.from(BUCKET).upload(pfad, v.blob, { upsert: false, contentType: 'image/jpeg', cacheControl: '31536000' })
+      .then(function (r) {
+        if (r.error) throw r.error
+        var url = sb().storage.from(BUCKET).getPublicUrl(pfad).data.publicUrl
+        return deaktiviere(v.layout, v.format).then(function () {
+          return sb().from('mittag_vorlagen').insert({ kunde_id: kundeId(), layout: v.layout, format: v.format, bild_url: url,
+            breite: v.breite, hoehe: v.hoehe, notiz: v.notiz || null, aktiv: true }).select()
+        })
+      })
+      .then(function (r) { if (r.error) throw r.error; return r.data && r.data[0] })
+  }
+  /* ältere Version wieder verwenden – oder (row = null) zurück zur Standard-Vorlage aus dem Code */
+  function aktiviereVorlage (layout, format, row) {
+    return deaktiviere(layout, format).then(function () {
+      if (!row) return null
+      return Promise.resolve(sb().from('mittag_vorlagen').update({ aktiv: true }).eq('id', row.id))
+        .then(function (r) { if (r && r.error) throw r.error })
+    })
+  }
+
   window.MPMittagDaten = {
+    FORMAT_NAMEN: FORMAT_NAMEN, vorlagenFormate: vorlagenFormate, ladeVorlagen: ladeVorlagen, mitVorlagen: mitVorlagen,
+    speichereVorlage: speichereVorlage, aktiviereVorlage: aktiviereVorlage,
     ladeOverrides: ladeOverrides,
     TAGE: TAGE, TAG_NAMEN: TAG_NAMEN,
     kundeKey: kundeKey, kundeId: kundeId, kundeName: kundeName, link: link, esc: esc, slug: slug,

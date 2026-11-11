@@ -312,6 +312,11 @@
 
   <script src="../../shared/supabase.js"></script>
   <script src="../../shared/components.js"></script>
+  <script>
+    // Nur für Admins (vorher ohne Login erreichbar)
+    document.documentElement.style.visibility = 'hidden'
+    MP.requireAdmin().then(u => { if (u) document.documentElement.style.visibility = '' })
+  </script>
   <script src="config.js"></script>
   <script src="admin.js"></script>
 </body>
